@@ -1,5 +1,5 @@
 # go-mms
-Go client for MET Messaging system(MMS)
+Go client for MET Messaging system (MMS)
 
 
 ## How to use
@@ -11,8 +11,8 @@ Shell 1.
 - `./mms-http-server-mock`
 
 Shell 2:
- - `cd go-mss`
- - `go build ./cmd/mmsctl`
- - `./mmsctl`
+- `cd go-mss`
+- `go build ./cmd/mmsctl`
+- `./mmsctl`
 
- You should now get a printout of a MMS message.
+You should now get a printout of an MMS message.
