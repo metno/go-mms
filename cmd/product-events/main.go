@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"time"
+
+	"github.com/urfave/cli/v2"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/metno/go-mms/internal/mms"
@@ -15,6 +19,35 @@ func receive(event cloudevents.Event) {
 }
 
 func main() {
+	app := &cli.App{
+		Name:  "product-events",
+		Usage: "Get and post events about products produced at MET, by talking to the MET Messaging system",
+		Commands: []*cli.Command{
+			{
+				Name:    "list-all",
+				Aliases: []string{"ls"},
+				Usage:   "List all the latest available events in the system",
+				Action:  listAllEvents,
+			},
+			{
+				Name:    "subscribe",
+				Aliases: []string{"s"},
+				Usage:   "Listen for new incoming events, get them printed conintuosly. Optionally, set up filters to limit events you get.",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "source", Aliases: []string{"s"}},
+				},
+				Action: subscribeEvents,
+			},
+		},
+	}
+
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func listAllEvents(c *cli.Context) error {
 	resp, err := http.Get("http://localhost:8080")
 	if err != nil {
 		log.Fatalf("Could not get events from local http server:%v", err)
@@ -33,6 +66,13 @@ func main() {
 
 	fmt.Printf("Event metadata:\n %+v\n", event.Context)
 	fmt.Printf("Message:\n%s\n", printMessage(message))
+
+	return nil
+}
+
+func subscribeEvents(c *cli.Context) error {
+	time.Sleep(10 * time.Second)
+	return nil
 }
 
 func printMessage(m interface{}) string {
