@@ -20,8 +20,8 @@ func receive(event cloudevents.Event) {
 
 func main() {
 	app := &cli.App{
-		Name:  "product-events",
-		Usage: "Get and post events about products produced at MET, by talking to the MET Messaging system",
+		Name:  "mmsctl",
+		Usage: "Get and post events and get info about production hubs, by talking to the MET Messaging system",
 		Commands: []*cli.Command{
 			{
 				Name:    "list-all",
@@ -32,11 +32,29 @@ func main() {
 			{
 				Name:    "subscribe",
 				Aliases: []string{"s"},
-				Usage:   "Listen for new incoming events, get them printed conintuosly. Optionally, set up filters to limit events you get.",
+				Usage:   "Listen for new incoming events, get them printed continuously. Optionally, set up filters to limit events you get.",
 				Flags: []cli.Flag{
-					&cli.StringFlag{Name: "source", Aliases: []string{"s"}},
+					&cli.StringFlag{Name: "source", Usage: "Filter incoming events by setting specifying the source events are coming from.", Aliases: []string{"s"}},
 				},
 				Action: subscribeEvents,
+			},
+			{
+				Name:    "post",
+				Aliases: []string{"p"},
+				Usage:   "Post a message about a product update.",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "type",
+						Usage: "Type of event. Default is created, but you can set the following type: created, updated, deleted.",
+						Value: "created",
+					},
+				},
+				Action: postEvent,
+			},
+			{
+				Name:   "list-production-hubs",
+				Usage:  "List all available production hubs, aka. sources of events.",
+				Action: listProductionHubs,
 			},
 		},
 	}
@@ -72,6 +90,14 @@ func listAllEvents(c *cli.Context) error {
 
 func subscribeEvents(c *cli.Context) error {
 	time.Sleep(10 * time.Second)
+	return nil
+}
+
+func postEvent(c *cli.Context) error {
+	return nil
+}
+
+func listProductionHubs(c *cli.Context) error {
 	return nil
 }
 
