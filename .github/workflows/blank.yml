@@ -1,0 +1,27 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Coverage badge
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  generate-badge:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go 1.15
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.15
+      id: go
+  
+    - uses: actions/checkout@v2
+
+    - name: Install gopherbadger
+      run: go get github.com/jpoles1/gopherbadger
+
+    - name: Generate badge
+      run: gopherbadger 
