@@ -1,5 +1,3 @@
-# This is a basic workflow to help you get started with Actions
-
 name: Coverage badge
 
 on:
@@ -25,3 +23,8 @@ jobs:
 
     - name: Generate badge
       run: gopherbadger 
+    
+    - uses: actions/upload-artifact@v2
+      with:
+        name: coverage_badge
+        path: coverage_badge.png
