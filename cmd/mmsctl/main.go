@@ -1,22 +1,11 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
-	"net/http"
 	"os"
-	"time"
 
 	"github.com/urfave/cli/v2"
-
-	cloudevents "github.com/cloudevents/sdk-go/v2"
-	"github.com/metno/go-mms/internal/mms"
 )
-
-func receive(event cloudevents.Event) {
-	fmt.Printf("%s", event)
-}
 
 func main() {
 	app := &cli.App{
@@ -63,45 +52,4 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func listAllEvents(c *cli.Context) error {
-	resp, err := http.Get("http://localhost:8080")
-	if err != nil {
-		log.Fatalf("Could not get events from local http server:%v", err)
-	}
-	defer resp.Body.Close()
-
-	event := cloudevents.NewEvent()
-	if err = json.NewDecoder(resp.Body).Decode(&event); err != nil {
-		log.Fatalf("Failed to decode event: %v", err)
-	}
-
-	message := mms.METDatasetCreatedMessage{}
-	if err = event.DataAs(&message); err != nil {
-		log.Fatalf("Failed to decode message in event: %v", err)
-	}
-
-	fmt.Printf("Event metadata:\n %+v\n", event.Context)
-	fmt.Printf("Message:\n%s\n", printMessage(message))
-
-	return nil
-}
-
-func subscribeEvents(c *cli.Context) error {
-	time.Sleep(10 * time.Second)
-	return nil
-}
-
-func postEvent(c *cli.Context) error {
-	return nil
-}
-
-func listProductionHubs(c *cli.Context) error {
-	return nil
-}
-
-func printMessage(m interface{}) string {
-	s, _ := json.MarshalIndent(m, "", "\t")
-	return string(s)
 }
