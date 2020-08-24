@@ -22,7 +22,7 @@ func mockDatasetEvent(w http.ResponseWriter, r *http.Request) {
 	event.SetID("0173c5ce-e1fb-11ea-9c78-6b708419aa07")
 	event.SetSource("ecflow/modellprod")
 	event.SetType("no.met.dataset.created.v1")
-	event.SetData(cloudevents.ApplicationJSON, &mms.METDatasetCreatedMessage{
+	event.SetData(cloudevents.ApplicationJSON, &mms.METDatasetCreatedEvent{
 		Name:          "Arome Arctic",
 		ReferenceTime: "2020-08-17T00:00:00Z",
 	})
