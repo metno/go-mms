@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 )
 
 var erroneousEventData = `
@@ -19,12 +20,12 @@ var erroneousEventData = `
 }`
 
 func TestDatasetCreatedEvent(t *testing.T) {
-	eventData := METDatasetCreatedEvent{}
+	eventData := DatasetCreatedEvent{}
 	err := json.Unmarshal([]byte(erroneousEventData), &eventData)
 
-	if err != nil || eventData.ReferenceTime != "" {
+	if (err != nil || eventData.CreatedAt != time.Time{}) {
 
-		t.Errorf("Expected missing ReferenceTime field; Got %v", eventData.ReferenceTime)
+		t.Errorf("Expected missing CreatedAt field; Got %v", eventData.CreatedAt)
 	}
 	fmt.Println(err)
 }
