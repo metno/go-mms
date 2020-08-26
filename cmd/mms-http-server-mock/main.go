@@ -12,20 +12,20 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/", mockDatasetEvent)
+	http.HandleFunc("/", mockProductEvent)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func mockDatasetEvent(w http.ResponseWriter, r *http.Request) {
+func mockProductEvent(w http.ResponseWriter, r *http.Request) {
 	event := cloudevents.NewEvent()
 
 	event.SetID("0173c5ce-e1fb-11ea-9c78-6b708419aa07")
 	event.SetSource("ecflow/modellprod")
-	event.SetType("no.met.dataset.created.v1")
+	event.SetType("no.met.Product.created.v1")
 	event.SetSubject("arome.arctic")
 
-	event.SetData(cloudevents.ApplicationJSON, &mms.DatasetCreatedEvent{
+	event.SetData(cloudevents.ApplicationJSON, &mms.ProductEvent{
 		Product:     "Arome Arctic",
 		ProductSlug: "arome.arctic",
 		CreatedAt:   time.Now(),

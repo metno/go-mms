@@ -8,6 +8,16 @@ import (
 )
 
 func main() {
+
+	// Get ProductionHubs to contact
+	hubs := []productionHub{
+		{
+			Name:       "test-hub",
+			NatsURL:    "nats://localhost:4222",
+			EventCache: "http://localhost:8080",
+		},
+	}
+
 	app := &cli.App{
 		Name:  "mmsctl",
 		Usage: "Get and post events and get info about production hubs, by talking to the MET Messaging system",
@@ -16,7 +26,7 @@ func main() {
 				Name:    "list-all",
 				Aliases: []string{"ls"},
 				Usage:   "List all the latest available events in the system",
-				Action:  listAllEvents,
+				Action:  listAllEvents(hubs),
 			},
 			{
 				Name:    "subscribe",
@@ -25,7 +35,7 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "source", Usage: "Filter incoming events by setting specifying the source events are coming from.", Aliases: []string{"s"}},
 				},
-				Action: subscribeEvents,
+				Action: subscribeEvents(hubs),
 			},
 			{
 				Name:    "post",
@@ -33,12 +43,24 @@ func main() {
 				Usage:   "Post a message about a product update.",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
+						Name:  "product",
+						Usage: "Human readable name of product.",
+					},
+					&cli.StringFlag{
+						Name:  "production-hub",
+						Usage: "Slug of the production-hub",
+					},
+					&cli.StringFlag{
+						Name:  "product-slug",
+						Usage: "Slug of the product.",
+					},
+					&cli.StringFlag{
 						Name:  "type",
 						Usage: "Type of event. Default is created, but you can set the following type: created, updated, deleted.",
 						Value: "created",
 					},
 				},
-				Action: postEvent,
+				Action: postEvent(hubs),
 			},
 			{
 				Name:   "list-production-hubs",

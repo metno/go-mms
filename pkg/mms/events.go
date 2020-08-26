@@ -11,16 +11,17 @@ import (
 
 	cenats "github.com/cloudevents/sdk-go/protocol/nats/v2"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
+	"github.com/google/uuid"
 )
 
-// DatasetCreatedEvent defines the message to send when a new dataset has been completed and persisted.
+// ProductEvent defines the message to send when a new Product has been completed and persisted.
 // TODO: Find a proper name following our naming conventions: https://github.com/metno/MMS/wiki/Terminology
-type DatasetCreatedEvent struct {
+type ProductEvent struct {
 	Product         string
 	ProductionHub   string
 	ProductSlug     string
 	CreatedAt       time.Time
-	DatasetLocation url.URL
+	ProductLocation url.URL
 }
 
 // Options defines the filtering options you can set to limit what kinds of events you will receive.
@@ -29,54 +30,83 @@ type Options struct {
 	ProductionHub string
 }
 
-// DatasetCreatedEventCallback specifies the function signature for receiving DatasetCreatedEvent events.
-type DatasetCreatedEventCallback func(e *DatasetCreatedEvent) error
+// ProductEventCallback specifies the function signature for receiving ProductEvent events.
+type ProductEventCallback func(e *ProductEvent) error
 
-// WatchDatasetCreatedEvents will call your callback function on each incoming event from the MMS Nats server.
-func WatchDatasetCreatedEvents(natsURL string, opts Options, callback DatasetCreatedEventCallback) error {
+// WatchProductEvents will call your callback function on each incoming event from the MMS Nats server.
+func WatchProductEvents(natsURL string, opts Options, callback ProductEventCallback) error {
 	c, err := newNATSConsumer(natsURL)
 	if err != nil {
 		return fmt.Errorf("failed to subscribe to events: %v", err)
 	}
 
 	for {
-		if err := c.StartReceiver(context.Background(), datasetCreatedReceiver(callback)); err != nil {
+		if err := c.StartReceiver(context.Background(), productReceiver(callback)); err != nil {
 			log.Printf("failed to start nats receiver, %s", err.Error())
 		}
 	}
 }
 
-// ListDatasetCreatedEvents will give all available events from the specified events cache.
-func ListDatasetCreatedEvents(url string, opts Options) ([]*DatasetCreatedEvent, error) {
-	resp, err := http.Get(url)
+// ListProductEvents will give all available events from the specified events cache.
+func ListProductEvents(eventCache string, opts Options) ([]*ProductEvent, error) {
+	events := []*ProductEvent{}
+
+	resp, err := http.Get(eventCache)
 	if err != nil {
-		log.Fatalf("Could not get events from local http server:%v", err)
+		return nil, fmt.Errorf("Could not get events from local http server:%v", err)
 	}
 	defer resp.Body.Close()
 
 	event := cloudevents.NewEvent()
 	if err = json.NewDecoder(resp.Body).Decode(&event); err != nil {
-		log.Fatalf("Failed to decode event: %v", err)
+		return nil, fmt.Errorf("failed to decode event: %v", err)
 	}
 
-	eventData := DatasetCreatedEvent{}
+	eventData := ProductEvent{}
 	if err = event.DataAs(&eventData); err != nil {
-		log.Fatalf("Failed to decode message in event: %v", err)
+		return nil, fmt.Errorf("failed to decode message in event: %v", err)
 	}
 	eventData.ProductionHub = event.Source()
 
-	return []*DatasetCreatedEvent{&eventData}, nil
+	events = append(events, &eventData)
+
+	return events, nil
 }
 
-func newNATSConsumer(natsURL string) (cloudevents.Client, error) {
-	ctx := context.Background()
-
-	p, err := cenats.NewConsumer(natsURL, "test", cenats.NatsOptions())
+// PostProductEvent generates an event and sends it to the specified messaging service.
+func PostProductEvent(natsURL string, opts Options, p *ProductEvent) error {
+	c, err := newNATSSender(natsURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create nats protocol, %v", err)
+		return fmt.Errorf("can not send event to messaging service: %v", err)
 	}
 
-	defer p.Close(ctx)
+	e := cloudevents.NewEvent()
+	e.SetID(uuid.New().String())
+	e.SetType("no.met.mms.product.v1")
+	e.SetTime(time.Now())
+	e.SetSource(p.ProductionHub)
+	e.SetSubject(p.ProductSlug)
+
+	err = e.SetData("application/json", p)
+	if err != nil {
+		return fmt.Errorf("failed to properly encode event data for product event: %v", err)
+	}
+
+	if result := c.Send(context.Background(), e); cloudevents.IsUndelivered(result) {
+		return fmt.Errorf("failed to send: %v", result.Error())
+	}
+
+	// FIXME(havardf): Weird race condition with closing connection and actually getting the event sent. Figure out how this actually should be done robustly.
+	time.Sleep(50 * time.Millisecond)
+
+	return nil
+}
+
+func newNATSSender(natsURL string) (cloudevents.Client, error) {
+	p, err := cenats.NewSender(natsURL, "mms", cenats.NatsOptions())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create nats protocol: %v", err)
+	}
 
 	c, err := cloudevents.NewClient(p)
 	if err != nil {
@@ -84,12 +114,29 @@ func newNATSConsumer(natsURL string) (cloudevents.Client, error) {
 	}
 
 	return c, nil
-
 }
 
-func datasetCreatedReceiver(callback DatasetCreatedEventCallback) func(context.Context, cloudevents.Event) error {
+func newNATSConsumer(natsURL string) (cloudevents.Client, error) {
+	p, err := cenats.NewConsumer(natsURL, "mms", cenats.NatsOptions())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create nats protocol, %v", err)
+	}
+
+	c, err := cloudevents.NewClient(p)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client, %v", err)
+	}
+
+	return c, nil
+}
+
+func productReceiver(callback ProductEventCallback) func(context.Context, cloudevents.Event) error {
 	return func(ctx context.Context, e cloudevents.Event) error {
-		mmsEvent := DatasetCreatedEvent{}
+		mmsEvent := ProductEvent{}
+
+		if err := e.DataAs(&mmsEvent); err != nil {
+			return fmt.Errorf("failed to decode event as product event: %v", err)
+		}
 
 		return callback(&mmsEvent)
 	}
