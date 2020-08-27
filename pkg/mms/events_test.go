@@ -64,7 +64,7 @@ func TestListProductEvents(t *testing.T) {
 
 	list, err := ListProductEvents(ts.URL, Options{})
 	if err != nil {
-		t.Errorf("Expectd no errors; Got %v", err)
+		t.Errorf("Expected no errors; Got %v", err)
 	}
 
 	if len(list) != 1 {
