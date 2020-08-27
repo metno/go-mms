@@ -37,9 +37,12 @@ func subscribeEvents(hubs []productionHub) func(*cli.Context) error {
 		errChannel := make(chan error, 1)
 		for _, h := range hubs {
 			go func(h productionHub) {
-				err := mms.WatchProductEvents(h.NatsURL, mms.Options{}, productReceiver)
-
-				errChannel <- err
+				mmsClient, err := mms.NewNatsConsumerClient(h.NatsURL)
+				if err != nil {
+					errChannel <- err
+					return
+				}
+				mmsClient.WatchProductEvents(productReceiver, mms.Options{})
 			}(h)
 
 		}
@@ -71,7 +74,12 @@ func postEvent(hubs []productionHub) func(*cli.Context) error {
 			return fmt.Errorf("could not find correct hub to send event")
 		}
 
-		err := mms.PostProductEvent(hub.NatsURL, mms.Options{}, &productEvent)
+		mmsClient, err := mms.NewNatsSenderClient(hub.NatsURL)
+		if err != nil {
+			return fmt.Errorf("failed to post event to messaging service: %v", err)
+		}
+
+		err = mmsClient.PostProductEvent(&productEvent, mms.Options{})
 		if err != nil {
 			return fmt.Errorf("failed to post event to messaging service: %v", err)
 		}

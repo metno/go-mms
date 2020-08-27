@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"time"
 
 	cenats "github.com/cloudevents/sdk-go/protocol/nats/v2"
@@ -21,7 +20,7 @@ type ProductEvent struct {
 	ProductionHub   string
 	ProductSlug     string
 	CreatedAt       time.Time
-	ProductLocation url.URL
+	ProductLocation string
 }
 
 // Options defines the filtering options you can set to limit what kinds of events you will receive.
@@ -33,15 +32,39 @@ type Options struct {
 // ProductEventCallback specifies the function signature for receiving ProductEvent events.
 type ProductEventCallback func(e *ProductEvent) error
 
-// WatchProductEvents will call your callback function on each incoming event from the MMS Nats server.
-func WatchProductEvents(natsURL string, opts Options, callback ProductEventCallback) error {
+// EventClient defines the MMS client used to send and receive events from the MMS messaging service.
+type EventClient struct {
+	ce cloudevents.Client
+}
+
+// NewNatsConsumerClient creates a cloudevent client for consuming MMS events from NATS.
+func NewNatsConsumerClient(natsURL string) (*EventClient, error) {
 	c, err := newNATSConsumer(natsURL)
 	if err != nil {
-		return fmt.Errorf("failed to subscribe to events: %v", err)
+		return nil, fmt.Errorf("failed to subscribe to events: %v", err)
 	}
 
+	return &EventClient{
+		ce: c,
+	}, nil
+}
+
+// NewNatsSenderClient creates a cloudevent client for sending MMS events to NATS.
+func NewNatsSenderClient(natsURL string) (*EventClient, error) {
+	c, err := newNATSSender(natsURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to subscribe to events: %v", err)
+	}
+
+	return &EventClient{
+		ce: c,
+	}, nil
+}
+
+// WatchProductEvents will call your callback function on each incoming event from the MMS Nats server.
+func (c *EventClient) WatchProductEvents(callback ProductEventCallback, opts Options) {
 	for {
-		if err := c.StartReceiver(context.Background(), productReceiver(callback)); err != nil {
+		if err := c.ce.StartReceiver(context.Background(), productReceiver(callback)); err != nil {
 			log.Printf("failed to start nats receiver, %s", err.Error())
 		}
 	}
@@ -74,12 +97,7 @@ func ListProductEvents(eventCache string, opts Options) ([]*ProductEvent, error)
 }
 
 // PostProductEvent generates an event and sends it to the specified messaging service.
-func PostProductEvent(natsURL string, opts Options, p *ProductEvent) error {
-	c, err := newNATSSender(natsURL)
-	if err != nil {
-		return fmt.Errorf("can not send event to messaging service: %v", err)
-	}
-
+func (c *EventClient) PostProductEvent(p *ProductEvent, opts Options) error {
 	e := cloudevents.NewEvent()
 	e.SetID(uuid.New().String())
 	e.SetType("no.met.mms.product.v1")
@@ -87,12 +105,12 @@ func PostProductEvent(natsURL string, opts Options, p *ProductEvent) error {
 	e.SetSource(p.ProductionHub)
 	e.SetSubject(p.ProductSlug)
 
-	err = e.SetData("application/json", p)
+	err := e.SetData("application/json", p)
 	if err != nil {
 		return fmt.Errorf("failed to properly encode event data for product event: %v", err)
 	}
 
-	if result := c.Send(context.Background(), e); cloudevents.IsUndelivered(result) {
+	if result := c.ce.Send(context.Background(), e); cloudevents.IsUndelivered(result) {
 		return fmt.Errorf("failed to send: %v", result.Error())
 	}
 
