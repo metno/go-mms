@@ -12,8 +12,10 @@ func PyPostEvent(cMsg *C.char) *C.char {
 	return C.CString("{\"err\": false, \"errmsg\": \"\"}")
 }
 
-//PyHello : Simple function to check the interface is working.
-//export PyHello
-func PyHello(x int) int {
-	return 2 * x
+//SayHello : Simple function to check the interface is working.
+//export SayHello
+func SayHello(cMsg *C.char) *C.char {
+	msg := C.GoString(cMsg)
+	fmt.Printf("Python says: %s\n", msg)
+	return C.CString("Hello Python!")
 }
