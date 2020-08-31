@@ -1,0 +1,35 @@
+{{define "howto"}}
+{{template "header"}}
+<h2>How to use Hello</h2>
+<p>Hello is a REST-service. It requires not authentication and no client registration, so to use it you can just go over to the <a href="/docs/apiref">api reference</a>.</p>
+
+<h3>Versioning</h3>
+<p>For major changes to the api, we will add a new version number to the url, e.g /api/v2/hello.
+    For smaller changes to the api, we will provide a beta service which includes those changes, before merging the changes into the production version.
+</p>
+<p>If we will support multiple content-types for the same entity, we will support that with adding the media-type as suffix to the url, e.g .html.</p>
+<p>
+    For all significant changes, we will send out a description of the change on the <a href="mailto:hello-users@met.no>">mailinglist</a>.
+    We will also update the <a href="/docs/changelog">changelog</a>.
+</p>
+<div class="zig-zag"></div>
+
+<h3>Error handling</h3>
+<p>
+    We use regular 4xx and 5xx http status codes, as close as possible to the HTTP specification. Some errors will have a message of what went wrong in it. 
+    Some errors will respons with json. Do not encode those json error responses, as they might change without proper versioning as described above.
+</p>
+    There might be cases where the service can give a successfull response, but the response object is missing some data.
+    In that case, we will include one or more warning messages in the object.
+<p>
+
+</p>
+<div class="zig-zag"></div>
+
+<h3>Authentication</h3>
+<div class="zig-zag"></div>
+
+<h3>Examples</h3>
+<div class="zig-zag"></div>
+{{template "footer"}}
+{{end}}

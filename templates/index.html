@@ -1,0 +1,16 @@
+{{define "index"}}
+{{template "header"}}
+            <h2>What is Hello?</h2>
+
+            <p>The Hello API provides <a href="https://www.met.no/en/free-meteorological-data">free access</a> to <a href="https://www.met.no/">MET Norway's</a>
+             best ever hello data.</p>
+
+            <p>The Hello API is primarily for developers who need to develop scripts or applications that need to say hello to MET Norway's
+            employees. Please read about the <a href="{{ .TermsOfService }}">terms of use</a> for the API,
+            as well as <a href="https://www.met.no/en/About-us/privacy">MET's privacy policy statement</a></p>
+
+            <p>Please email helpdesk&#64met.no if you have questions about Hello, and it will be directed to the appropriate people. We are looking
+            into setting up a discussion forum in the future, as the old email list has been discontinued. 
+            </p>
+{{template "footer"}}
+{{end}}
