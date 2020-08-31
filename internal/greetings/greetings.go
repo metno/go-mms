@@ -81,7 +81,7 @@ func (s *service) routes() {
 	s.ExternalRouter.HandleFunc("/docs/{page}", s.docsHandler)
 
 	//http.HandleFunc("/", mockProductEvent)
-	s.ExternalRouter.HandleFunc("/mockevent", mockProductEvent)
+	s.ExternalRouter.HandleFunc("/mockevent", metaservice.MockProductEvent)
 
 	// Swagger UI
 	swui := http.StripPrefix("/swaggerui", http.FileServer(http.Dir("./static/swaggerui/")))
