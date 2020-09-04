@@ -26,10 +26,37 @@
         },
         "type": "object"
       },
+      "eventsOK": {
+        "items": {
+          "properties": {
+            "created_at": {
+              "example": "2020-09-04T03:00:00Z",
+              "format": "date-time",
+              "type": "string"
+            },
+            "name": {
+              "example": "Arome Arctic",
+              "type": "string"
+            },
+            "production_hub": {
+              "example": "ecflow.modellprod",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "created_at",
+            "production_hub"
+          ],
+          "type": "object"
+        },
+        "title": "EventsList",
+        "type": "array"
+      },
       "healthz": {
         "properties": {
           "description": {
-            "example": "Checked stock of greetings and we are good.",
+            "example": "we are good.",
             "type": "string"
           },
           "errors": {
@@ -54,56 +81,6 @@
         "title": "Service health report.",
         "type": "object"
       },
-      "helloOK": {
-        "properties": {
-          "greeting": {
-            "example": "Hello Bob",
-            "type": "string"
-          }
-        },
-        "title": "Greeting",
-        "type": "object"
-      },
-      "helloOKbeta": {
-        "properties": {
-          "geometry": {
-            "properties": {
-              "coordinates": {
-                "example": [
-                  60,
-                  11,
-                  100
-                ],
-                "items": {
-                  "type": "number"
-                },
-                "minItems": 2,
-                "type": "array"
-              },
-              "type": {
-                "enum": [
-                  "POINT"
-                ],
-                "type": "string"
-              }
-            },
-            "required": [
-              "type",
-              "coordinates"
-            ],
-            "type": "object"
-          },
-          "greeting": {
-            "example": "Hello bob",
-            "type": "string"
-          }
-        },
-        "required": [
-          "greeting"
-        ],
-        "title": "Greeting beta",
-        "type": "object"
-      },
       "serviceFailing": {
         "properties": {
           "error": {
@@ -117,8 +94,8 @@
     }
   },
   "info": {
-    "description": "Hello world api with all the required MET REST endpoints.",
-    "title": "MET hello world api",
+    "description": "MMSd REST endpoints.",
+    "title": "MMSd api",
     "version": "0.1"
   },
   "openapi": "3.0.2",
@@ -141,6 +118,37 @@
         "summary": "Metadata about this service.",
         "tags": [
           "meta"
+        ]
+      }
+    },
+    "/api/v1/events": {
+      "get": {
+        "operationId": "events",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/eventsOK"
+                }
+              }
+            },
+            "description": "Events went ok."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/serviceFailing"
+                }
+              }
+            },
+            "description": "The service can not properly handle the request at this time."
+          }
+        },
+        "summary": "List all events",
+        "tags": [
+          "events"
         ]
       }
     },
@@ -179,93 +187,9 @@
             "description": "The service is up, but something is seriously wrong and healthz will give you the status."
           }
         },
-        "summary": "Health status of this MET Hello service.",
+        "summary": "Health status of this service.",
         "tags": [
           "meta"
-        ]
-      }
-    },
-    "/api/v1/hello/{name}": {
-      "get": {
-        "operationId": "hello",
-        "parameters": [
-          {
-            "example": "Bob",
-            "in": "path",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/helloOK"
-                }
-              }
-            },
-            "description": "Hello went ok."
-          },
-          "503": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/serviceFailing"
-                }
-              }
-            },
-            "description": "The service can not properly handle the request at this time."
-          }
-        },
-        "summary": "Give a name, get a nice hello.",
-        "tags": [
-          "hello"
-        ]
-      }
-    },
-    "/api/v1beta/hello/{name}": {
-      "get": {
-        "operationId": "helloBeta",
-        "parameters": [
-          {
-            "example": "Bob",
-            "in": "path",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/helloOKbeta"
-                }
-              }
-            },
-            "description": "Hello went ok."
-          },
-          "503": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/serviceFailing"
-                }
-              }
-            },
-            "description": "The service can not properly handle the request at this time."
-          }
-        },
-        "summary": "Give a name, get a nice hello.",
-        "tags": [
-          "hello"
         ]
       }
     }

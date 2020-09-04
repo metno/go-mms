@@ -1,10 +1,9 @@
-// Package greetings provides a http service struct for a greeting service.
+// Package api provides a http service struct for a events service.
 // All request and response structs and handlers for this service are located in this package.
-package greetings
+package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/metno/go-mms/pkg/metaservice"
 	"github.com/metno/go-mms/pkg/middleware"
+	"github.com/metno/go-mms/pkg/mms"
 )
 
 type service struct {
@@ -24,27 +24,13 @@ type service struct {
 	ExternalRouter *mux.Router
 }
 
-type Greeting struct {
-	Greeting string `json:"greeting"`
-}
-
-type GreetingBeta struct {
-	Greeting string   `json:"greeting"`
-	Geometry geometry `json:"geometry"`
-}
-
-type geometry struct {
-	Type        string
-	Coordinates []float32 `json:"coordinates"`
-}
-
 type ServerError struct {
 	ErrMsg string `json:"error"`
 }
 
 func NewService(templates *template.Template, staticFilesDir string) *service {
 	service := service{
-		about:          aboutHello(),
+		about:          aboutMMSd(),
 		htmlTemplates:  templates,
 		staticFilesDir: staticFilesDir,
 		InternalRouter: mux.NewRouter(),
@@ -57,16 +43,13 @@ func NewService(templates *template.Template, staticFilesDir string) *service {
 
 func (s *service) routes() {
 	var metrics = middleware.NewServiceMetrics(middleware.MetricsOpts{
-		Name:            "hello",
-		Description:     "Hello REST service at MET Norway.",
+		Name:            "events",
+		Description:     "MMSd production hub events.",
 		ResponseBuckets: []float64{0.001, 0.002, 0.1, 0.5},
 	})
 
-	// Beta version of hello service endpoint.
-	s.ExternalRouter.HandleFunc("/api/v1beta/hello/{who}", metrics.Endpoint("/v1beta/hello", s.helloBetaHandler))
-
-	// The hello service endpoint.
-	s.ExternalRouter.HandleFunc("/api/v1/hello/{who}", metrics.Endpoint("/v1/hello", s.helloHandler))
+	// The Eventscache endpoint.
+	s.ExternalRouter.HandleFunc("/api/v1/events", metrics.Endpoint("/v1/events", s.eventsHandler))
 
 	// Health of the service
 	s.ExternalRouter.HandleFunc("/api/v1/healthz", metaservice.HealthzHandler(s.checkHealthz))
@@ -106,10 +89,9 @@ func proxyHeaders(next func(w http.ResponseWriter, r *http.Request)) http.Handle
 	return gorilla.ProxyHeaders(http.HandlerFunc(setSchemeIfEmpty))
 }
 
-func (s *service) helloHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	greeting := &Greeting{
-		Greeting: fmt.Sprintf("Hello %s.", params["who"]),
+func (s *service) eventsHandler(w http.ResponseWriter, r *http.Request) {
+	events := []mms.ProductEvent{
+		{},
 	}
 	var err error
 	if err != nil {
@@ -117,30 +99,7 @@ func (s *service) helloHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload, err := json.Marshal(greeting)
-	if err != nil {
-		http.Error(w, "Failed to serialize data.", http.StatusInternalServerError)
-		return
-	}
-	okResponse(payload, w, r)
-}
-
-func (s *service) helloBetaHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	greeting := &GreetingBeta{
-		Greeting: fmt.Sprintf("Hello %s.", params["who"]),
-		Geometry: geometry{
-			Type:        "POINT",
-			Coordinates: []float32{60, 11, 112},
-		},
-	}
-	var err error
-	if err != nil {
-		serverErrorResponse(err, w, r)
-		return
-	}
-
-	payload, err := json.Marshal(greeting)
+	payload, err := json.Marshal(events)
 	if err != nil {
 		http.Error(w, "Failed to serialize data.", http.StatusInternalServerError)
 		return
