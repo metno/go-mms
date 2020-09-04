@@ -132,7 +132,7 @@ func (s *service) checkHealthz() (*metaservice.Healthz, error) {
 }
 
 func okResponse(payload []byte, w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "max-age=86400")
+	w.Header().Set("Cache-Control", "max-age=10")
 	w.Header().Set("Content-Type", "application/json")
 	_, err := w.Write(payload)
 	if err != nil {
