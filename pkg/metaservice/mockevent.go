@@ -10,7 +10,7 @@ import (
 	"github.com/metno/go-mms/pkg/mms"
 )
 
-func mockProductEvent(w http.ResponseWriter, r *http.Request) {
+func MockProductEvent(w http.ResponseWriter, r *http.Request) {
 	event := cloudevents.NewEvent()
 
 	event.SetID("0173c5ce-e1fb-11ea-9c78-6b708419aa07")
