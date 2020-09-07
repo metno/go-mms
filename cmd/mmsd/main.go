@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/metno/go-mms/internal/api"
+	"github.com/metno/go-mms/internal/web"
 	nats "github.com/nats-io/nats-server/v2/server"
 )
 
@@ -15,25 +15,8 @@ const staticFilesDir = "./static/"
 const productionHubName = "default"
 
 func main() {
-	templates := template.Must(template.ParseGlob("templates/*"))
-
-	service := api.NewService(templates, staticFilesDir)
-
-	log.Println("Starting webserver for internal services ...")
-	go func() {
-		http.ListenAndServe(":8088", service.InternalRouter)
-	}()
-
-	server := &http.Server{
-		Addr:         ":8080",
-		Handler:      service.ExternalRouter,
-		WriteTimeout: 1 * time.Second,
-		IdleTimeout:  10 * time.Second,
-	}
 	startNATSServer()
-
-	log.Println("Starting webserver ...")
-	log.Fatal(server.ListenAndServe())
+	startWebServer()
 }
 
 func startNATSServer() {
@@ -51,4 +34,24 @@ func startNATSServer() {
 		}
 		s.WaitForShutdown()
 	}()
+}
+
+func startWebServer() {
+	templates := template.Must(template.ParseGlob("templates/*"))
+
+	webService := web.NewService(templates, staticFilesDir)
+
+	log.Println("Starting webserver for internal services ...")
+	go func() {
+		http.ListenAndServe(":8088", webService.InternalRouter)
+	}()
+
+	server := &http.Server{
+		Addr:         ":8080",
+		Handler:      webService.ExternalRouter,
+		WriteTimeout: 1 * time.Second,
+		IdleTimeout:  10 * time.Second,
+	}
+	log.Println("Starting webserver ...")
+	log.Fatal(server.ListenAndServe())
 }
