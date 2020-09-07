@@ -1,0 +1,197 @@
+{
+  "components": {
+    "schemas": {
+      "aboutOK": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provider": {
+            "properties": {
+              "@type": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "termsOfService": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "eventsOK": {
+        "items": {
+          "properties": {
+            "created_at": {
+              "example": "2020-09-04T03:00:00Z",
+              "format": "date-time",
+              "type": "string"
+            },
+            "name": {
+              "example": "Arome Arctic",
+              "type": "string"
+            },
+            "production_hub": {
+              "example": "ecflow.modellprod",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "created_at",
+            "production_hub"
+          ],
+          "type": "object"
+        },
+        "title": "EventsList",
+        "type": "array"
+      },
+      "healthz": {
+        "properties": {
+          "description": {
+            "example": "we are good.",
+            "type": "string"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "healthy",
+              "unhealthy",
+              "critical"
+            ],
+            "example": "healthy",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "Service health report.",
+        "type": "object"
+      },
+      "serviceFailing": {
+        "properties": {
+          "error": {
+            "example": "Critial service error. Please try again later.",
+            "type": "string"
+          }
+        },
+        "title": "Error message.",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "MMSd REST endpoints.",
+    "title": "MMSd api",
+    "version": "0.1"
+  },
+  "openapi": "3.0.2",
+  "paths": {
+    "/api/v1/about": {
+      "get": {
+        "operationId": "about",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/aboutOK"
+                }
+              }
+            },
+            "description": "Metadata about this service."
+          }
+        },
+        "summary": "Metadata about this service.",
+        "tags": [
+          "meta"
+        ]
+      }
+    },
+    "/api/v1/events": {
+      "get": {
+        "operationId": "events",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/eventsOK"
+                }
+              }
+            },
+            "description": "Events went ok."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/serviceFailing"
+                }
+              }
+            },
+            "description": "The service can not properly handle the request at this time."
+          }
+        },
+        "summary": "List all events",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/healthz": {
+      "get": {
+        "operationId": "healthz",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/healthz"
+                }
+              }
+            },
+            "description": "The service is ok."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/serviceFailing"
+                }
+              }
+            },
+            "description": "The whole service is failing, and healthz is not able to give you a meaningful status."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/healthz"
+                }
+              }
+            },
+            "description": "The service is up, but something is seriously wrong and healthz will give you the status."
+          }
+        },
+        "summary": "Health status of this service.",
+        "tags": [
+          "meta"
+        ]
+      }
+    }
+  }
+}

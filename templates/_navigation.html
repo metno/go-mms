@@ -1,0 +1,64 @@
+{{define "navigation"}}
+
+          <div class="topnav">
+            <section class="header" style="padding-bottom: 1%">
+                <a href="https://www.met.no/">
+                    <img class="site-logo" src="/static/mettemplate/images/met-logo.svg" alt="Meteorologisk Institutt logo">
+                </a>
+            </section>
+            <nav class="navbar" id="mainnavbar">
+              <a class="navbar-link" id="index" href="/docs/index">MMSd</a>
+              <a class="navbar-link" id="howto" href="/docs/howto">Usage</a>
+              <a class="navbar-link" id="apiref" href="/docs/apiref">API</a>
+              <a class="navbar-link" id="datadetails" href="/docs/datadetails">Data</a>
+              <a class="navbar-link" id="changelog" href="/docs/changelog">Changelog</a>
+              <a href="javascript:void(0);" class="icon" onClick="openDrawerMenu()">&#9776;</a>
+            </nav>
+          <div class="spacer-line"></div>
+    </div>
+    <script>
+            function currentNav() {
+              var header = document.getElementById("mainnavbar");
+              var items = header.getElementsByClassName("navbar-link");
+
+              var path = window.location.pathname;
+              var page = path.split("/").pop();
+
+              if (page == "") {
+                items[0].className += " active";
+              }
+              else {
+                for (var i = 0; i < items.length; i++) {
+                  if (items[i].id == page) {
+                    items[i].className += " active";
+                  }
+                  else {
+                    items[i].className = "navbar-link";
+                  }
+                }
+              }
+            }
+            currentNav();
+
+            function openDrawerMenu() {
+              var x = document.getElementById("mainnavbar");
+              //console.log(x);
+              if (x.className === "navbar"){
+                x.className += " responsive";
+              } else {
+                x.className = "navbar";
+              }
+              var items = x.getElementsByClassName("navbar-link");
+              for (var i = 0; i < items.length; i++) {
+                //console.log(i);
+                //console.log(items[i]);
+                if (x.className === "navbar-link") {
+                  items[i].className += " responsive";
+                } else {
+                items[i].className = "navbar-link";
+                }
+              }
+            }
+  </script>
+
+{{end}}

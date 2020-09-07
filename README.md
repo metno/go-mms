@@ -7,12 +7,12 @@ Go client for MET Messaging system (MMS)
 
 Shell 1.
 - `cd go-mms`
-- `go build ./cmd/mms-http-server-mock/`
-- `./mms-http-server-mock`
+- `go build ./cmd/mmsd`
+- `./mmsd`
 
 Shell 2:
-- `cd go-mss`
-- `go build ./cmd/mmsctl`
-- `./mmsctl`
+- `cd go-mms`
+- `go build ./cmd/mms`
+- `./mms`
 
 You should now get a printout of an MMS message.

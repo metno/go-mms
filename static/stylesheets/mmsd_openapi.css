@@ -1,0 +1,12 @@
+/* Hide away service info from swagger info spec block */
+.information-container, .scheme-container { 
+   display: none !important; 
+}
+
+/* override mettemplate changes, as they break swagger-ui layout. */
+table {
+    table-layout: initial;
+}
+td {
+    word-wrap: initial;
+}

@@ -1,0 +1,129 @@
+openapi: "3.0.2"
+info: 
+  title: "MMSd api"
+  description: "MMSd REST endpoints."
+  version: "0.1"
+paths:
+  /api/v1/about:
+    get:
+      summary: "Metadata about this service."
+      operationId: about
+      tags:
+        - meta
+      responses:
+        '200':
+          description: Metadata about this service.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/aboutOK'
+  /api/v1/healthz:
+    get:
+      summary: "Health status of this service."
+      operationId: healthz
+      tags:
+        - meta
+      responses:
+        '200':
+          description: The service is ok.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/healthz'
+        '503':
+          description: The service is up, but something is seriously wrong and healthz will give you the status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/healthz'
+        '500':
+          description: The whole service is failing, and healthz is not able to give you a meaningful status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceFailing'
+
+  /api/v1/events:
+    get:
+      summary: "List all events"
+      operationId: events
+      tags:
+        - events
+      responses:
+        '200':
+          description: Events went ok.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/eventsOK'
+        '503':
+          description: The service can not properly handle the request at this time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceFailing'
+components:
+  schemas:
+    healthz:
+      title: Service health report.
+      type: object
+      required:
+      - status
+      properties:
+        status:
+          type: string
+          example: "healthy"
+          enum:
+          - healthy
+          - unhealthy
+          - critical
+        description:
+          type: string
+          example: "we are good."
+        errors:
+          type: array
+          items:
+            type: string
+    serviceFailing:
+      title: Error message.
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Critial service error. Please try again later."
+    eventsOK:
+      title: EventsList
+      type: array
+      items:
+        type: object
+        required:
+          - name
+          - created_at
+          - production_hub
+        properties:
+          name:
+            type: string
+            example: "Arome Arctic"
+          created_at:
+            type: string
+            format: date-time
+            example: "2020-09-04T03:00:00Z"
+          production_hub:
+            type: string
+            example: "ecflow.modellprod"
+    aboutOK:    
+      type: object
+      properties:
+        name: 
+          type: string
+        description: 
+          type: string
+        termsOfService: 
+          type: string
+        provider:
+          type: object
+          properties:
+            "@type":
+              type: string
+            name:
+              type: string
