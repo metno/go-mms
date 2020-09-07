@@ -7,8 +7,8 @@ Go client for MET Messaging system (MMS)
 
 Shell 1.
 - `cd go-mms`
-- `go build ./cmd/rest-api/`
-- `./rest-api`
+- `go build ./cmd/mmsd`
+- `./mmsd`
 
 Shell 2:
 - `cd go-mms`
