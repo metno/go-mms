@@ -1,6 +1,3 @@
-## Build with: docker build -t mmsd .
-## Run with: docker run -i -p 8080:8080 -p 8088:8088 mmsd
-
 # FIRST STAGE:  build the app.
 FROM golang:1.15 AS build-app
 WORKDIR /build/app
@@ -14,7 +11,7 @@ RUN go mod download
 
 # Copy the rest of the source files.
 COPY . .
-RUN go test ./internal/api
+RUN go test ./pkg/mms
 RUN go build -o mmsd ./cmd/mmsd
 
 # SECOND STAGE: create the app runtime image.
