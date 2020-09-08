@@ -11,9 +11,9 @@ import (
 	gorilla "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
+	"github.com/metno/go-mms/internal/cache"
 	"github.com/metno/go-mms/pkg/metaservice"
 	"github.com/metno/go-mms/pkg/middleware"
-	"github.com/metno/go-mms/pkg/mms"
 )
 
 type service struct {
@@ -90,10 +90,7 @@ func proxyHeaders(next func(w http.ResponseWriter, r *http.Request)) http.Handle
 }
 
 func (s *service) eventsHandler(w http.ResponseWriter, r *http.Request) {
-	events := []mms.ProductEvent{
-		{},
-	}
-	var err error
+	events, err := cache.GetAllEvents()
 	if err != nil {
 		serverErrorResponse(err, w, r)
 		return

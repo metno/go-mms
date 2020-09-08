@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/metno/go-mms/internal/cache"
 	"github.com/metno/go-mms/internal/web"
 	nats "github.com/nats-io/nats-server/v2/server"
 )
@@ -16,6 +17,7 @@ const productionHubName = "default"
 
 func main() {
 	startNATSServer()
+	startEventCaching()
 	startWebServer()
 }
 
@@ -33,6 +35,16 @@ func startNATSServer() {
 			nats.PrintAndDie(err.Error())
 		}
 		s.WaitForShutdown()
+	}()
+}
+
+func startEventCaching() {
+	go func() {
+		log.Println("Start caching incoming events...")
+
+		if err := cache.Run("nats://localhost:4222"); err != nil {
+			log.Fatalf("Caching events failed: %s", err)
+		}
 	}()
 }
 
