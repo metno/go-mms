@@ -4,19 +4,14 @@ import (
 	"log"
 	"os"
 
+	"github.com/metno/go-mms/pkg/mms"
 	"github.com/urfave/cli/v2"
 )
 
 func main() {
 
 	// Get ProductionHubs to contact
-	hubs := []productionHub{
-		{
-			Name:       "test-hub",
-			NatsURL:    "nats://localhost:4222",
-			EventCache: "http://localhost:8080",
-		},
-	}
+	hubs := mms.ListProductionHubs()
 
 	app := &cli.App{
 		Name:  "mms",
