@@ -16,3 +16,10 @@ Shell 2:
 - `./mms`
 
 You should now get a printout of an MMS message.
+
+## Python Interface
+
+Build `libmms.so` with:
+```bash
+go build -o libmms.so -buildmode=c-shared ./export/
+```
