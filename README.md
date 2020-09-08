@@ -2,7 +2,8 @@
 Go client for MET Messaging system (MMS)
 
 
-## How to use
+# How to use
+## Build and run in shell
 - Clone this repo.
 
 Shell 1.
@@ -16,6 +17,12 @@ Shell 2:
 - `./mms`
 
 You should now get a printout of an MMS message.
+
+## Build and run MMSd as docker container
+```
+cd go-mms
+docker build -t mmsd .
+docker run -i -p 4222:4222 -p 8080:8080 -p 8088:8088 mmsd
 
 ## Python Interface
 

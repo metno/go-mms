@@ -53,7 +53,6 @@ func subscribeEvents(hubs []productionHub) func(*cli.Context) error {
 	}
 }
 
-//TODO: Split in two functions so that it is callable both from cli and the Python binding
 func postEvent(hubs []productionHub) func(*cli.Context) error {
 	return func(c *cli.Context) error {
 		productEvent := mms.ProductEvent{
