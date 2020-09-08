@@ -9,12 +9,10 @@ import (
 	"github.com/metno/go-mms/pkg/mms"
 )
 
-//PyProductEvent : Interface function for Python only dealing with JSON strings
+//PyProductEvent is an interface function for Python for posting a prodction event.
 //export PyProductEvent
 func PyProductEvent(cMsg *C.char) *C.char {
 	msg := C.GoString(cMsg)
-	fmt.Println("Go received message:")
-	fmt.Println(msg)
 
 	var productEvent mms.ProductEvent
 	json.Unmarshal([]byte(msg), &productEvent)
@@ -29,7 +27,7 @@ func PyProductEvent(cMsg *C.char) *C.char {
 	}
 }
 
-//PySayHello : Simple function to check the interface is working.
+//PySayHello is a simple function to check the interface is working.
 //export PySayHello
 func PySayHello(cMsg *C.char) *C.char {
 	msg := C.GoString(cMsg)
