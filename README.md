@@ -23,4 +23,10 @@ You should now get a printout of an MMS message.
 cd go-mms
 docker build -t mmsd .
 docker run -i -p 4222:4222 -p 8080:8080 -p 8088:8088 mmsd
+
+## Python Interface
+
+Build `libmms.so` with:
+```bash
+go build -o libmms.so -buildmode=c-shared ./export/
 ```
