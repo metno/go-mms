@@ -1,6 +1,6 @@
 // Package api provides a http service struct for a events service.
 // All request and response structs and handlers for this service are located in this package.
-package api
+package web
 
 import (
 	"encoding/json"

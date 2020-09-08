@@ -18,10 +18,9 @@
     We use regular 4xx and 5xx http status codes, as close as possible to the HTTP specification. Some errors will have a message of what went wrong in it. 
     Some errors will respons with json. Do not encode those json error responses, as they might change without proper versioning as described above.
 </p>
+<p>
     There might be cases where the service can give a successfull response, but the response object is missing some data.
     In that case, we will include one or more warning messages in the object.
-<p>
-
 </p>
 <div class="zig-zag"></div>
 
