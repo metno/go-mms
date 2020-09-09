@@ -116,7 +116,6 @@ func ListProductEvents(eventCache string, opts Options) ([]*ProductEvent, error)
 
 // MakeProductEvent prepares and sends the product event
 func MakeProductEvent(hubs []ProductionHub, p *ProductEvent) error {
-
 	var hub ProductionHub
 	for _, h := range hubs {
 		if h.Name == p.ProductionHub {
