@@ -26,6 +26,8 @@ docker run -i -p 4222:4222 -p 8080:8080 mmsd
 
 ## Python Interface
 
+The python interface is meant to be used from [py-mms](https://github.com/metno/py-mms).
+
 Build `libmms.so` with:
 ```bash
 go build -o libmms.so -buildmode=c-shared ./export/
