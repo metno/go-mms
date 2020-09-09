@@ -1,8 +1,9 @@
-// Package api provides a http service struct for a events service.
+// Package server provides a http service struct for a events service.
 // All request and response structs and handlers for this service are located in this package.
-package web
+package server
 
 import (
+	"database/sql"
 	"encoding/json"
 	"html/template"
 	"log"
@@ -11,37 +12,39 @@ import (
 	gorilla "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
-	"github.com/metno/go-mms/internal/cache"
 	"github.com/metno/go-mms/pkg/metaservice"
 	"github.com/metno/go-mms/pkg/middleware"
 )
 
-type service struct {
+// Service is a struct that wires up all data that is needed for this service to run.
+type Service struct {
+	cacheDB        *sql.DB
 	about          *metaservice.About
 	htmlTemplates  *template.Template
 	staticFilesDir string
-	InternalRouter *mux.Router
-	ExternalRouter *mux.Router
+	Router         *mux.Router
 }
 
-type ServerError struct {
+// HTTPServerError is used when the server fails to return a correct response to the user.
+type HTTPServerError struct {
 	ErrMsg string `json:"error"`
 }
 
-func NewService(templates *template.Template, staticFilesDir string) *service {
-	service := service{
+// NewService creates a service struct, containing all that is needed for a mmsd server to run.
+func NewService(templates *template.Template, staticFilesDir string, cacheDB *sql.DB) *Service {
+	service := Service{
+		cacheDB:        cacheDB,
 		about:          aboutMMSd(),
 		htmlTemplates:  templates,
 		staticFilesDir: staticFilesDir,
-		InternalRouter: mux.NewRouter(),
-		ExternalRouter: mux.NewRouter(),
+		Router:         mux.NewRouter(),
 	}
 	service.routes()
 
 	return &service
 }
 
-func (s *service) routes() {
+func (s *Service) routes() {
 	var metrics = middleware.NewServiceMetrics(middleware.MetricsOpts{
 		Name:            "events",
 		Description:     "MMSd production hub events.",
@@ -49,32 +52,32 @@ func (s *service) routes() {
 	})
 
 	// The Eventscache endpoint.
-	s.ExternalRouter.HandleFunc("/api/v1/events", metrics.Endpoint("/v1/events", s.eventsHandler))
+	s.Router.HandleFunc("/api/v1/events", metrics.Endpoint("/v1/events", s.eventsHandler))
 
 	// Health of the service
-	s.ExternalRouter.HandleFunc("/api/v1/healthz", metaservice.HealthzHandler(s.checkHealthz))
+	s.Router.HandleFunc("/api/v1/healthz", metaservice.HealthzHandler(s.checkHealthz))
 
 	// Service discovery metadata for the world
-	s.ExternalRouter.Handle("/api/v1/about", proxyHeaders(metaservice.AboutHandler(s.about)))
+	s.Router.Handle("/api/v1/about", proxyHeaders(metaservice.AboutHandler(s.about)))
 
 	// Metrics of the service(s) for this app.
-	s.InternalRouter.Handle("/metrics", metrics.Handler())
+	s.Router.Handle("/metrics", metrics.Handler())
 
 	// Documentation of the service(s)
-	s.ExternalRouter.HandleFunc("/docs/{page}", s.docsHandler)
+	s.Router.HandleFunc("/docs/{page}", s.docsHandler)
 
 	//http.HandleFunc("/", mockProductEvent)
-	s.ExternalRouter.HandleFunc("/mockevent", metaservice.MockProductEvent)
+	s.Router.HandleFunc("/mockevent", metaservice.MockProductEvent)
 
 	// Swagger UI
 	swui := http.StripPrefix("/swaggerui", http.FileServer(http.Dir("./static/swaggerui/")))
-	s.ExternalRouter.PathPrefix("/swaggerui").Handler(swui)
+	s.Router.PathPrefix("/swaggerui").Handler(swui)
 
 	// Static assets.
-	s.ExternalRouter.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(s.staticFilesDir))))
+	s.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(s.staticFilesDir))))
 
 	// Send root path of the http service to the docs index page.
-	s.ExternalRouter.HandleFunc("/", s.docsHandler)
+	s.Router.HandleFunc("/", s.docsHandler)
 }
 
 // proxyHeaders is a http handler middleware function for setting scheme and host correctly when behind a proxy.
@@ -89,8 +92,8 @@ func proxyHeaders(next func(w http.ResponseWriter, r *http.Request)) http.Handle
 	return gorilla.ProxyHeaders(http.HandlerFunc(setSchemeIfEmpty))
 }
 
-func (s *service) eventsHandler(w http.ResponseWriter, r *http.Request) {
-	events, err := cache.GetAllEvents()
+func (s *Service) eventsHandler(w http.ResponseWriter, r *http.Request) {
+	events, err := s.GetAllEvents()
 	if err != nil {
 		serverErrorResponse(err, w, r)
 		return
@@ -105,7 +108,7 @@ func (s *service) eventsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // html docs generated from templates.
-func (s *service) docsHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Service) docsHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	page, exists := params["page"]
 
@@ -121,7 +124,7 @@ func (s *service) docsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // checkHealthz is supplied to metaservice.HealthzHandler as a callback function.
-func (s *service) checkHealthz() (*metaservice.Healthz, error) {
+func (s *Service) checkHealthz() (*metaservice.Healthz, error) {
 	return &metaservice.Healthz{
 		Status:      metaservice.HealthzStatusHealthy,
 		Description: "No deps, so everything is ok all the time.",
@@ -138,7 +141,7 @@ func okResponse(payload []byte, w http.ResponseWriter, r *http.Request) {
 }
 
 func serverErrorResponse(errMsg error, w http.ResponseWriter, r *http.Request) {
-	errResponse := ServerError{
+	errResponse := HTTPServerError{
 		ErrMsg: errMsg.Error(),
 	}
 

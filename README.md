@@ -22,7 +22,7 @@ You should now get a printout of an MMS message.
 ```
 cd go-mms
 docker build -t mmsd .
-docker run -i -p 4222:4222 -p 8080:8080 -p 8088:8088 mmsd
+docker run -i -p 4222:4222 -p 8080:8080 mmsd
 
 ## Python Interface
 
