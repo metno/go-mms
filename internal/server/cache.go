@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -23,7 +24,7 @@ func NewDB(filePath string) (*sql.DB, error) {
 }
 
 // RunCache starts up a watch of incoming events from NATS. Each incoming event is stored in the cache database.
-// This function blocks forever, until it fails to subscribe to NATS, for some reason.
+// This function blocks forever, until it fails to subscribe to NATS for some reason.
 func (s *Service) RunCache(natsURL string) error {
 	eventClient, err := mms.NewNatsConsumerClient(natsURL)
 	if err != nil {
@@ -36,11 +37,13 @@ func (s *Service) RunCache(natsURL string) error {
 }
 
 // GetAllEvents returns all product events it can find in the cache database.
-func (s *Service) GetAllEvents() ([]*mms.ProductEvent, error) {
-	rows, err := s.cacheDB.Query("SELECT * FROM event")
+func (s *Service) GetAllEvents(ctx context.Context) ([]*mms.ProductEvent, error) {
+	rows, err := s.cacheDB.QueryContext(ctx, "SELECT * FROM events")
 	if err != nil {
 		return nil, fmt.Errorf("could not access db to get events: %s", err)
 	}
+	defer rows.Close()
+
 	var events []*mms.ProductEvent
 	for rows.Next() {
 		var id int
@@ -59,7 +62,7 @@ func (s *Service) GetAllEvents() ([]*mms.ProductEvent, error) {
 
 func cacheProductEventCallback(db *sql.DB) func(e *mms.ProductEvent) error {
 	return func(event *mms.ProductEvent) error {
-		insertEventSQL := `INSERT INTO event(event) VALUES (?)`
+		insertEventSQL := `INSERT INTO events(event) VALUES (?)`
 		payload, err := json.Marshal(event)
 		if err != nil {
 			return fmt.Errorf("failed to create json blob for storage: %s", err)
@@ -88,12 +91,12 @@ func createCacheDB(dbFilePath string) (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to sqlite database: %s", err)
 	}
-	createEventTable := `CREATE TABLE IF NOT EXISTS event (
+	createEventTable := `CREATE TABLE IF NOT EXISTS events (
 		"id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,		
 		"event" BLOB
 	  );`
 
-	_, err = db.Query(createEventTable)
+	_, err = db.Exec(createEventTable)
 
 	return db, err
 }

@@ -11,7 +11,7 @@ RUN go mod download
 
 # Copy the rest of the source files.
 COPY . .
-RUN go test ./pkg/mms
+RUN go test ./...
 RUN go build -o mmsd ./cmd/mmsd
 
 # SECOND STAGE: create the app runtime image.

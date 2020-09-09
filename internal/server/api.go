@@ -3,11 +3,13 @@
 package server
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
+	"time"
 
 	gorilla "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -93,7 +95,10 @@ func proxyHeaders(next func(w http.ResponseWriter, r *http.Request)) http.Handle
 }
 
 func (s *Service) eventsHandler(w http.ResponseWriter, r *http.Request) {
-	events, err := s.GetAllEvents()
+	dbCtx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	events, err := s.GetAllEvents(dbCtx)
 	if err != nil {
 		serverErrorResponse(err, w, r)
 		return
