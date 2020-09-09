@@ -51,7 +51,6 @@ func postEvent(hubs []mms.ProductionHub) func(*cli.Context) error {
 	return func(c *cli.Context) error {
 		productEvent := mms.ProductEvent{
 			Product:       c.String("product"),
-			ProductSlug:   c.String("product-slug"),
 			ProductionHub: c.String("production-hub"),
 			CreatedAt:     time.Now(),
 		}

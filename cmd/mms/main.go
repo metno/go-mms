@@ -43,11 +43,11 @@ func main() {
 					},
 					&cli.StringFlag{
 						Name:  "production-hub",
-						Usage: "Slug of the production-hub",
+						Usage: "Name of the production-hub",
 					},
 					&cli.StringFlag{
-						Name:  "product-slug",
-						Usage: "Slug of the product.",
+						Name:  "product",
+						Usage: "Name of the product.",
 					},
 					&cli.StringFlag{
 						Name:  "type",
