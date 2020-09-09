@@ -36,7 +36,7 @@ func main() {
 
 func startNATSServer(s *nats.Server) {
 	go func() {
-		log.Println("Starting NATS server...")
+		log.Println("Starting NATS server on localhost:4222...")
 		if err := nats.Run(s); err != nil {
 			nats.PrintAndDie(err.Error())
 		}
@@ -61,6 +61,6 @@ func startWebServer(webService *server.Service) {
 		WriteTimeout: 1 * time.Second,
 		IdleTimeout:  10 * time.Second,
 	}
-	log.Println("Starting webserver ...")
+	log.Printf("Starting webserver on %s...\n", server.Addr)
 	log.Fatal(server.ListenAndServe())
 }
