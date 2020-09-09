@@ -21,8 +21,8 @@ func TestGetAllEvents(t *testing.T) {
 	}
 	// Add expected queries and results to the mock sqlite db.
 	mock.ExpectQuery("SELECT (.+) FROM events").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "event"}).
-			AddRow(1, `{
+		WillReturnRows(sqlmock.NewRows([]string{"id", "createdAt", "event"}).
+			AddRow(1, "2020-08-26T12:18:48.281847242+02:00", `{
 				"ProductionHub": "ecflow.modellprod",
 				"ProductSlug": "arome.arctic",
 				"CreatedAt": "2020-08-26T12:18:48.281847242+02:00",

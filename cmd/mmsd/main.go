@@ -52,6 +52,19 @@ func startEventCaching(webService *server.Service, natsURL string) {
 			log.Fatalf("Caching events failed: %s", err)
 		}
 	}()
+
+	ticker := time.NewTicker(1 * time.Hour)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				if err := webService.DeleteOldEvents(time.Now().AddDate(0, 0, -3)); err != nil {
+					log.Printf("failed to delete old events from cache db: %s", err)
+				}
+			}
+		}
+
+	}()
 }
 
 func startWebServer(webService *server.Service) {

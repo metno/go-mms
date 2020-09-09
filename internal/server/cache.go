@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3" // Import sqlite3 driver for database/sql library
 	"github.com/metno/go-mms/pkg/mms"
@@ -47,8 +48,9 @@ func (s *Service) GetAllEvents(ctx context.Context) ([]*mms.ProductEvent, error)
 	var events []*mms.ProductEvent
 	for rows.Next() {
 		var id int
+		var createdAt string
 		var payload []byte
-		rows.Scan(&id, &payload)
+		rows.Scan(&id, &createdAt, &payload)
 
 		var event mms.ProductEvent
 		if err := json.Unmarshal(payload, &event); err != nil {
@@ -62,20 +64,27 @@ func (s *Service) GetAllEvents(ctx context.Context) ([]*mms.ProductEvent, error)
 
 func cacheProductEventCallback(db *sql.DB) func(e *mms.ProductEvent) error {
 	return func(event *mms.ProductEvent) error {
-		insertEventSQL := `INSERT INTO events(event) VALUES (?)`
 		payload, err := json.Marshal(event)
 		if err != nil {
 			return fmt.Errorf("failed to create json blob for storage: %s", err)
 		}
 
-		statement, err := db.Prepare(insertEventSQL) // Prepare statement.
-		_, err = statement.Exec(payload)
+		insertEventSQL := `INSERT INTO events(createdAt,event) VALUES (?, ?)`
+		statement, err := db.Prepare(insertEventSQL)
+		_, err = statement.Exec(event.CreatedAt, payload)
 		if err != nil {
 			return fmt.Errorf("failed to store event in db: %s", err)
 		}
 
 		return nil
 	}
+}
+
+// DeleteOldEvents removes events older than a specifed datetime.
+func (s *Service) DeleteOldEvents(maxAge time.Time) error {
+	deleteOldEvents := `DELETE FROM events WHERE createdAt < "` + maxAge.Format(time.RFC3339) + `";`
+	_, err := s.cacheDB.Exec(deleteOldEvents)
+	return err
 }
 
 func createCacheDB(dbFilePath string) (*sql.DB, error) {
@@ -92,7 +101,8 @@ func createCacheDB(dbFilePath string) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to connect to sqlite database: %s", err)
 	}
 	createEventTable := `CREATE TABLE IF NOT EXISTS events (
-		"id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,		
+		"id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+		"createdAt" string,	
 		"event" BLOB
 	  );`
 
