@@ -8,13 +8,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-type productionHub struct {
-	Name       string
-	NatsURL    string
-	EventCache string
-}
-
-func listAllEvents(hubs []productionHub) func(*cli.Context) error {
+func listAllEvents(hubs []mms.ProductionHub) func(*cli.Context) error {
 	return func(c *cli.Context) error {
 		events := []*mms.ProductEvent{}
 		for _, h := range hubs {
@@ -32,11 +26,11 @@ func listAllEvents(hubs []productionHub) func(*cli.Context) error {
 	}
 }
 
-func subscribeEvents(hubs []productionHub) func(*cli.Context) error {
+func subscribeEvents(hubs []mms.ProductionHub) func(*cli.Context) error {
 	return func(c *cli.Context) error {
 		errChannel := make(chan error, 1)
 		for _, h := range hubs {
-			go func(h productionHub) {
+			go func(h mms.ProductionHub) {
 				mmsClient, err := mms.NewNatsConsumerClient(h.NatsURL)
 				if err != nil {
 					errChannel <- err
@@ -53,7 +47,7 @@ func subscribeEvents(hubs []productionHub) func(*cli.Context) error {
 	}
 }
 
-func postEvent(hubs []productionHub) func(*cli.Context) error {
+func postEvent(hubs []mms.ProductionHub) func(*cli.Context) error {
 	return func(c *cli.Context) error {
 		productEvent := mms.ProductEvent{
 			Product:       c.String("product"),
@@ -62,29 +56,7 @@ func postEvent(hubs []productionHub) func(*cli.Context) error {
 			CreatedAt:     time.Now(),
 		}
 
-		var hub productionHub
-		for _, h := range hubs {
-			if h.Name == c.String("production-hub") {
-				hub = h
-				break
-			}
-		}
-
-		if (hub == productionHub{}) {
-			return fmt.Errorf("could not find correct hub to send event")
-		}
-
-		mmsClient, err := mms.NewNatsSenderClient(hub.NatsURL)
-		if err != nil {
-			return fmt.Errorf("failed to post event to messaging service: %v", err)
-		}
-
-		err = mmsClient.PostProductEvent(&productEvent, mms.Options{})
-		if err != nil {
-			return fmt.Errorf("failed to post event to messaging service: %v", err)
-		}
-
-		return nil
+		return mms.MakeProductEvent(hubs, &productEvent)
 	}
 }
 

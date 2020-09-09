@@ -37,6 +37,24 @@ type EventClient struct {
 	ce cloudevents.Client
 }
 
+// ProductionHub specifies the available hubs
+type ProductionHub struct {
+	Name       string
+	NatsURL    string
+	EventCache string
+}
+
+// ListProductionHubs to contact
+func ListProductionHubs() []ProductionHub {
+	return []ProductionHub{
+		{
+			Name:       "test-hub",
+			NatsURL:    "nats://localhost:4222",
+			EventCache: "http://localhost:8080",
+		},
+	}
+}
+
 // NewNatsConsumerClient creates a cloudevent client for consuming MMS events from NATS.
 func NewNatsConsumerClient(natsURL string) (*EventClient, error) {
 	c, err := newNATSConsumer(natsURL)
@@ -94,6 +112,33 @@ func ListProductEvents(eventCache string, opts Options) ([]*ProductEvent, error)
 	events = append(events, &eventData)
 
 	return events, nil
+}
+
+// MakeProductEvent prepares and sends the product event
+func MakeProductEvent(hubs []ProductionHub, p *ProductEvent) error {
+	var hub ProductionHub
+	for _, h := range hubs {
+		if h.Name == p.ProductionHub {
+			hub = h
+			break
+		}
+	}
+
+	if (hub == ProductionHub{}) {
+		return fmt.Errorf("could not find correct hub to send event")
+	}
+
+	mmsClient, err := NewNatsSenderClient(hub.NatsURL)
+	if err != nil {
+		return fmt.Errorf("failed to post event to messaging service: %v", err)
+	}
+
+	err = mmsClient.PostProductEvent(p, Options{})
+	if err != nil {
+		return fmt.Errorf("failed to post event to messaging service: %v", err)
+	}
+
+	return nil
 }
 
 // PostProductEvent generates an event and sends it to the specified messaging service.
