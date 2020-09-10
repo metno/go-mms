@@ -38,16 +38,12 @@ func main() {
 				Usage:   "Post a message about a product update.",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:  "product",
-						Usage: "Human readable name of product.",
-					},
-					&cli.StringFlag{
 						Name:  "production-hub",
-						Usage: "Slug of the production-hub",
+						Usage: "Name of the production-hub",
 					},
 					&cli.StringFlag{
-						Name:  "product-slug",
-						Usage: "Slug of the product.",
+						Name:  "product",
+						Usage: "Name of the product.",
 					},
 					&cli.StringFlag{
 						Name:  "type",

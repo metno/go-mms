@@ -17,7 +17,7 @@ var erroneousEventData = `
 {
 	"data": {
 	"ProductionHub": "ecflow.modellprod",
-	"ProductSlug": "arome.arctic",
+	"Product": "arome_arctic_sfx_2_5km",
 	"CreatedAt": "2020-08-26T12:18:48.281847242+02:00",
 	"ProductLocation": ""
 	},
@@ -34,7 +34,7 @@ var correctEventData = `
 	"data": {
 	"Product": "Arome Arctic",
 	"ProductionHub": "ecflow.modellprod",
-	"ProductSlug": "arome.arctic",
+	"Product": "arome_arctic_sfx_2_5km",
 	"CreatedAt": "2020-08-26T12:18:48.281847242+02:00",
 	"ProductLocation": ""
 	},
@@ -71,8 +71,8 @@ func TestListProductEvents(t *testing.T) {
 		t.Errorf("Expected 1 event; Got %d events", len(list))
 	}
 
-	if list[0].Product != "Arome Arctic" {
-		t.Errorf("Expected Product field value 'Arome Arctic'; Got %s", list[0].Product)
+	if list[0].Product != "arome_arctic_sfx_2_5km" {
+		t.Errorf("Expected Product field value 'arome_arctic_sfx_2_5km'; Got %s", list[0].Product)
 	}
 }
 

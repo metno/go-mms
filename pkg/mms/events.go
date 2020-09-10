@@ -16,11 +16,10 @@ import (
 // ProductEvent defines the message to send when a new Product has been completed and persisted.
 // TODO: Find a proper name following our naming conventions: https://github.com/metno/MMS/wiki/Terminology
 type ProductEvent struct {
-	Product         string
+	Product         string // shortname, i.e., file(object) name without timestamp
 	ProductionHub   string
-	ProductSlug     string
-	CreatedAt       time.Time
-	ProductLocation string
+	CreatedAt       time.Time // timestamp of the produced file (object)
+	ProductLocation string    //storage system + protocol + filename or object name
 }
 
 // Options defines the filtering options you can set to limit what kinds of events you will receive.
@@ -148,7 +147,7 @@ func (c *EventClient) PostProductEvent(p *ProductEvent, opts Options) error {
 	e.SetType("no.met.mms.product.v1")
 	e.SetTime(time.Now())
 	e.SetSource(p.ProductionHub)
-	e.SetSubject(p.ProductSlug)
+	e.SetSubject(p.Product)
 
 	err := e.SetData("application/json", p)
 	if err != nil {
