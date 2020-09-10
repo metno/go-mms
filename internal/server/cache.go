@@ -62,6 +62,13 @@ func (s *Service) GetAllEvents(ctx context.Context) ([]*mms.ProductEvent, error)
 	return events, nil
 }
 
+// DeleteOldEvents removes events older than a specifed datetime.
+func (s *Service) DeleteOldEvents(maxAge time.Time) error {
+	deleteOldEvents := `DELETE FROM events WHERE createdAt < "` + maxAge.Format(time.RFC3339) + `";`
+	_, err := s.cacheDB.Exec(deleteOldEvents)
+	return err
+}
+
 func cacheProductEventCallback(db *sql.DB) func(e *mms.ProductEvent) error {
 	return func(event *mms.ProductEvent) error {
 		payload, err := json.Marshal(event)
@@ -71,20 +78,13 @@ func cacheProductEventCallback(db *sql.DB) func(e *mms.ProductEvent) error {
 
 		insertEventSQL := `INSERT INTO events(createdAt,event) VALUES (?, ?)`
 		statement, err := db.Prepare(insertEventSQL)
-		_, err = statement.Exec(event.CreatedAt, payload)
+		_, err = statement.Exec(event.CreatedAt.Format(time.RFC3339), payload)
 		if err != nil {
 			return fmt.Errorf("failed to store event in db: %s", err)
 		}
 
 		return nil
 	}
-}
-
-// DeleteOldEvents removes events older than a specifed datetime.
-func (s *Service) DeleteOldEvents(maxAge time.Time) error {
-	deleteOldEvents := `DELETE FROM events WHERE createdAt < "` + maxAge.Format(time.RFC3339) + `";`
-	_, err := s.cacheDB.Exec(deleteOldEvents)
-	return err
 }
 
 func createCacheDB(dbFilePath string) (*sql.DB, error) {
