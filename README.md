@@ -35,5 +35,5 @@ go build -o libmms.so -buildmode=c-shared ./export/
 ```
 
 ## Generate code diagram
-- install go-plantuml
+- install go-plantuml: `go get -u github.com/bykof/go-plantuml`
 - 'go-plantuml generate -rd . -o go-mms.puml'
