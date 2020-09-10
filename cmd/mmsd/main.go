@@ -53,6 +53,7 @@ func startEventCaching(webService *server.Service, natsURL string) {
 		}
 	}()
 
+	// Start a separate go routine for regularly deleting old events from the events cache db.
 	ticker := time.NewTicker(1 * time.Hour)
 	go func() {
 		for {

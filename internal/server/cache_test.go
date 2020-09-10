@@ -11,6 +11,7 @@ import (
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 )
 
+// FIXME: (20200910) We need a better way to initialize the service when testing, rather than having to reference these static files through relative paths like this.
 const staticFilesDir = "./../../static/"
 const productionHubName = "default"
 
