@@ -1,6 +1,7 @@
 # go-mms
-Go client for MET Messaging system (MMS)
+[![codecov](https://codecov.io/gh/metno/go-mms/branch/master/graph/badge.svg)](https://codecov.io/gh/metno/go-mms)
 
+Go client for MET Messaging system (MMS)
 
 # How to use
 ## Build and run in shell
