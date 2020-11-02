@@ -62,7 +62,7 @@ func (s *Service) GetAllEvents(ctx context.Context) ([]*mms.ProductEvent, error)
 	return events, nil
 }
 
-// DeleteOldEvents removes events older than a specifed datetime.
+// DeleteOldEvents removes events older than a specified datetime.
 func (s *Service) DeleteOldEvents(maxAge time.Time) error {
 	deleteOldEvents := `DELETE FROM events WHERE createdAt < "` + maxAge.Format(time.RFC3339) + `";`
 	_, err := s.cacheDB.Exec(deleteOldEvents)
