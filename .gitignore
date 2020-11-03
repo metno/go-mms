@@ -1,5 +1,6 @@
 # Binaries
 /mms*
+/libmms.*
 
 # VSCode
 /.vscode/
