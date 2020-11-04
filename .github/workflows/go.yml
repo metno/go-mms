@@ -2,35 +2,36 @@ name: Go
 
 on:
   push:
-    branches: [ '*' ]
+    branches: ["*"]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
-
   build:
     name: Build
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Go 1.15
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.15
+        id: go
 
-    - name: Set up Go 1.15
-      uses: actions/setup-go@v2
-      with:
-        go-version: ^1.15
-      id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+      - name: Get dependencies
+        run: |
+          go get -v -t -d ./...
 
-    - name: Get dependencies
-      run: |
-        go get -v -t -d ./...
+      - name: Generate static files package
+        run: make statik
 
-    - name: Build
-      run: go build -v ./...
+      - name: Build
+        run: go build -v ./...
 
-    - name: Test
-      run: go test -coverprofile=coverage.txt -covermode=atomic -v ./...
-      
-    - name: Upload to Codecov
-      uses: codecov/codecov-action@v1
+      - name: Test
+        run: go test -coverprofile=coverage.txt -covermode=atomic -v ./...
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v1
