@@ -31,7 +31,7 @@ func main() {
 	hubs := mms.ListProductionHubs()
 
 	// Default file name for config
-	// Should be exapned to pick a file from a pre-defined list
+	// Could be expanded to check and pick a file from a pre-defined list
 	var confFile string = "mms_config.yml"
 
 	subFlags := []cli.Flag{
@@ -52,17 +52,17 @@ func main() {
 			Usage:   "Name of the product.",
 			EnvVars: []string{"MMS_PRODUCT"},
 		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "type",
+			Usage: "Type of event. Default is created, but you can set the following type: created, updated, deleted.",
+			Value: "created",
+		}),
 		&cli.StringFlag{
 			Name:    "config",
 			Aliases: []string{"c"},
 			Usage:   "Load configuration from file.",
 			EnvVars: []string{"MMS_CONFIG"},
 			Value:   confFile,
-		},
-		&cli.StringFlag{
-			Name:  "type",
-			Usage: "Type of event. Default is created, but you can set the following type: created, updated, deleted.",
-			Value: "created",
 		},
 	}
 
