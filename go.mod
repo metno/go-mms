@@ -17,6 +17,7 @@ require (
 	github.com/nats-io/nkeys v0.2.0 // indirect
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.13.0 // indirect
+	github.com/urfave/cli v1.22.1
 	github.com/urfave/cli/v2 v2.2.0
 	go.opencensus.io v0.22.4 // indirect
 	go.uber.org/zap v1.16.0 // indirect

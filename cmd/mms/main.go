@@ -22,12 +22,17 @@ import (
 
 	"github.com/metno/go-mms/pkg/mms"
 	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v2/altsrc"
 )
 
 func main() {
 
 	// Get ProductionHubs to contact
 	hubs := mms.ListProductionHubs()
+
+	// Default file name for config
+	// Should be exapned to pick a file from a pre-defined list
+	var confFile string = "mms_config.yml"
 
 	subFlags := []cli.Flag{
 		&cli.StringFlag{
@@ -37,13 +42,22 @@ func main() {
 	}
 
 	postFlags := []cli.Flag{
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    "production-hub",
+			Usage:   "Name of the production-hub",
+			EnvVars: []string{"MMS_PRODUCTION_HUB"},
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    "product",
+			Usage:   "Name of the product.",
+			EnvVars: []string{"MMS_PRODUCT"},
+		}),
 		&cli.StringFlag{
-			Name:  "production-hub",
-			Usage: "Name of the production-hub",
-		},
-		&cli.StringFlag{
-			Name:  "product",
-			Usage: "Name of the product.",
+			Name:    "config",
+			Aliases: []string{"c"},
+			Usage:   "Load configuration from file.",
+			EnvVars: []string{"MMS_CONFIG"},
+			Value:   confFile,
 		},
 		&cli.StringFlag{
 			Name:  "type",
@@ -73,6 +87,7 @@ func main() {
 				Name:    "post",
 				Aliases: []string{"p"},
 				Usage:   "Post a message about a product update.",
+				Before:  altsrc.InitInputSourceWithContext(postFlags, altsrc.NewYamlSourceFromFlagFunc("config")),
 				Flags:   postFlags,
 				Action:  postEvent(hubs),
 			},
