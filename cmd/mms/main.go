@@ -29,6 +29,29 @@ func main() {
 	// Get ProductionHubs to contact
 	hubs := mms.ListProductionHubs()
 
+	subFlags := []cli.Flag{
+		&cli.StringFlag{
+			Name:    "source",
+			Usage:   "Filter incoming events by setting specifying the source events are coming from.",
+			Aliases: []string{"s"}},
+	}
+
+	postFlags := []cli.Flag{
+		&cli.StringFlag{
+			Name:  "production-hub",
+			Usage: "Name of the production-hub",
+		},
+		&cli.StringFlag{
+			Name:  "product",
+			Usage: "Name of the product.",
+		},
+		&cli.StringFlag{
+			Name:  "type",
+			Usage: "Type of event. Default is created, but you can set the following type: created, updated, deleted.",
+			Value: "created",
+		},
+	}
+
 	app := &cli.App{
 		Name:  "mms",
 		Usage: "Get and post events and get info about production hubs, by talking to the MET Messaging system",
@@ -43,31 +66,15 @@ func main() {
 				Name:    "subscribe",
 				Aliases: []string{"s"},
 				Usage:   "Listen for new incoming events, get them printed continuously. Optionally, set up filters to limit events you get.",
-				Flags: []cli.Flag{
-					&cli.StringFlag{Name: "source", Usage: "Filter incoming events by setting specifying the source events are coming from.", Aliases: []string{"s"}},
-				},
-				Action: subscribeEvents(hubs),
+				Flags:   subFlags,
+				Action:  subscribeEvents(hubs),
 			},
 			{
 				Name:    "post",
 				Aliases: []string{"p"},
 				Usage:   "Post a message about a product update.",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:  "production-hub",
-						Usage: "Name of the production-hub",
-					},
-					&cli.StringFlag{
-						Name:  "product",
-						Usage: "Name of the product.",
-					},
-					&cli.StringFlag{
-						Name:  "type",
-						Usage: "Type of event. Default is created, but you can set the following type: created, updated, deleted.",
-						Value: "created",
-					},
-				},
-				Action: postEvent(hubs),
+				Flags:   postFlags,
+				Action:  postEvent(hubs),
 			},
 			{
 				Name:   "list-production-hubs",
