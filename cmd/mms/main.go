@@ -30,6 +30,14 @@ func main() {
 	// Get ProductionHubs to contact
 	hubs := mms.ListProductionHubs()
 
+	// Create an identifier
+	clientID, idErr := mms.MakeClientIdentifier()
+
+	if idErr != nil {
+		log.Printf("Failed to create identifier, %s", idErr.Error())
+		clientID = "error"
+	}
+
 	// Default file name for config
 	// Could be expanded to check and pick a file from a pre-defined list
 	var confFile string = "mms_config.yml"
@@ -56,6 +64,11 @@ func main() {
 			Name:  "type",
 			Usage: "Type of event. Default is created, but you can set the following type: created, updated, deleted.",
 			Value: "created",
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "id",
+			Usage: "Client identifier. If not specified, an identifier is generated.",
+			Value: clientID,
 		}),
 		&cli.StringFlag{
 			Name:    "config",

@@ -70,6 +70,11 @@ func ListProductionHubs() []ProductionHub {
 	}
 }
 
+// Generate an event identifier
+func MakeClientIdentifier() (string, error) {
+	return "test", nil
+}
+
 // NewNatsConsumerClient creates a cloudevent client for consuming MMS events from NATS.
 func NewNatsConsumerClient(natsURL string) (*EventClient, error) {
 	c, err := newNATSConsumer(natsURL)
