@@ -87,9 +87,17 @@ func main() {
 				Name:    "post",
 				Aliases: []string{"p"},
 				Usage:   "Post a message about a product update.",
-				Before:  altsrc.InitInputSourceWithContext(postFlags, altsrc.NewYamlSourceFromFlagFunc("config")),
-				Flags:   postFlags,
-				Action:  postEvent(hubs),
+				Before: func(ctx *cli.Context) error {
+
+					inputSource, err := altsrc.NewYamlSourceFromFlagFunc("config")(ctx)
+					if err != nil {
+						return nil
+					}
+
+					return altsrc.ApplyInputSourceValues(ctx, inputSource, postFlags)
+				},
+				Flags:  postFlags,
+				Action: postEvent(hubs),
 			},
 			{
 				Name:   "list-production-hubs",
