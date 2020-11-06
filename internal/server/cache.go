@@ -29,15 +29,12 @@ import (
 	"github.com/metno/go-mms/pkg/mms"
 )
 
-const defaultDBFilePath = "/tmp/eventsCache.db"
-
 // NewDB returns an sql database object, initialized with necessary tables.
 func NewDB(filePath string) (*sql.DB, error) {
-	fp := defaultDBFilePath
-	if filePath != "" {
-		fp = filePath
+	if filePath == "" {
+		return nil, fmt.Errorf("empty file path for sqlite database")
 	}
-	return createCacheDB(fp)
+	return createCacheDB(filePath)
 }
 
 // RunCache starts up a watch of incoming events from NATS. Each incoming event is stored in the cache database.
@@ -78,7 +75,7 @@ func (s *Service) GetAllEvents(ctx context.Context) ([]*mms.ProductEvent, error)
 	return events, nil
 }
 
-// DeleteOldEvents removes events older than a specifed datetime.
+// DeleteOldEvents removes events older than a specified datetime.
 func (s *Service) DeleteOldEvents(maxAge time.Time) error {
 	deleteOldEvents := `DELETE FROM events WHERE createdAt < "` + maxAge.Format(time.RFC3339) + `";`
 	_, err := s.cacheDB.Exec(deleteOldEvents)

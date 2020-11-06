@@ -88,7 +88,6 @@ func main() {
 				Aliases: []string{"p"},
 				Usage:   "Post a message about a product update.",
 				Before: func(ctx *cli.Context) error {
-
 					inputSource, err := altsrc.NewYamlSourceFromFlagFunc("config")(ctx)
 					if err != nil {
 						return nil

@@ -17,6 +17,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"html/template"
 	"log"
@@ -30,7 +31,10 @@ import (
 const staticFilesDir = "./static/"
 const productionHubName = "default"
 
+var persistentStorageLocation = flag.String("p", "./events.sqlite", "Set persistent event storage location.")
+
 func main() {
+	flag.Parse()
 	natsServer, err := nats.NewServer(&nats.Options{
 		ServerName: fmt.Sprintf("mmsd-nats-server-%s", productionHubName),
 	})
@@ -38,7 +42,7 @@ func main() {
 		nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
 	}
 
-	cacheDB, err := server.NewDB("")
+	cacheDB, err := server.NewDB(*persistentStorageLocation)
 	if err != nil {
 		log.Fatalf("could not open cache db: %s", err)
 	}
