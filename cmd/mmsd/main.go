@@ -17,41 +17,58 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/metno/go-mms/internal/server"
 	nats "github.com/nats-io/nats-server/v2/server"
+	"github.com/urfave/cli/v2"
 )
 
 const staticFilesDir = "./static/"
 const productionHubName = "default"
 
-var persistentStorageLocation = flag.String("p", "./events.sqlite", "Set persistent event storage location.")
-
 func main() {
-	flag.Parse()
-	natsServer, err := nats.NewServer(&nats.Options{
-		ServerName: fmt.Sprintf("mmsd-nats-server-%s", productionHubName),
-	})
-	if err != nil {
-		nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
+	app := &cli.App{
+		Action: func(c *cli.Context) error {
+			natsServer, err := nats.NewServer(&nats.Options{
+				ServerName: fmt.Sprintf("mmsd-nats-server-%s", productionHubName),
+			})
+			if err != nil {
+				nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
+			}
+
+			cacheDB, err := server.NewDB(c.String("pstorage"))
+			if err != nil {
+				log.Fatalf("could not open cache db: %s", err)
+			}
+			templates := template.Must(template.ParseGlob("templates/*"))
+			webService := server.NewService(templates, staticFilesDir, cacheDB)
+
+			startNATSServer(natsServer)
+			startEventCaching(webService, "nats://localhost:4222")
+			startWebServer(webService)
+			return nil
+		},
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "pstorage",
+				Aliases: []string{"p"},
+				Value:   "./events.sqlite",
+				Usage:   "set persistent event storage location",
+			},
+		},
 	}
 
-	cacheDB, err := server.NewDB(*persistentStorageLocation)
+	err := app.Run(os.Args)
 	if err != nil {
-		log.Fatalf("could not open cache db: %s", err)
+		log.Fatal(err)
 	}
-	templates := template.Must(template.ParseGlob("templates/*"))
-	webService := server.NewService(templates, staticFilesDir, cacheDB)
 
-	startNATSServer(natsServer)
-	startEventCaching(webService, "nats://localhost:4222")
-	startWebServer(webService)
 }
 
 func startNATSServer(s *nats.Server) {
