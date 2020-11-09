@@ -22,12 +22,49 @@ import (
 
 	"github.com/metno/go-mms/pkg/mms"
 	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v2/altsrc"
 )
 
 func main() {
 
 	// Get ProductionHubs to contact
 	hubs := mms.ListProductionHubs()
+
+	// Default file name for config
+	// Could be expanded to check and pick a file from a pre-defined list
+	var confFile string = "mms_config.yml"
+
+	subFlags := []cli.Flag{
+		&cli.StringFlag{
+			Name:    "source",
+			Usage:   "Filter incoming events by setting specifying the source events are coming from.",
+			Aliases: []string{"s"}},
+	}
+
+	postFlags := []cli.Flag{
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    "production-hub",
+			Usage:   "Name of the production-hub",
+			EnvVars: []string{"MMS_PRODUCTION_HUB"},
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    "product",
+			Usage:   "Name of the product.",
+			EnvVars: []string{"MMS_PRODUCT"},
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "type",
+			Usage: "Type of event. Default is created, but you can set the following type: created, updated, deleted.",
+			Value: "created",
+		}),
+		&cli.StringFlag{
+			Name:    "config",
+			Aliases: []string{"c"},
+			Usage:   "Load configuration from file.",
+			EnvVars: []string{"MMS_CONFIG"},
+			Value:   confFile,
+		},
+	}
 
 	app := &cli.App{
 		Name:  "mms",
@@ -43,30 +80,22 @@ func main() {
 				Name:    "subscribe",
 				Aliases: []string{"s"},
 				Usage:   "Listen for new incoming events, get them printed continuously. Optionally, set up filters to limit events you get.",
-				Flags: []cli.Flag{
-					&cli.StringFlag{Name: "source", Usage: "Filter incoming events by setting specifying the source events are coming from.", Aliases: []string{"s"}},
-				},
-				Action: subscribeEvents(hubs),
+				Flags:   subFlags,
+				Action:  subscribeEvents(hubs),
 			},
 			{
 				Name:    "post",
 				Aliases: []string{"p"},
 				Usage:   "Post a message about a product update.",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:  "production-hub",
-						Usage: "Name of the production-hub",
-					},
-					&cli.StringFlag{
-						Name:  "product",
-						Usage: "Name of the product.",
-					},
-					&cli.StringFlag{
-						Name:  "type",
-						Usage: "Type of event. Default is created, but you can set the following type: created, updated, deleted.",
-						Value: "created",
-					},
+				Before: func(ctx *cli.Context) error {
+					inputSource, err := altsrc.NewYamlSourceFromFlagFunc("config")(ctx)
+					if err != nil {
+						return nil
+					}
+
+					return altsrc.ApplyInputSourceValues(ctx, inputSource, postFlags)
 				},
+				Flags:  postFlags,
 				Action: postEvent(hubs),
 			},
 			{
