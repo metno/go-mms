@@ -90,6 +90,7 @@ func main() {
 				Before: func(ctx *cli.Context) error {
 					inputSource, err := altsrc.NewYamlSourceFromFlagFunc("config")(ctx)
 					if err != nil {
+						// If there is no file, just return without error
 						return nil
 					}
 

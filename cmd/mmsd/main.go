@@ -27,13 +27,45 @@ import (
 	"github.com/metno/go-mms/internal/server"
 	nats "github.com/nats-io/nats-server/v2/server"
 	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v2/altsrc"
 )
 
 const staticFilesDir = "./static/"
 const productionHubName = "default"
 
 func main() {
+
+	// Default file name for config
+	// Could be expanded to check and pick a file from a pre-defined list
+	var confFile string = "mmsd_config.yml"
+
+	cmdFlags := []cli.Flag{
+		&cli.StringFlag{
+			Name:    "pstorage",
+			Aliases: []string{"p"},
+			Value:   "./events.sqlite",
+			Usage:   "set persistent event storage location",
+		},
+		&cli.StringFlag{
+			Name:    "config",
+			Aliases: []string{"c"},
+			Usage:   "Load configuration from file.",
+			EnvVars: []string{"MMSD_CONFIG"},
+			Value:   confFile,
+		},
+	}
+
 	app := &cli.App{
+		Before: func(ctx *cli.Context) error {
+			inputSource, err := altsrc.NewYamlSourceFromFlagFunc("config")(ctx)
+			if err != nil {
+				// If there is no file, just return without error
+				return nil
+			}
+
+			return altsrc.ApplyInputSourceValues(ctx, inputSource, cmdFlags)
+		},
+		Flags: cmdFlags,
 		Action: func(c *cli.Context) error {
 			natsServer, err := nats.NewServer(&nats.Options{
 				ServerName: fmt.Sprintf("mmsd-nats-server-%s", productionHubName),
@@ -52,15 +84,8 @@ func main() {
 			startNATSServer(natsServer)
 			startEventCaching(webService, "nats://localhost:4222")
 			startWebServer(webService)
+
 			return nil
-		},
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "pstorage",
-				Aliases: []string{"p"},
-				Value:   "./events.sqlite",
-				Usage:   "set persistent event storage location",
-			},
 		},
 	}
 
@@ -68,7 +93,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 }
 
 func startNATSServer(s *nats.Server) {
