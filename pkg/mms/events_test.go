@@ -92,18 +92,16 @@ func TestListProductEvents(t *testing.T) {
 	}
 }
 
-// TODO
-// func TestPostProductEvent(t *testing.T) {
-// 	c := newMockCloudeventsClient()
+func TestPostProductEvent(t *testing.T) {
+	c := newMockCloudeventsClient()
 
-// 	event := ProductEvent{}
+	event := ProductEvent{ProductionHub: "test-hub", Product: "test"}
+	err := c.PostProductEvent(&event, Options{})
 
-// 	err := c.PostProductEvent(&event, Options{})
-
-// 	if err != nil {
-// 		t.Errorf("Expected no errors; Got this error: %s", err)
-// 	}
-// }
+	if err != nil {
+		t.Errorf("Expected no errors; Got this error: %s", err)
+	}
+}
 
 // EventClient that sends and receives events on an internal go channel.
 func newMockCloudeventsClient() *EventClient {
