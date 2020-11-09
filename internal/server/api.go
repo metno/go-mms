@@ -30,8 +30,11 @@ import (
 	gorilla "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
+	"github.com/rakyll/statik/fs"
+
 	"github.com/metno/go-mms/pkg/metaservice"
 	"github.com/metno/go-mms/pkg/middleware"
+	_ "github.com/metno/go-mms/pkg/statik"
 )
 
 // Service is a struct that wires up all data that is needed for this service to run.
@@ -69,6 +72,11 @@ func (s *Service) routes() {
 		ResponseBuckets: []float64{0.001, 0.002, 0.1, 0.5},
 	})
 
+	statikFS, err := fs.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// The Eventscache endpoint.
 	s.Router.HandleFunc("/api/v1/events", metrics.Endpoint("/v1/events", s.eventsHandler))
 
@@ -92,7 +100,7 @@ func (s *Service) routes() {
 	s.Router.PathPrefix("/swaggerui").Handler(swui)
 
 	// Static assets.
-	s.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(s.staticFilesDir))))
+	s.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(statikFS)))
 
 	// Send root path of the http service to the docs index page.
 	s.Router.HandleFunc("/", s.docsHandler)

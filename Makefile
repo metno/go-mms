@@ -1,7 +1,7 @@
 VERSION := $(shell cat ./VERSION)
 all: build_mmsd build_mms
 
-build_mmsd:
+build_mmsd: statik
 	go build ./cmd/mmsd
 
 build_mms:
@@ -14,8 +14,10 @@ image:
 	docker build -t mmsd .
 
 test:
-	cd ./lib && go test -v
+	go test -v ./...
 
+statik:
+	statik -src=static -dest=pkg
 
 release:
 	git tag -a $(VERSION) -m "Release" || true
@@ -25,4 +27,4 @@ release:
 puml:
 	go-plantuml generate -rd . -o go-mms.puml
 
-.PHONY: build_mmsd build_mms test image release puml
+.PHONY: build_mmsd build_mms test image release puml static
