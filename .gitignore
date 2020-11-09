@@ -1,5 +1,6 @@
 # Binaries
-/mms*
+/mms
+/mmsd
 /libmms.*
 
 # Static files built into the binary
