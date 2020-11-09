@@ -3,5 +3,11 @@
 /mmsd
 /libmms.*
 
+# Build Files
+/pkg/statik
+
 # VSCode
 /.vscode/
+
+# Runtime
+events.sqlite
