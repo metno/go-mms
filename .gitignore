@@ -3,11 +3,14 @@
 /mmsd
 /libmms.*
 
-# Build Files
+# Static files built into the binary
 /pkg/statik
 
 # VSCode
 /.vscode/
+
+# Test coverage artifacts
+coverage.txt
 
 # Runtime
 events.sqlite

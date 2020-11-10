@@ -11,14 +11,16 @@ RUN go mod download
 
 # Copy the rest of the source files.
 COPY . .
-RUN go test ./...
-RUN go build -o mmsd ./cmd/mmsd
+
+RUN make deps
+
+RUN make
+RUN make test
 
 # SECOND STAGE: create the app runtime image.
 FROM ubuntu:bionic
 
 COPY --from=build-app /build/app/mmsd /app/
-COPY --from=build-app /build/app/static /app/static
 COPY --from=build-app /build/app/templates /app/templates
 
 WORKDIR /app
