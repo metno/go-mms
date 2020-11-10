@@ -6,19 +6,20 @@ Go client for MET Messaging system (MMS)
 
 # How to use
 ## Build and run in shell
-- Clone this repo.
 
-Shell 1.
+Shell 1:
 - `cd go-mms`
-- `go build ./cmd/mmsd`
+- `make deps`
+- `make`
 - `./mmsd`
 
 Shell 2:
-- `cd go-mms`
-- `go build ./cmd/mms`
-- `./mms`
+- `./mms s`
 
-You should now get a printout of an MMS message.
+Shell 3:
+- `./mms p --production-hub test-hub --product test`
+
+You should now get a printout of an MMS message in `Shell 2`
 
 ## Build and run MMSd as docker container
 ```
@@ -38,4 +39,4 @@ go build -o libmms.so -buildmode=c-shared ./export/
 
 ## Generate code diagram
 - install go-plantuml: `go get -u github.com/bykof/go-plantuml`
-- 'go-plantuml generate -rd . -o go-mms.puml'
+- `make puml`
