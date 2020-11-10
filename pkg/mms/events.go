@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/user"
 	"time"
 
 	cenats "github.com/cloudevents/sdk-go/protocol/nats/v2"
@@ -70,9 +72,23 @@ func ListProductionHubs() []ProductionHub {
 	}
 }
 
-// Generate an event identifier
-func MakeClientIdentifier() (string, error) {
-	return "test", nil
+// Generate a hub indetifier
+func MakeHubIdentifier() (string, error) {
+	var userName string
+
+	hostName, err := os.Hostname()
+	if err != nil {
+		hostName = "unkown"
+	}
+
+	user, err := user.Current()
+	if err == nil {
+		userName = user.Username
+	} else {
+		userName = "unkown"
+	}
+
+	return fmt.Sprintf("%s@%s:%d", userName, hostName, 0), nil
 }
 
 // NewNatsConsumerClient creates a cloudevent client for consuming MMS events from NATS.

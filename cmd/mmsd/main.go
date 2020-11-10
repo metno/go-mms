@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/metno/go-mms/internal/server"
+	"github.com/metno/go-mms/pkg/mms"
 	nats "github.com/nats-io/nats-server/v2/server"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
@@ -39,13 +40,31 @@ func main() {
 	// Could be expanded to check and pick a file from a pre-defined list
 	var confFile string = "mmsd_config.yml"
 
+	// Create an identifier
+	hubID, idErr := mms.MakeHubIdentifier()
+	log.Print(hubID)
+	if idErr != nil {
+		log.Printf("Failed to create identifier, %s", idErr.Error())
+		hubID = "error"
+	}
+
 	cmdFlags := []cli.Flag{
-		&cli.StringFlag{
+		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "pstorage",
 			Aliases: []string{"p"},
 			Value:   "./events.sqlite",
-			Usage:   "set persistent event storage location",
-		},
+			Usage:   "Set persistent event storage location",
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "hubid",
+			Usage: "Production hub identifier. If not specified, an identifier is generated.",
+			Value: hubID,
+		}),
+		altsrc.NewIntFlag(&cli.IntFlag{
+			Name:  "port",
+			Usage: "Specify the port number for the API lisetning port.",
+			Value: 8080,
+		}),
 		&cli.StringFlag{
 			Name:    "config",
 			Aliases: []string{"c"},
