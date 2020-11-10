@@ -16,6 +16,9 @@ image:
 test:
 	go test -v ./...
 
+testcov:
+	go test -coverprofile=coverage.txt -covermode=atomic -v ./...
+
 statik:
 	statik -f -src=static -dest=pkg
 
@@ -24,6 +27,7 @@ go_mod:
 
 deps:
 	go get github.com/rakyll/statik
+	go get -v -t -d ./...
 
 release:
 	git tag -a $(VERSION) -m "Release" || true

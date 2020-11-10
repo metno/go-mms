@@ -9,5 +9,8 @@
 # VSCode
 /.vscode/
 
+# Test coverage artifacts
+coverage.txt
+
 # Runtime
 events.sqlite

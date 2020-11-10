@@ -9,10 +9,10 @@ COPY go.sum .
 # Dependencies are downloaded only when go.mod or go.sum changes.
 RUN go mod download
 
-RUN make deps
-
 # Copy the rest of the source files.
 COPY . .
+
+RUN make deps
 
 RUN make
 RUN make test
