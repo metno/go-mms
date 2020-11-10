@@ -17,7 +17,7 @@ test:
 	go test -v ./...
 
 statik:
-	statik -src=static -dest=pkg
+	statik -f -src=static -dest=pkg
 
 go_mod:
 	go mod download

@@ -8,3 +8,6 @@
 
 # VSCode
 /.vscode/
+
+# Runtime
+events.sqlite
