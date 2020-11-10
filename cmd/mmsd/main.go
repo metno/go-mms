@@ -17,41 +17,82 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/metno/go-mms/internal/server"
 	nats "github.com/nats-io/nats-server/v2/server"
+	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v2/altsrc"
 )
 
 const staticFilesDir = "./static/"
 const productionHubName = "default"
 
-var persistentStorageLocation = flag.String("p", "./events.sqlite", "Set persistent event storage location.")
-
 func main() {
-	flag.Parse()
-	natsServer, err := nats.NewServer(&nats.Options{
-		ServerName: fmt.Sprintf("mmsd-nats-server-%s", productionHubName),
-	})
-	if err != nil {
-		nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
+
+	// Default file name for config
+	// Could be expanded to check and pick a file from a pre-defined list
+	var confFile string = "mmsd_config.yml"
+
+	cmdFlags := []cli.Flag{
+		&cli.StringFlag{
+			Name:    "pstorage",
+			Aliases: []string{"p"},
+			Value:   "./events.sqlite",
+			Usage:   "set persistent event storage location",
+		},
+		&cli.StringFlag{
+			Name:    "config",
+			Aliases: []string{"c"},
+			Usage:   "Load configuration from file.",
+			EnvVars: []string{"MMSD_CONFIG"},
+			Value:   confFile,
+		},
 	}
 
-	cacheDB, err := server.NewDB(*persistentStorageLocation)
-	if err != nil {
-		log.Fatalf("could not open cache db: %s", err)
-	}
-	templates := template.Must(template.ParseGlob("templates/*"))
-	webService := server.NewService(templates, staticFilesDir, cacheDB)
+	app := &cli.App{
+		Before: func(ctx *cli.Context) error {
+			inputSource, err := altsrc.NewYamlSourceFromFlagFunc("config")(ctx)
+			if err != nil {
+				// If there is no file, just return without error
+				return nil
+			}
 
-	startNATSServer(natsServer)
-	startEventCaching(webService, "nats://localhost:4222")
-	startWebServer(webService)
+			return altsrc.ApplyInputSourceValues(ctx, inputSource, cmdFlags)
+		},
+		Flags: cmdFlags,
+		Action: func(c *cli.Context) error {
+			natsServer, err := nats.NewServer(&nats.Options{
+				ServerName: fmt.Sprintf("mmsd-nats-server-%s", productionHubName),
+			})
+			if err != nil {
+				nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
+			}
+
+			cacheDB, err := server.NewDB(c.String("pstorage"))
+			if err != nil {
+				log.Fatalf("could not open cache db: %s", err)
+			}
+			templates := template.Must(template.ParseGlob("templates/*"))
+			webService := server.NewService(templates, staticFilesDir, cacheDB)
+
+			startNATSServer(natsServer)
+			startEventCaching(webService, "nats://localhost:4222")
+			startWebServer(webService)
+
+			return nil
+		},
+	}
+
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func startNATSServer(s *nats.Server) {
