@@ -7,6 +7,8 @@ Go client for MET Messaging system (MMS)
 # How to use
 ## Build and run in shell
 
+For being able to use `statik` binary, you need to have go's bin directory in the path, most probably `~/go/bin or ~/.local/go/bin`.
+
 Shell 1:
 - `cd go-mms`
 - `make deps`
@@ -23,8 +25,7 @@ You should now get a printout of an MMS message in `Shell 2`
 
 ## Build and run MMSd as docker container
 ```
-cd go-mms
-docker build -t mmsd .
+make image
 docker run -i -p 4222:4222 -p 8080:8080 mmsd
 ```
 
