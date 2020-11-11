@@ -32,9 +32,11 @@ import (
 // ProductEvent defines the message to send when a new Product has been completed and persisted.
 // TODO: Find a proper name following our naming conventions: https://github.com/metno/MMS/wiki/Terminology
 type ProductEvent struct {
+	JobName         string
 	Product         string // shortname, i.e., file(object) name without timestamp
 	ProductionHub   string
 	CreatedAt       time.Time // timestamp of the produced file (object)
+	NextEventAt     time.Time // timestamp of the next event
 	ProductLocation string    //storage system + protocol + filename or object name
 }
 

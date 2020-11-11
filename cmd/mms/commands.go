@@ -66,9 +66,11 @@ func subscribeEvents(hubs []mms.ProductionHub) func(*cli.Context) error {
 func postEvent(hubs []mms.ProductionHub) func(*cli.Context) error {
 	return func(c *cli.Context) error {
 		productEvent := mms.ProductEvent{
+			JobName:       c.String("jobname"),
 			Product:       c.String("product"),
 			ProductionHub: c.String("production-hub"),
 			CreatedAt:     time.Now(),
+			NextEventAt:   time.Now().Add(time.Second * time.Duration(c.Int("event-interval"))),
 		}
 
 		return mms.MakeProductEvent(hubs, &productEvent)

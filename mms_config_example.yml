@@ -1,2 +1,4 @@
 production-hub: "test-hub"
 product: "test"
+jobname: "test-job"
+event-interval: 3600
