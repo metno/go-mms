@@ -49,7 +49,8 @@ type ProductEventCallback func(e *ProductEvent) error
 
 // EventClient defines the MMS client used to send and receive events from the MMS messaging service.
 type EventClient struct {
-	ce cloudevents.Client
+	ce           cloudevents.Client
+	cenatsSender cenats.Sender
 }
 
 // ProductionHub specifies the available hubs
@@ -84,13 +85,14 @@ func NewNatsConsumerClient(natsURL string) (*EventClient, error) {
 
 // NewNatsSenderClient creates a cloudevent client for sending MMS events to NATS.
 func NewNatsSenderClient(natsURL string) (*EventClient, error) {
-	c, err := newNATSSender(natsURL)
+	c, p, err := newNATSSender(natsURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to subscribe to events: %v", err)
 	}
 
 	return &EventClient{
-		ce: c,
+		ce:           c,
+		cenatsSender: p,
 	}, nil
 }
 
@@ -153,6 +155,8 @@ func MakeProductEvent(hubs []ProductionHub, p *ProductEvent) error {
 		return fmt.Errorf("failed to post event to messaging service: %v", err)
 	}
 
+	mmsClient.cenatsSender.Close(context.Background())
+
 	return nil
 }
 
@@ -174,24 +178,21 @@ func (c *EventClient) PostProductEvent(p *ProductEvent, opts Options) error {
 		return fmt.Errorf("failed to send: %v", result.Error())
 	}
 
-	// FIXME(havardf): Weird race condition with closing connection and actually getting the event sent. Figure out how this actually should be done robustly.
-	time.Sleep(50 * time.Millisecond)
-
 	return nil
 }
 
-func newNATSSender(natsURL string) (cloudevents.Client, error) {
+func newNATSSender(natsURL string) (cloudevents.Client, cenats.Sender, error) {
 	p, err := cenats.NewSender(natsURL, "mms", cenats.NatsOptions())
 	if err != nil {
-		return nil, fmt.Errorf("failed to create nats protocol: %v", err)
+		return nil, cenats.Sender{}, fmt.Errorf("failed to create nats protocol: %v", err)
 	}
 
 	c, err := cloudevents.NewClient(p)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create client, %v", err)
+		return nil, cenats.Sender{}, fmt.Errorf("failed to create client, %v", err)
 	}
 
-	return c, nil
+	return c, *p, nil
 }
 
 func newNATSConsumer(natsURL string) (cloudevents.Client, error) {
