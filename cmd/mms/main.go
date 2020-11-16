@@ -53,6 +53,17 @@ func main() {
 			EnvVars: []string{"MMS_PRODUCT"},
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    "jobname",
+			Usage:   "Name of the job.",
+			EnvVars: []string{"MMS_JOBNAME"},
+		}),
+		altsrc.NewIntFlag(&cli.IntFlag{
+			Name:    "event-interval",
+			Usage:   "Expected time between events (in seconds).",
+			EnvVars: []string{"MMS_EVENT_INTERVAL"},
+			Value:   0,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:  "type",
 			Usage: "Type of event. Default is created, but you can set the following type: created, updated, deleted.",
 			Value: "created",
