@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/metno/go-mms/internal/server"
+	"github.com/metno/go-mms/pkg/mms"
 	nats "github.com/nats-io/nats-server/v2/server"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
@@ -39,13 +40,41 @@ func main() {
 	// Could be expanded to check and pick a file from a pre-defined list
 	var confFile string = "mmsd_config.yml"
 
+	// Create an identifier
+	hubID, idErr := mms.MakeHubIdentifier()
+	log.Print(hubID)
+	if idErr != nil {
+		log.Printf("Failed to create identifier, %s", idErr.Error())
+		hubID = "error"
+	}
+
 	cmdFlags := []cli.Flag{
-		&cli.StringFlag{
+		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "pstorage",
 			Aliases: []string{"p"},
 			Value:   "./events.sqlite",
-			Usage:   "set persistent event storage location",
-		},
+			Usage:   "Set persistent event storage location",
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "hubid",
+			Usage: "Production hub identifier. If not specified, an identifier is generated.",
+			Value: hubID,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "hostname",
+			Usage: "Specify the hostname for API and NATS.",
+			Value: "localhost",
+		}),
+		altsrc.NewIntFlag(&cli.IntFlag{
+			Name:  "api-port",
+			Usage: "Specify the port number for the API listening port.",
+			Value: 8080,
+		}),
+		altsrc.NewIntFlag(&cli.IntFlag{
+			Name:  "nats-port",
+			Usage: "Specify the port number for the NATS listening port.",
+			Value: 4222,
+		}),
 		&cli.StringFlag{
 			Name:    "config",
 			Aliases: []string{"c"},
@@ -67,8 +96,13 @@ func main() {
 		},
 		Flags: cmdFlags,
 		Action: func(c *cli.Context) error {
+			natsURL := fmt.Sprintf("nats://%s:%d", c.String("hostname"), c.Int("nats-port"))
+			apiURL := fmt.Sprintf("%s:%d", c.String("hostname"), c.Int("api-port"))
+
 			natsServer, err := nats.NewServer(&nats.Options{
 				ServerName: fmt.Sprintf("mmsd-nats-server-%s", productionHubName),
+				Host:       c.String("hostname"),
+				Port:       c.Int("nats-port"),
 			})
 			if err != nil {
 				nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
@@ -81,9 +115,9 @@ func main() {
 			templates := template.Must(template.ParseGlob("templates/*"))
 			webService := server.NewService(templates, staticFilesDir, cacheDB)
 
-			startNATSServer(natsServer)
-			startEventCaching(webService, "nats://localhost:4222")
-			startWebServer(webService)
+			startNATSServer(natsServer, natsURL)
+			startEventCaching(webService, natsURL)
+			startWebServer(webService, apiURL)
 
 			return nil
 		},
@@ -95,9 +129,9 @@ func main() {
 	}
 }
 
-func startNATSServer(s *nats.Server) {
+func startNATSServer(s *nats.Server, natsURL string) {
 	go func() {
-		log.Println("Starting NATS server on localhost:4222...")
+		log.Printf("Starting NATS server on %s ...", natsURL)
 		if err := nats.Run(s); err != nil {
 			nats.PrintAndDie(err.Error())
 		}
@@ -107,7 +141,7 @@ func startNATSServer(s *nats.Server) {
 
 func startEventCaching(webService *server.Service, natsURL string) {
 	go func() {
-		log.Println("Start caching incoming events...")
+		log.Println("Start caching incoming events ...")
 
 		if err := webService.RunCache(natsURL); err != nil {
 			log.Fatalf("Caching events failed: %s", err)
@@ -125,17 +159,16 @@ func startEventCaching(webService *server.Service, natsURL string) {
 				}
 			}
 		}
-
 	}()
 }
 
-func startWebServer(webService *server.Service) {
+func startWebServer(webService *server.Service, apiURL string) {
 	server := &http.Server{
-		Addr:         ":8080",
+		Addr:         apiURL,
 		Handler:      webService.Router,
 		WriteTimeout: 1 * time.Second,
 		IdleTimeout:  10 * time.Second,
 	}
-	log.Printf("Starting webserver on %s...\n", server.Addr)
+	log.Printf("Starting webserver on %s ...\n", server.Addr)
 	log.Fatal(server.ListenAndServe())
 }
