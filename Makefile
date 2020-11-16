@@ -1,10 +1,10 @@
 VERSION := $(shell cat ./VERSION)
 all: build_mmsd build_mms
 
-build_mmsd: statik
+build_mmsd: go_mod statik
 	go build ./cmd/mmsd
 
-build_mms:
+build_mms: go_mod
 	go build ./cmd/mms
 
 clean:
@@ -16,8 +16,18 @@ image:
 test:
 	go test -v ./...
 
+testcov:
+	go test -coverprofile=coverage.txt -covermode=atomic -v ./...
+
 statik:
 	statik -f -src=static -dest=pkg
+
+go_mod:
+	go mod download
+
+deps:
+	go get github.com/rakyll/statik
+	go get -v -t -d ./...
 
 release:
 	git tag -a $(VERSION) -m "Release" || true
@@ -27,4 +37,4 @@ release:
 puml:
 	go-plantuml generate -rd . -o go-mms.puml
 
-.PHONY: build_mmsd build_mms test image release puml static
+.PHONY: deps go_mod build_mmsd build_mms test image release puml static
