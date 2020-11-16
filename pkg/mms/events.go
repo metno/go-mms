@@ -88,7 +88,7 @@ func MakeHubIdentifier() (string, error) {
 		userName = "unkown"
 	}
 
-	return fmt.Sprintf("%s@%s:%d", userName, hostName, 0), nil
+	return fmt.Sprintf("%s@%s", userName, hostName), nil
 }
 
 // NewNatsConsumerClient creates a cloudevent client for consuming MMS events from NATS.
