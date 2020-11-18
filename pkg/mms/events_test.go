@@ -62,57 +62,57 @@ var correctEventData = `
 	"type": "no.met.Product.created.v1"
 }`
 
-func TestProductEvent(t *testing.T) {
+func TestProductEvent(tT *testing.T) {
 	eventData := ProductEvent{}
 	err := json.Unmarshal([]byte(erroneousEventData), &eventData)
 
 	if err != nil || eventData.Product != "" {
 
-		t.Errorf("Expected missing Product field; Got %v", eventData.Product)
+		tT.Errorf("Expected missing Product field; Got %v", eventData.Product)
 	}
 	fmt.Println(err)
 }
 
-func TestListProductEvents(t *testing.T) {
+func TestListProductEvents(tT *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, correctEventData)
 	}))
 
 	list, err := ListProductEvents(ts.URL, Options{})
 	if err != nil {
-		t.Errorf("Expected no errors; Got %v", err)
+		tT.Errorf("Expected no errors; Got %v", err)
 	}
 
 	if len(list) != 1 {
-		t.Errorf("Expected 1 event; Got %d events", len(list))
+		tT.Errorf("Expected 1 event; Got %d events", len(list))
 	}
 
 	if list[0].Product != "arome_arctic_sfx_2_5km" {
-		t.Errorf("Expected Product field value 'arome_arctic_sfx_2_5km'; Got %s", list[0].Product)
+		tT.Errorf("Expected Product field value 'arome_arctic_sfx_2_5km'; Got %s", list[0].Product)
 	}
 }
 
-func TestPostProductEvent(t *testing.T) {
-	c := newMockCloudeventsClient()
+func TestPostProductEvent(tT *testing.T) {
+	eClient := newMockCloudeventsClient()
 
 	event := ProductEvent{ProductionHub: "test-hub", Product: "test"}
-	err := c.PostProductEvent(&event, Options{})
+	err := eClient.PostProductEvent(&event, Options{})
 
 	if err != nil {
-		t.Errorf("Expected no errors; Got this error: %s", err)
+		tT.Errorf("Expected no errors; Got this error: %s", err)
 	}
 }
 
 // EventClient that sends and receives events on an internal go channel.
 func newMockCloudeventsClient() *EventClient {
-	c, err := cloudevents.NewClient(gochan.New())
+	cEvent, err := cloudevents.NewClient(gochan.New())
 	if err != nil {
 		log.Fatalln("Failed to create event gochan mock cloudevents client.")
 	}
 
 	// Start the receiver
 	go func() {
-		if err := c.StartReceiver(context.Background(), func(ctx context.Context, event cloudevents.Event) {
+		if err := cEvent.StartReceiver(context.Background(), func(ctx context.Context, event cloudevents.Event) {
 			log.Printf("[receiver] %s", event)
 		}); err != nil && err.Error() != "context deadline exceeded" {
 			log.Fatalf("[receiver] start receiver returned an error: %s", err)
@@ -121,6 +121,6 @@ func newMockCloudeventsClient() *EventClient {
 	}()
 
 	return &EventClient{
-		ceClient: c,
+		ceClient: cEvent,
 	}
 }
