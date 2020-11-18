@@ -121,6 +121,6 @@ func newMockCloudeventsClient() *EventClient {
 	}()
 
 	return &EventClient{
-		ce: c,
+		ceClient: c,
 	}
 }

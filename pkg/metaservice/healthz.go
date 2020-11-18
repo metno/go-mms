@@ -41,35 +41,35 @@ type healthzJSONLD struct {
 
 // HealthzHandler runs the callback function check and serializes and sends the result of that check.
 func HealthzHandler(check func() (*Healthz, error)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(httpResp http.ResponseWriter, httpReq *http.Request) {
 		healthz, err := check()
 		if err != nil {
-			http.Error(w, "Could not check the health of the service.", http.StatusInternalServerError)
+			http.Error(httpResp, "Could not check the health of the service.", http.StatusInternalServerError)
 		}
-		healthz.respond(w, r)
+		healthz.respond(httpResp, httpReq)
 	}
 }
 
-func (h *Healthz) respond(w http.ResponseWriter, r *http.Request) {
-	response, err := h.encodeJSONLD()
+func (hltz *Healthz) respond(httpResp http.ResponseWriter, httpReq *http.Request) {
+	response, err := hltz.encodeJSONLD()
 	if err != nil {
-		http.Error(w, "Failed to encode health. Something very wrong is going on.",
+		http.Error(httpResp, "Failed to encode health. Something very wrong is going on.",
 			http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Link", "Link: <https://schema.met.no/contexts/healthz.jsonld>; rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json\"")
-	w.Header().Set("Cache-Control", "max-age=360")
-	w.Header().Set("Content-Type", "application/json")
-	if h.Status != HealthzStatusHealthy {
-		w.WriteHeader(http.StatusServiceUnavailable)
+	httpResp.Header().Set("Link", "Link: <https://schema.met.no/contexts/healthz.jsonld>; rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json\"")
+	httpResp.Header().Set("Cache-Control", "max-age=360")
+	httpResp.Header().Set("Content-Type", "application/json")
+	if hltz.Status != HealthzStatusHealthy {
+		httpResp.WriteHeader(http.StatusServiceUnavailable)
 	}
-	w.Write(response)
+	httpResp.Write(response)
 }
 
-func (h *Healthz) encodeJSONLD() ([]byte, error) {
+func (healthz *Healthz) encodeJSONLD() ([]byte, error) {
 	ld := &healthzJSONLD{
-		Status:      h.Status.String(),
-		Description: h.Description,
+		Status:      healthz.Status.String(),
+		Description: healthz.Description,
 	}
 
 	payload, err := json.Marshal(ld)
@@ -79,8 +79,8 @@ func (h *Healthz) encodeJSONLD() ([]byte, error) {
 	return payload, nil
 }
 
-func (hs HealthzStatus) String() string {
-	switch hs {
+func (hltzStatus HealthzStatus) String() string {
+	switch hltzStatus {
 	case HealthzStatusHealthy:
 		return "healthy"
 	case HealthzStatusUnhealthy:

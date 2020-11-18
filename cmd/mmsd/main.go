@@ -36,15 +36,15 @@ const productionHubName = "default"
 
 func main() {
 
-	// Default file name for config
-	// Could be expanded to check and pick a file from a pre-defined list
+	var err error
+	var hubID string
 	var confFile string = "mmsd_config.yml"
 
 	// Create an identifier
-	hubID, idErr := mms.MakeHubIdentifier()
+	hubID, err = mms.MakeHubIdentifier()
 	log.Print(hubID)
-	if idErr != nil {
-		log.Printf("Failed to create identifier, %s", idErr.Error())
+	if err != nil {
+		log.Printf("Failed to create identifier, %s", err.Error())
 		hubID = "error"
 	}
 
@@ -123,19 +123,19 @@ func main() {
 		},
 	}
 
-	err := app.Run(os.Args)
+	err = app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func startNATSServer(s *nats.Server, natsURL string) {
+func startNATSServer(natsServer *nats.Server, natsURL string) {
 	go func() {
 		log.Printf("Starting NATS server on %s ...", natsURL)
-		if err := nats.Run(s); err != nil {
+		if err := nats.Run(natsServer); err != nil {
 			nats.PrintAndDie(err.Error())
 		}
-		s.WaitForShutdown()
+		natsServer.WaitForShutdown()
 	}()
 }
 

@@ -25,35 +25,35 @@ import (
 )
 
 func listAllEvents(hubs []mms.ProductionHub) func(*cli.Context) error {
-	return func(c *cli.Context) error {
+	return func(ctx *cli.Context) error {
 		events := []*mms.ProductEvent{}
-		for _, h := range hubs {
-			newEvents, err := mms.ListProductEvents(h.EventCache, mms.Options{})
+		for _, hub := range hubs {
+			newEvents, err := mms.ListProductEvents(hub.EventCache, mms.Options{})
 			if err != nil {
 				return fmt.Errorf("failed to access events: %v", err)
 			}
 			events = append(events, newEvents...)
 		}
 
-		for _, e := range events {
-			fmt.Printf("Event: %+v\n", e)
+		for _, event := range events {
+			fmt.Printf("Event: %+v\n", event)
 		}
 		return nil
 	}
 }
 
 func subscribeEvents(hubs []mms.ProductionHub) func(*cli.Context) error {
-	return func(c *cli.Context) error {
+	return func(ctx *cli.Context) error {
 		errChannel := make(chan error, 1)
-		for _, h := range hubs {
-			go func(h mms.ProductionHub) {
-				mmsClient, err := mms.NewNatsConsumerClient(h.NatsURL)
+		for _, hub := range hubs {
+			go func(hub mms.ProductionHub) {
+				mmsClient, err := mms.NewNatsConsumerClient(hub.NatsURL)
 				if err != nil {
 					errChannel <- err
 					return
 				}
 				mmsClient.WatchProductEvents(productReceiver, mms.Options{})
-			}(h)
+			}(hub)
 
 		}
 		select {
@@ -64,24 +64,24 @@ func subscribeEvents(hubs []mms.ProductionHub) func(*cli.Context) error {
 }
 
 func postEvent(hubs []mms.ProductionHub) func(*cli.Context) error {
-	return func(c *cli.Context) error {
+	return func(ctx *cli.Context) error {
 		productEvent := mms.ProductEvent{
-			JobName:       c.String("jobname"),
-			Product:       c.String("product"),
-			ProductionHub: c.String("production-hub"),
+			JobName:       ctx.String("jobname"),
+			Product:       ctx.String("product"),
+			ProductionHub: ctx.String("production-hub"),
 			CreatedAt:     time.Now(),
-			NextEventAt:   time.Now().Add(time.Second * time.Duration(c.Int("event-interval"))),
+			NextEventAt:   time.Now().Add(time.Second * time.Duration(ctx.Int("event-interval"))),
 		}
 
 		return mms.MakeProductEvent(hubs, &productEvent)
 	}
 }
 
-func listProductionHubs(c *cli.Context) error {
+func listProductionHubs(ctx *cli.Context) error {
 	return nil
 }
 
-func productReceiver(e *mms.ProductEvent) error {
-	fmt.Println(e)
+func productReceiver(event *mms.ProductEvent) error {
+	fmt.Println(event)
 	return nil
 }
