@@ -34,6 +34,7 @@ import (
 
 	"github.com/metno/go-mms/pkg/metaservice"
 	"github.com/metno/go-mms/pkg/middleware"
+	"github.com/metno/go-mms/pkg/mms"
 	_ "github.com/metno/go-mms/pkg/statik"
 )
 
@@ -85,6 +86,9 @@ func (service *Service) routes() {
 
 	// Service discovery metadata for the world
 	service.Router.Handle("/api/v1/about", proxyHeaders(metaservice.AboutHandler(service.about)))
+
+	//
+	// service.Router.HandleFunc("/api/v1/postevent", postEventHandler())
 
 	// Metrics of the service(service) for this app.
 	service.Router.Handle("/metrics", metrics.Handler())
@@ -150,6 +154,18 @@ func (service *Service) docsHandler(httpRespW http.ResponseWriter, httpReq *http
 	if err != nil {
 		http.Error(httpRespW, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq *http.Request) {
+
+	var pEvent mms.ProductEvent
+	var payLoad []byte
+
+	httpReq.Body.Read(payLoad)
+	json.Unmarshal(payLoad, &pEvent)
+
+	cacheProductEvent(service.cacheDB, &pEvent)
+
 }
 
 // checkHealthz is supplied to metaservice.HealthzHandler as a callback function.

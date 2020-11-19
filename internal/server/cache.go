@@ -100,6 +100,23 @@ func cacheProductEventCallback(db *sql.DB) func(event *mms.ProductEvent) error {
 	}
 }
 
+func cacheProductEvent(db *sql.DB, event *mms.ProductEvent) error {
+
+	payload, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("failed to create json blob for storage: %s", err)
+	}
+
+	insertEventSQL := `INSERT INTO events(createdAt,event) VALUES (?, ?)`
+	statement, err := db.Prepare(insertEventSQL)
+	_, err = statement.Exec(event.CreatedAt.Format(time.RFC3339), payload)
+	if err != nil {
+		return fmt.Errorf("failed to store event in db: %s", err)
+	}
+
+	return nil
+}
+
 func createCacheDB(dbFilePath string) (*sql.DB, error) {
 	// Create file if it does not exist.
 	file, err := os.OpenFile(dbFilePath, os.O_CREATE, 0660)
