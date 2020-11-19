@@ -14,3 +14,7 @@ coverage.txt
 
 # Runtime
 events.sqlite
+
+# Config
+/mms_config.yml
+/mmsd_config.yml

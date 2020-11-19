@@ -26,7 +26,7 @@ import (
 	"github.com/metno/go-mms/pkg/mms"
 )
 
-func MockProductEvent(httpResp http.ResponseWriter, httpReq *http.Request) {
+func MockProductEvent(httpRespW http.ResponseWriter, httpReq *http.Request) {
 	event := cloudevents.NewEvent()
 
 	event.SetID("0173c5ce-e1fb-11ea-9c78-6b708419aa07")
@@ -41,9 +41,9 @@ func MockProductEvent(httpResp http.ResponseWriter, httpReq *http.Request) {
 
 	payload, err := json.Marshal(event)
 	if err != nil {
-		http.Error(httpResp, fmt.Sprintf("Failed to encode event: %v", err), http.StatusInternalServerError)
+		http.Error(httpRespW, fmt.Sprintf("Failed to encode event: %v", err), http.StatusInternalServerError)
 		return
 	}
-	httpResp.Header().Add("Content-Type", "application/json")
-	fmt.Fprint(httpResp, string(payload))
+	httpRespW.Header().Add("Content-Type", "application/json")
+	fmt.Fprint(httpRespW, string(payload))
 }

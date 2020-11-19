@@ -108,47 +108,47 @@ func (service *Service) routes() {
 
 // proxyHeaders is a http handler middleware function for setting scheme and host correctly when behind a proxy.
 // Usually needed when the response consists of urls to the service.
-func proxyHeaders(next func(httpResp http.ResponseWriter, httpReq *http.Request)) http.Handler {
-	setSchemeIfEmpty := func(httpResp http.ResponseWriter, httpReq *http.Request) {
+func proxyHeaders(next func(httpRespW http.ResponseWriter, httpReq *http.Request)) http.Handler {
+	setSchemeIfEmpty := func(httpRespW http.ResponseWriter, httpReq *http.Request) {
 		if httpReq.URL.Scheme == "" {
 			httpReq.URL.Scheme = "http"
 		}
-		next(httpResp, httpReq)
+		next(httpRespW, httpReq)
 	}
 	return gorilla.ProxyHeaders(http.HandlerFunc(setSchemeIfEmpty))
 }
 
-func (service *Service) eventsHandler(httpResp http.ResponseWriter, httpReq *http.Request) {
+func (service *Service) eventsHandler(httpRespW http.ResponseWriter, httpReq *http.Request) {
 	dbCtx, cancel := context.WithTimeout(httpReq.Context(), 5*time.Second)
 	defer cancel()
 
 	events, err := service.GetAllEvents(dbCtx)
 	if err != nil {
-		serverErrorResponse(err, httpResp, httpReq)
+		serverErrorResponse(err, httpRespW, httpReq)
 		return
 	}
 
 	payload, err := json.Marshal(events)
 	if err != nil {
-		http.Error(httpResp, "Failed to serialize data.", http.StatusInternalServerError)
+		http.Error(httpRespW, "Failed to serialize data.", http.StatusInternalServerError)
 		return
 	}
-	okResponse(payload, httpResp, httpReq)
+	okResponse(payload, httpRespW, httpReq)
 }
 
 // html docs generated from templates.
-func (service *Service) docsHandler(httpResp http.ResponseWriter, httpReq *http.Request) {
+func (service *Service) docsHandler(httpRespW http.ResponseWriter, httpReq *http.Request) {
 	params := mux.Vars(httpReq)
 	page, exists := params["page"]
 
 	var err error
 	if exists != true {
-		err = service.htmlTemplates.ExecuteTemplate(httpResp, "index", service.about)
+		err = service.htmlTemplates.ExecuteTemplate(httpRespW, "index", service.about)
 	} else {
-		err = service.htmlTemplates.ExecuteTemplate(httpResp, page, service.about)
+		err = service.htmlTemplates.ExecuteTemplate(httpRespW, page, service.about)
 	}
 	if err != nil {
-		http.Error(httpResp, err.Error(), http.StatusInternalServerError)
+		http.Error(httpRespW, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -160,29 +160,29 @@ func (service *Service) checkHealthz() (*metaservice.Healthz, error) {
 	}, nil
 }
 
-func okResponse(payload []byte, httpResp http.ResponseWriter, httpReq *http.Request) {
-	httpResp.Header().Set("Cache-Control", "max-age=10")
-	httpResp.Header().Set("Content-Type", "application/json")
-	_, err := httpResp.Write(payload)
+func okResponse(payload []byte, httpRespW http.ResponseWriter, httpReq *http.Request) {
+	httpRespW.Header().Set("Cache-Control", "max-age=10")
+	httpRespW.Header().Set("Content-Type", "application/json")
+	_, err := httpRespW.Write(payload)
 	if err != nil {
 		log.Printf("could send response to req %q: %s", httpReq.URL, err)
 	}
 }
 
-func serverErrorResponse(errMsg error, httpResp http.ResponseWriter, httpReq *http.Request) {
+func serverErrorResponse(errMsg error, httpRespW http.ResponseWriter, httpReq *http.Request) {
 	errResponse := HTTPServerError{
 		ErrMsg: errMsg.Error(),
 	}
 
 	payload, err := json.Marshal(errResponse)
 	if err != nil {
-		http.Error(httpResp, "Failed to serialize data.", http.StatusInternalServerError)
+		http.Error(httpRespW, "Failed to serialize data.", http.StatusInternalServerError)
 		return
 	}
-	httpResp.WriteHeader(http.StatusServiceUnavailable)
+	httpRespW.WriteHeader(http.StatusServiceUnavailable)
 
-	httpResp.Header().Set("Content-Type", "application/json")
-	_, err = httpResp.Write(payload)
+	httpRespW.Header().Set("Content-Type", "application/json")
+	_, err = httpRespW.Write(payload)
 	if err != nil {
 		log.Printf("could send response to req %q: %s", httpReq.URL, err)
 	}

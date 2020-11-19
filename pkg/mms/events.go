@@ -185,19 +185,19 @@ func MakeProductEvent(hubs []ProductionHub, pEvent *ProductEvent) error {
 
 // PostProductEvent generates an event and sends it to the specified messaging service.
 func (eClient *EventClient) PostProductEvent(pEvent *ProductEvent, opts Options) error {
-	e := cloudevents.NewEvent()
-	e.SetID(uuid.New().String())
-	e.SetType("no.met.mms.product.v1")
-	e.SetTime(time.Now())
-	e.SetSource(pEvent.ProductionHub)
-	e.SetSubject(pEvent.Product)
+	event := cloudevents.NewEvent()
+	event.SetID(uuid.New().String())
+	event.SetType("no.met.mms.product.v1")
+	event.SetTime(time.Now())
+	event.SetSource(pEvent.ProductionHub)
+	event.SetSubject(pEvent.Product)
 
-	err := e.SetData("application/json", pEvent)
+	err := event.SetData("application/json", pEvent)
 	if err != nil {
 		return fmt.Errorf("failed to properly encode event data for product event: %v", err)
 	}
 
-	if result := eClient.ceClient.Send(context.Background(), e); cloudevents.IsUndelivered(result) {
+	if result := eClient.ceClient.Send(context.Background(), event); cloudevents.IsUndelivered(result) {
 		return fmt.Errorf("failed to send: %v", result.Error())
 	}
 
@@ -233,10 +233,10 @@ func newNATSConsumer(natsURL string) (cloudevents.Client, error) {
 }
 
 func productReceiver(callback ProductEventCallback) func(context.Context, cloudevents.Event) error {
-	return func(ctx context.Context, e cloudevents.Event) error {
+	return func(ctx context.Context, event cloudevents.Event) error {
 		mmsEvent := ProductEvent{}
 
-		if err := e.DataAs(&mmsEvent); err != nil {
+		if err := event.DataAs(&mmsEvent); err != nil {
 			return fmt.Errorf("failed to decode event as product event: %v", err)
 		}
 

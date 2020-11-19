@@ -95,20 +95,20 @@ func main() {
 			return altsrc.ApplyInputSourceValues(ctx, inputSource, cmdFlags)
 		},
 		Flags: cmdFlags,
-		Action: func(c *cli.Context) error {
-			natsURL := fmt.Sprintf("nats://%s:%d", c.String("hostname"), c.Int("nats-port"))
-			apiURL := fmt.Sprintf("%s:%d", c.String("hostname"), c.Int("api-port"))
+		Action: func(ctx *cli.Context) error {
+			natsURL := fmt.Sprintf("nats://%s:%d", ctx.String("hostname"), ctx.Int("nats-port"))
+			apiURL := fmt.Sprintf("%s:%d", ctx.String("hostname"), ctx.Int("api-port"))
 
 			natsServer, err := nats.NewServer(&nats.Options{
 				ServerName: fmt.Sprintf("mmsd-nats-server-%s", productionHubName),
-				Host:       c.String("hostname"),
-				Port:       c.Int("nats-port"),
+				Host:       ctx.String("hostname"),
+				Port:       ctx.Int("nats-port"),
 			})
 			if err != nil {
 				nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
 			}
 
-			cacheDB, err := server.NewDB(c.String("pstorage"))
+			cacheDB, err := server.NewDB(ctx.String("pstorage"))
 			if err != nil {
 				log.Fatalf("could not open cache db: %s", err)
 			}

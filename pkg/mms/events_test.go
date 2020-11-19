@@ -62,44 +62,44 @@ var correctEventData = `
 	"type": "no.met.Product.created.v1"
 }`
 
-func TestProductEvent(tT *testing.T) {
+func TestProductEvent(t *testing.T) {
 	eventData := ProductEvent{}
 	err := json.Unmarshal([]byte(erroneousEventData), &eventData)
 
 	if err != nil || eventData.Product != "" {
 
-		tT.Errorf("Expected missing Product field; Got %v", eventData.Product)
+		t.Errorf("Expected missing Product field; Got %v", eventData.Product)
 	}
 	fmt.Println(err)
 }
 
-func TestListProductEvents(tT *testing.T) {
+func TestListProductEvents(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, correctEventData)
 	}))
 
 	list, err := ListProductEvents(ts.URL, Options{})
 	if err != nil {
-		tT.Errorf("Expected no errors; Got %v", err)
+		t.Errorf("Expected no errors; Got %v", err)
 	}
 
 	if len(list) != 1 {
-		tT.Errorf("Expected 1 event; Got %d events", len(list))
+		t.Errorf("Expected 1 event; Got %d events", len(list))
 	}
 
 	if list[0].Product != "arome_arctic_sfx_2_5km" {
-		tT.Errorf("Expected Product field value 'arome_arctic_sfx_2_5km'; Got %s", list[0].Product)
+		t.Errorf("Expected Product field value 'arome_arctic_sfx_2_5km'; Got %s", list[0].Product)
 	}
 }
 
-func TestPostProductEvent(tT *testing.T) {
+func TestPostProductEvent(t *testing.T) {
 	eClient := newMockCloudeventsClient()
 
 	event := ProductEvent{ProductionHub: "test-hub", Product: "test"}
 	err := eClient.PostProductEvent(&event, Options{})
 
 	if err != nil {
-		tT.Errorf("Expected no errors; Got this error: %s", err)
+		t.Errorf("Expected no errors; Got this error: %s", err)
 	}
 }
 

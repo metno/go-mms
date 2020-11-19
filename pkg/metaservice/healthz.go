@@ -41,29 +41,29 @@ type healthzJSONLD struct {
 
 // HealthzHandler runs the callback function check and serializes and sends the result of that check.
 func HealthzHandler(check func() (*Healthz, error)) http.HandlerFunc {
-	return func(httpResp http.ResponseWriter, httpReq *http.Request) {
+	return func(httpRespW http.ResponseWriter, httpReq *http.Request) {
 		healthz, err := check()
 		if err != nil {
-			http.Error(httpResp, "Could not check the health of the service.", http.StatusInternalServerError)
+			http.Error(httpRespW, "Could not check the health of the service.", http.StatusInternalServerError)
 		}
-		healthz.respond(httpResp, httpReq)
+		healthz.respond(httpRespW, httpReq)
 	}
 }
 
-func (hltz *Healthz) respond(httpResp http.ResponseWriter, httpReq *http.Request) {
+func (hltz *Healthz) respond(httpRespW http.ResponseWriter, httpReq *http.Request) {
 	response, err := hltz.encodeJSONLD()
 	if err != nil {
-		http.Error(httpResp, "Failed to encode health. Something very wrong is going on.",
+		http.Error(httpRespW, "Failed to encode health. Something very wrong is going on.",
 			http.StatusInternalServerError)
 		return
 	}
-	httpResp.Header().Set("Link", "Link: <https://schema.met.no/contexts/healthz.jsonld>; rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json\"")
-	httpResp.Header().Set("Cache-Control", "max-age=360")
-	httpResp.Header().Set("Content-Type", "application/json")
+	httpRespW.Header().Set("Link", "Link: <https://schema.met.no/contexts/healthz.jsonld>; rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json\"")
+	httpRespW.Header().Set("Cache-Control", "max-age=360")
+	httpRespW.Header().Set("Content-Type", "application/json")
 	if hltz.Status != HealthzStatusHealthy {
-		httpResp.WriteHeader(http.StatusServiceUnavailable)
+		httpRespW.WriteHeader(http.StatusServiceUnavailable)
 	}
-	httpResp.Write(response)
+	httpRespW.Write(response)
 }
 
 func (healthz *Healthz) encodeJSONLD() ([]byte, error) {
