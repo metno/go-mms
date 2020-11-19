@@ -22,7 +22,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -88,7 +90,7 @@ func (service *Service) routes() {
 	service.Router.Handle("/api/v1/about", proxyHeaders(metaservice.AboutHandler(service.about)))
 
 	//
-	// service.Router.HandleFunc("/api/v1/postevent", postEventHandler())
+	service.Router.HandleFunc("/api/v1/postevent", service.postEventHandler)
 
 	// Metrics of the service(service) for this app.
 	service.Router.Handle("/metrics", metrics.Handler())
@@ -156,16 +158,43 @@ func (service *Service) docsHandler(httpRespW http.ResponseWriter, httpReq *http
 	}
 }
 
+// Post an event to the api
 func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq *http.Request) {
 
+	if httpReq.Method != "POST" {
+		httpRespW.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	var err error
 	var pEvent mms.ProductEvent
 	var payLoad []byte
 
-	httpReq.Body.Read(payLoad)
-	json.Unmarshal(payLoad, &pEvent)
+	payLoad, err = ioutil.ReadAll(httpReq.Body)
+	if err != nil {
+		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusInternalServerError)
+		log.Printf("Internal Server Error: %v", err)
+		return
+	}
+
+	err = json.Unmarshal(payLoad, &pEvent)
+	if err != nil {
+		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusBadRequest)
+		log.Printf("Bad Request: %v", err)
+		return
+	}
 
 	cacheProductEvent(service.cacheDB, &pEvent)
 
+	hubs := mms.ListProductionHubs() // To be removed
+	err = mms.MakeProductEvent(hubs, &pEvent)
+	if err != nil {
+		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusBadRequest)
+		log.Printf("Bad Request: %v", err)
+		return
+	}
+
+	httpRespW.WriteHeader(http.StatusCreated)
 }
 
 // checkHealthz is supplied to metaservice.HealthzHandler as a callback function.
