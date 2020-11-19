@@ -93,10 +93,10 @@ func TestListProductEvents(t *testing.T) {
 }
 
 func TestPostProductEvent(t *testing.T) {
-	c := newMockCloudeventsClient()
+	eClient := newMockCloudeventsClient()
 
 	event := ProductEvent{ProductionHub: "test-hub", Product: "test"}
-	err := c.PostProductEvent(&event, Options{})
+	err := eClient.PostProductEvent(&event, Options{})
 
 	if err != nil {
 		t.Errorf("Expected no errors; Got this error: %s", err)
@@ -105,14 +105,14 @@ func TestPostProductEvent(t *testing.T) {
 
 // EventClient that sends and receives events on an internal go channel.
 func newMockCloudeventsClient() *EventClient {
-	c, err := cloudevents.NewClient(gochan.New())
+	cEvent, err := cloudevents.NewClient(gochan.New())
 	if err != nil {
 		log.Fatalln("Failed to create event gochan mock cloudevents client.")
 	}
 
 	// Start the receiver
 	go func() {
-		if err := c.StartReceiver(context.Background(), func(ctx context.Context, event cloudevents.Event) {
+		if err := cEvent.StartReceiver(context.Background(), func(ctx context.Context, event cloudevents.Event) {
 			log.Printf("[receiver] %s", event)
 		}); err != nil && err.Error() != "context deadline exceeded" {
 			log.Fatalf("[receiver] start receiver returned an error: %s", err)
@@ -121,6 +121,6 @@ func newMockCloudeventsClient() *EventClient {
 	}()
 
 	return &EventClient{
-		ce: c,
+		ceClient: cEvent,
 	}
 }

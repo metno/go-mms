@@ -65,7 +65,7 @@ func NewService(templates *template.Template, staticFilesDir string, cacheDB *sq
 	return &service
 }
 
-func (s *Service) routes() {
+func (service *Service) routes() {
 	var metrics = middleware.NewServiceMetrics(middleware.MetricsOpts{
 		Name:            "events",
 		Description:     "MMSd production hub events.",
@@ -78,112 +78,112 @@ func (s *Service) routes() {
 	}
 
 	// The Eventscache endpoint.
-	s.Router.HandleFunc("/api/v1/events", metrics.Endpoint("/v1/events", s.eventsHandler))
+	service.Router.HandleFunc("/api/v1/events", metrics.Endpoint("/v1/events", service.eventsHandler))
 
 	// Health of the service
-	s.Router.HandleFunc("/api/v1/healthz", metaservice.HealthzHandler(s.checkHealthz))
+	service.Router.HandleFunc("/api/v1/healthz", metaservice.HealthzHandler(service.checkHealthz))
 
 	// Service discovery metadata for the world
-	s.Router.Handle("/api/v1/about", proxyHeaders(metaservice.AboutHandler(s.about)))
+	service.Router.Handle("/api/v1/about", proxyHeaders(metaservice.AboutHandler(service.about)))
 
-	// Metrics of the service(s) for this app.
-	s.Router.Handle("/metrics", metrics.Handler())
+	// Metrics of the service(service) for this app.
+	service.Router.Handle("/metrics", metrics.Handler())
 
-	// Documentation of the service(s)
-	s.Router.HandleFunc("/docs/{page}", s.docsHandler)
+	// Documentation of the service(service)
+	service.Router.HandleFunc("/docs/{page}", service.docsHandler)
 
 	//http.HandleFunc("/", mockProductEvent)
-	s.Router.HandleFunc("/mockevent", metaservice.MockProductEvent)
+	service.Router.HandleFunc("/mockevent", metaservice.MockProductEvent)
 
 	// Swagger UI
 	swui := http.StripPrefix("/swaggerui", http.FileServer(http.Dir("./static/swaggerui/")))
-	s.Router.PathPrefix("/swaggerui").Handler(swui)
+	service.Router.PathPrefix("/swaggerui").Handler(swui)
 
 	// Static assets.
-	s.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(statikFS)))
+	service.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(statikFS)))
 
 	// Send root path of the http service to the docs index page.
-	s.Router.HandleFunc("/", s.docsHandler)
+	service.Router.HandleFunc("/", service.docsHandler)
 }
 
 // proxyHeaders is a http handler middleware function for setting scheme and host correctly when behind a proxy.
 // Usually needed when the response consists of urls to the service.
-func proxyHeaders(next func(w http.ResponseWriter, r *http.Request)) http.Handler {
-	setSchemeIfEmpty := func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Scheme == "" {
-			r.URL.Scheme = "http"
+func proxyHeaders(next func(httpRespW http.ResponseWriter, httpReq *http.Request)) http.Handler {
+	setSchemeIfEmpty := func(httpRespW http.ResponseWriter, httpReq *http.Request) {
+		if httpReq.URL.Scheme == "" {
+			httpReq.URL.Scheme = "http"
 		}
-		next(w, r)
+		next(httpRespW, httpReq)
 	}
 	return gorilla.ProxyHeaders(http.HandlerFunc(setSchemeIfEmpty))
 }
 
-func (s *Service) eventsHandler(w http.ResponseWriter, r *http.Request) {
-	dbCtx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+func (service *Service) eventsHandler(httpRespW http.ResponseWriter, httpReq *http.Request) {
+	dbCtx, cancel := context.WithTimeout(httpReq.Context(), 5*time.Second)
 	defer cancel()
 
-	events, err := s.GetAllEvents(dbCtx)
+	events, err := service.GetAllEvents(dbCtx)
 	if err != nil {
-		serverErrorResponse(err, w, r)
+		serverErrorResponse(err, httpRespW, httpReq)
 		return
 	}
 
 	payload, err := json.Marshal(events)
 	if err != nil {
-		http.Error(w, "Failed to serialize data.", http.StatusInternalServerError)
+		http.Error(httpRespW, "Failed to serialize data.", http.StatusInternalServerError)
 		return
 	}
-	okResponse(payload, w, r)
+	okResponse(payload, httpRespW, httpReq)
 }
 
 // html docs generated from templates.
-func (s *Service) docsHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
+func (service *Service) docsHandler(httpRespW http.ResponseWriter, httpReq *http.Request) {
+	params := mux.Vars(httpReq)
 	page, exists := params["page"]
 
 	var err error
 	if exists != true {
-		err = s.htmlTemplates.ExecuteTemplate(w, "index", s.about)
+		err = service.htmlTemplates.ExecuteTemplate(httpRespW, "index", service.about)
 	} else {
-		err = s.htmlTemplates.ExecuteTemplate(w, page, s.about)
+		err = service.htmlTemplates.ExecuteTemplate(httpRespW, page, service.about)
 	}
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(httpRespW, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 // checkHealthz is supplied to metaservice.HealthzHandler as a callback function.
-func (s *Service) checkHealthz() (*metaservice.Healthz, error) {
+func (service *Service) checkHealthz() (*metaservice.Healthz, error) {
 	return &metaservice.Healthz{
 		Status:      metaservice.HealthzStatusHealthy,
 		Description: "No deps, so everything is ok all the time.",
 	}, nil
 }
 
-func okResponse(payload []byte, w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "max-age=10")
-	w.Header().Set("Content-Type", "application/json")
-	_, err := w.Write(payload)
+func okResponse(payload []byte, httpRespW http.ResponseWriter, httpReq *http.Request) {
+	httpRespW.Header().Set("Cache-Control", "max-age=10")
+	httpRespW.Header().Set("Content-Type", "application/json")
+	_, err := httpRespW.Write(payload)
 	if err != nil {
-		log.Printf("could send response to req %q: %s", r.URL, err)
+		log.Printf("could send response to req %q: %s", httpReq.URL, err)
 	}
 }
 
-func serverErrorResponse(errMsg error, w http.ResponseWriter, r *http.Request) {
+func serverErrorResponse(errMsg error, httpRespW http.ResponseWriter, httpReq *http.Request) {
 	errResponse := HTTPServerError{
 		ErrMsg: errMsg.Error(),
 	}
 
 	payload, err := json.Marshal(errResponse)
 	if err != nil {
-		http.Error(w, "Failed to serialize data.", http.StatusInternalServerError)
+		http.Error(httpRespW, "Failed to serialize data.", http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusServiceUnavailable)
+	httpRespW.WriteHeader(http.StatusServiceUnavailable)
 
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(payload)
+	httpRespW.Header().Set("Content-Type", "application/json")
+	_, err = httpRespW.Write(payload)
 	if err != nil {
-		log.Printf("could send response to req %q: %s", r.URL, err)
+		log.Printf("could send response to req %q: %s", httpReq.URL, err)
 	}
 }

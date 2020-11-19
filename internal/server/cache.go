@@ -39,20 +39,20 @@ func NewDB(filePath string) (*sql.DB, error) {
 
 // RunCache starts up a watch of incoming events from NATS. Each incoming event is stored in the cache database.
 // This function blocks forever, until it fails to subscribe to NATS for some reason.
-func (s *Service) RunCache(natsURL string) error {
+func (service *Service) RunCache(natsURL string) error {
 	eventClient, err := mms.NewNatsConsumerClient(natsURL)
 	if err != nil {
 		return fmt.Errorf("failed to create nats consumer client: %s", err)
 	}
 
-	eventClient.WatchProductEvents(cacheProductEventCallback(s.cacheDB), mms.Options{})
+	eventClient.WatchProductEvents(cacheProductEventCallback(service.cacheDB), mms.Options{})
 
 	return nil
 }
 
 // GetAllEvents returns all product events it can find in the cache database.
-func (s *Service) GetAllEvents(ctx context.Context) ([]*mms.ProductEvent, error) {
-	rows, err := s.cacheDB.QueryContext(ctx, "SELECT * FROM events")
+func (service *Service) GetAllEvents(ctx context.Context) ([]*mms.ProductEvent, error) {
+	rows, err := service.cacheDB.QueryContext(ctx, "SELECT * FROM events")
 	if err != nil {
 		return nil, fmt.Errorf("could not access db to get events: %s", err)
 	}
@@ -76,13 +76,13 @@ func (s *Service) GetAllEvents(ctx context.Context) ([]*mms.ProductEvent, error)
 }
 
 // DeleteOldEvents removes events older than a specified datetime.
-func (s *Service) DeleteOldEvents(maxAge time.Time) error {
+func (service *Service) DeleteOldEvents(maxAge time.Time) error {
 	deleteOldEvents := `DELETE FROM events WHERE createdAt < "` + maxAge.Format(time.RFC3339) + `";`
-	_, err := s.cacheDB.Exec(deleteOldEvents)
+	_, err := service.cacheDB.Exec(deleteOldEvents)
 	return err
 }
 
-func cacheProductEventCallback(db *sql.DB) func(e *mms.ProductEvent) error {
+func cacheProductEventCallback(db *sql.DB) func(event *mms.ProductEvent) error {
 	return func(event *mms.ProductEvent) error {
 		payload, err := json.Marshal(event)
 		if err != nil {

@@ -46,20 +46,20 @@ type Provider struct {
 	Name   string `json:"name"`
 }
 
-func AboutHandler(about *About) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		baseURL := fmt.Sprintf("%s://%s", r.URL.Scheme, r.Host)
+func AboutHandler(about *About) func(httpRespW http.ResponseWriter, httpReq *http.Request) {
+	return func(httpRespW http.ResponseWriter, httpReq *http.Request) {
+		baseURL := fmt.Sprintf("%s://%s", httpReq.URL.Scheme, httpReq.Host)
 		response, err := EncodeAboutAsSchemaOrg(about, baseURL)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to encode %s. Something very wrong is going on.", r.URL.Path),
+			http.Error(httpRespW, fmt.Sprintf("Failed to encode %s. Something very wrong is going on.", httpReq.URL.Path),
 				http.StatusServiceUnavailable)
 			return
 		}
-		w.Header().Set("Link", "<https://schema.org/WebAPI.jsonld>; rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json\"")
-		w.Header().Set("Cache-Control", "max-age=60")
-		w.Header().Set("Content-Type", "application/json")
+		httpRespW.Header().Set("Link", "<https://schema.org/WebAPI.jsonld>; rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json\"")
+		httpRespW.Header().Set("Cache-Control", "max-age=60")
+		httpRespW.Header().Set("Content-Type", "application/json")
 
-		w.Write(response)
+		httpRespW.Write(response)
 	}
 }
 
