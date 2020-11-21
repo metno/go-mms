@@ -19,19 +19,22 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/metno/go-mms/internal/server"
 	"github.com/metno/go-mms/pkg/mms"
+	_ "github.com/metno/go-mms/pkg/statik"
 	nats "github.com/nats-io/nats-server/v2/server"
+	"github.com/rakyll/statik/fs"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 )
 
-const staticFilesDir = "./static/"
 const productionHubName = "default"
 
 func main() {
@@ -112,8 +115,32 @@ func main() {
 			if err != nil {
 				log.Fatalf("could not open cache db: %s", err)
 			}
-			templates := template.Must(template.ParseGlob("templates/*"))
-			webService := server.NewService(templates, staticFilesDir, cacheDB)
+
+			staticFS, err := fs.New()
+
+			templates := template.New("")
+
+			fs.Walk(staticFS, "/templates", func(path string, info os.FileInfo, err error) error {
+				if !info.IsDir() {
+					templateFile, err := staticFS.Open(path)
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					templateData, err := ioutil.ReadAll(templateFile)
+					if err != nil {
+						log.Fatal(err)
+					}
+					// Multiple calls to Parse are appending templates
+					templates.New(filepath.Base(path)).Parse(string(templateData))
+				}
+
+				return nil
+			})
+
+			fmt.Printf("%v", templates.DefinedTemplates())
+
+			webService := server.NewService(templates, cacheDB)
 
 			startNATSServer(natsServer, natsURL)
 			startEventCaching(webService, natsURL)

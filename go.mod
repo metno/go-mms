@@ -22,5 +22,6 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0 // indirect
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897 // indirect
+	golang.org/x/tools v0.0.0-20200103221440-774c71fcf114
 	google.golang.org/protobuf v1.25.0 // indirect
 )
