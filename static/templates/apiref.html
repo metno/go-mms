@@ -1,13 +1,12 @@
 {{define "apiref"}}
 {{template "header"}}
 <h2>API Documentation</h2>
-<link rel="stylesheet" type="text/css" href="/swaggerui/swagger-ui.css" >
-<link rel="stylesheet" type="text/css" href="/static/stylesheets/mmsd_openapi.css" >
+<link rel="stylesheet" type="text/css" href="/static/swaggerui/swagger-ui.css">
+<link rel="stylesheet" type="text/css" href="/static/stylesheets/mmsd_openapi.css">
 <link rel="icon" type="image/png" href="./favicon-32x32.png" sizes="32x32" />
 <link rel="icon" type="image/png" href="./favicon-16x16.png" sizes="16x16" />
 <style>
-  html
-  {
+  html {
     box-sizing: border-box;
     overflow: -moz-scrollbars-vertical;
     overflow-y: scroll;
@@ -15,39 +14,37 @@
 
   *,
   *:before,
-  *:after
-  {
+  *:after {
     box-sizing: inherit;
   }
 
-  body
-  {
-    margin:0;
+  body {
+    margin: 0;
     #background: #fafafa;
   }
 </style>
 <div id="swagger-ui"></div>
-    <script src="/swaggerui/swagger-ui-bundle.js"> </script>
-    <script src="/swaggerui/swagger-ui-standalone-preset.js"> </script>
-    <script>
-    window.onload = function() {
-      // Begin Swagger UI call region
-      const ui = SwaggerUIBundle({
-        url: "/swaggerui/swagger.json",
-        dom_id: '#swagger-ui',
-        defaultModelsExpandDepth: -1,
-        deepLinking: true,
-        presets: [
-          SwaggerUIBundle.presets.apis
-        ],
-        plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl
-        ],
-      })
-      // End Swagger UI call region
+<script src="/static/swaggerui/swagger-ui-bundle.js"> </script>
+<script src="/static/swaggerui/swagger-ui-standalone-preset.js"> </script>
+<script>
+  window.onload = function () {
+    // Begin Swagger UI call region
+    const ui = SwaggerUIBundle({
+      url: "/static/swaggerui/swagger.json",
+      dom_id: '#swagger-ui',
+      defaultModelsExpandDepth: -1,
+      deepLinking: true,
+      presets: [
+        SwaggerUIBundle.presets.apis
+      ],
+      plugins: [
+        SwaggerUIBundle.plugins.DownloadUrl
+      ],
+    })
+    // End Swagger UI call region
 
-      window.ui = ui
-    }
-  </script>
+    window.ui = ui
+  }
+</script>
 {{template "footer"}}
 {{end}}

@@ -99,10 +99,6 @@ func (service *Service) setRoutes() {
 	//http.HandleFunc("/", mockProductEvent)
 	service.Router.HandleFunc("/mockevent", metaservice.MockProductEvent)
 
-	// Swagger UI
-	swui := http.StripPrefix("/swaggerui", http.FileServer(http.Dir("./static/swaggerui/")))
-	service.Router.PathPrefix("/swaggerui").Handler(swui)
-
 	// Static assets.
 	service.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(statikFS)))
 

@@ -1,13 +1,18 @@
 {{define "index"}}
 {{template "header"}}
-            <h2>What is MMSd?</h2>
+<h2>What is MMSd?</h2>
 
-            <p>MMSd API receives, lists and publishes events about products procuced by a production hub at <a href="https://www.met.no/">MET Norway's</a></p>
+<p>MMSd API receives, lists and publishes events about products procuced by a production hub at <a
+        href="https://www.met.no/">MET Norway</a></p>
 
-            <p>Posting and watching for new events uses NATS. Listing of all available events for the last few days can be done through a REST endpoint. Please read about the <a href="{{ .TermsOfService }}">terms of use</a> for the API,
-            as well as <a href="https://www.met.no/en/About-us/privacy">MET's privacy policy statement</a></p>
+<p>Posting and watching for new events uses NATS. Listing of all available events for the last few days can be done
+    through a REST endpoint. Please read about the <a href="{{ .TermsOfService }}">terms of use</a> for the API,
+    as well as <a href="https://www.met.no/en/About-us/privacy">MET's privacy policy statement</a></p>
 
-            <p>Please email helpdesk&#64met.no if you have questions about MMSd, and it will be directed to the appropriate people. 
-            </p>
+<p>For more information about MMS see the <a href="https://github.com/metno/mms">MMS repo on GitHub</a></p>
+<p>Issues with the MMSd software can be reported directly in <a href="https://github.com/metno/go-mms/issues">GitHub</a>
+</p>
+<p>Please email helpdesk&#64met.no if you have questions about MMSd, and it will be directed to the appropriate people.
+</p>
 {{template "footer"}}
 {{end}}
