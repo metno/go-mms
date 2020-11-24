@@ -42,11 +42,10 @@ import (
 
 // Service is a struct that wires up all data that is needed for this service to run.
 type Service struct {
-	cacheDB        *sql.DB
-	about          *metaservice.About
-	htmlTemplates  *template.Template
-	staticFilesDir string
-	Router         *mux.Router
+	cacheDB       *sql.DB
+	about         *metaservice.About
+	htmlTemplates *template.Template
+	Router        *mux.Router
 }
 
 // HTTPServerError is used when the server fails to return a correct response to the user.
@@ -55,20 +54,19 @@ type HTTPServerError struct {
 }
 
 // NewService creates a service struct, containing all that is needed for a mmsd server to run.
-func NewService(templates *template.Template, staticFilesDir string, cacheDB *sql.DB) *Service {
+func NewService(templates *template.Template, cacheDB *sql.DB) *Service {
 	service := Service{
-		cacheDB:        cacheDB,
-		about:          aboutMMSd(),
-		htmlTemplates:  templates,
-		staticFilesDir: staticFilesDir,
-		Router:         mux.NewRouter(),
+		cacheDB:       cacheDB,
+		about:         aboutMMSd(),
+		htmlTemplates: templates,
+		Router:        mux.NewRouter(),
 	}
-	service.routes()
+	service.setRoutes()
 
 	return &service
 }
 
-func (service *Service) routes() {
+func (service *Service) setRoutes() {
 	var metrics = middleware.NewServiceMetrics(middleware.MetricsOpts{
 		Name:            "events",
 		Description:     "MMSd production hub events.",
@@ -100,10 +98,6 @@ func (service *Service) routes() {
 
 	//http.HandleFunc("/", mockProductEvent)
 	service.Router.HandleFunc("/mockevent", metaservice.MockProductEvent)
-
-	// Swagger UI
-	swui := http.StripPrefix("/swaggerui", http.FileServer(http.Dir("./static/swaggerui/")))
-	service.Router.PathPrefix("/swaggerui").Handler(swui)
 
 	// Static assets.
 	service.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(statikFS)))

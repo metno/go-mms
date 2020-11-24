@@ -18,7 +18,6 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -26,12 +25,12 @@ import (
 
 	"github.com/metno/go-mms/internal/server"
 	"github.com/metno/go-mms/pkg/mms"
+
 	nats "github.com/nats-io/nats-server/v2/server"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 )
 
-const staticFilesDir = "./static/"
 const productionHubName = "default"
 
 func main() {
@@ -112,8 +111,9 @@ func main() {
 			if err != nil {
 				log.Fatalf("could not open cache db: %s", err)
 			}
-			templates := template.Must(template.ParseGlob("templates/*"))
-			webService := server.NewService(templates, staticFilesDir, cacheDB)
+
+			templates := server.CreateTemplates()
+			webService := server.NewService(templates, cacheDB)
 
 			startNATSServer(natsServer, natsURL)
 			startEventCaching(webService, natsURL)

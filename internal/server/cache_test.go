@@ -19,7 +19,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"math/rand"
 	"os"
 	"testing"
@@ -27,8 +26,6 @@ import (
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 )
 
-// FIXME: (20200910) We need a better way to initialize the service when testing, rather than having to reference these static files through relative paths like this.
-const staticFilesDir = "./../../static/"
 const productionHubName = "default"
 
 func TestGetAllEvents(t *testing.T) {
@@ -77,8 +74,8 @@ func NewMockService() (*Service, sqlmock.Sqlmock, error) {
 		return nil, nil, fmt.Errorf("failed to create mock cache DB: %s", err)
 	}
 
-	templates := template.Must(template.ParseGlob("./../../templates/*"))
-	webService := NewService(templates, staticFilesDir, cacheDB)
+	templates := CreateTemplates()
+	webService := NewService(templates, cacheDB)
 
 	return webService, mock, nil
 }
