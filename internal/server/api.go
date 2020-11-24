@@ -22,7 +22,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -34,6 +36,7 @@ import (
 
 	"github.com/metno/go-mms/pkg/metaservice"
 	"github.com/metno/go-mms/pkg/middleware"
+	"github.com/metno/go-mms/pkg/mms"
 	_ "github.com/metno/go-mms/pkg/statik"
 )
 
@@ -85,6 +88,9 @@ func (service *Service) routes() {
 
 	// Service discovery metadata for the world
 	service.Router.Handle("/api/v1/about", proxyHeaders(metaservice.AboutHandler(service.about)))
+
+	// Post Event API
+	service.Router.Handle("/api/v1/postevent", proxyHeaders(service.postEventHandler))
 
 	// Metrics of the service(service) for this app.
 	service.Router.Handle("/metrics", metrics.Handler())
@@ -150,6 +156,52 @@ func (service *Service) docsHandler(httpRespW http.ResponseWriter, httpReq *http
 	if err != nil {
 		http.Error(httpRespW, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+// Post an event to the API
+func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq *http.Request) {
+
+	if httpReq.Method != "POST" {
+		httpRespW.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	var err error
+	var pEvent mms.ProductEvent
+	var payLoad []byte
+
+	apiKey := httpReq.Header.Get("Api-Key")
+	if apiKey == "" {
+		http.Error(httpRespW, "API key invalid or missing", http.StatusUnauthorized)
+		log.Print("Unauthorized: API key invalid or missing")
+		return
+	}
+
+	payLoad, err = ioutil.ReadAll(httpReq.Body)
+	if err != nil {
+		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusInternalServerError)
+		log.Printf("Internal Server Error: %v", err)
+		return
+	}
+
+	err = json.Unmarshal(payLoad, &pEvent)
+	if err != nil {
+		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusBadRequest)
+		log.Printf("Bad Request: %v", err)
+		return
+	}
+
+	cacheProductEvent(service.cacheDB, &pEvent)
+
+	hubs := mms.ListProductionHubs() // To be removed
+	err = mms.MakeProductEvent(hubs, &pEvent)
+	if err != nil {
+		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusBadRequest)
+		log.Printf("Bad Request: %v", err)
+		return
+	}
+
+	httpRespW.WriteHeader(http.StatusCreated)
 }
 
 // checkHealthz is supplied to metaservice.HealthzHandler as a callback function.
