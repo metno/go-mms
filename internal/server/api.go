@@ -34,7 +34,6 @@ import (
 
 	"github.com/rakyll/statik/fs"
 
-	"github.com/metno/go-mms/pkg/middleware"
 	"github.com/metno/go-mms/pkg/mms"
 	_ "github.com/metno/go-mms/pkg/statik"
 )
@@ -66,7 +65,7 @@ func NewService(templates *template.Template, cacheDB *sql.DB) *Service {
 }
 
 func (service *Service) setRoutes() {
-	var metrics = middleware.NewServiceMetrics(middleware.MetricsOpts{
+	var metrics = NewServiceMetrics(MetricsOpts{
 		Name:            "events",
 		Description:     "MMSd production hub events.",
 		ResponseBuckets: []float64{0.001, 0.002, 0.1, 0.5},
@@ -105,7 +104,7 @@ func (service *Service) setRoutes() {
 	service.Router.HandleFunc("/", service.docsHandler)
 }
 
-// proxyHeaders is a http handler middleware function for setting scheme and host correctly when behind a proxy.
+// proxyHeaders is a http handler function for setting scheme and host correctly when behind a proxy.
 // Usually needed when the response consists of urls to the service.
 func proxyHeaders(next func(httpRespW http.ResponseWriter, httpReq *http.Request)) http.Handler {
 	setSchemeIfEmpty := func(httpRespW http.ResponseWriter, httpReq *http.Request) {
