@@ -34,7 +34,6 @@ import (
 
 	"github.com/rakyll/statik/fs"
 
-	"github.com/metno/go-mms/pkg/metaservice"
 	"github.com/metno/go-mms/pkg/middleware"
 	"github.com/metno/go-mms/pkg/mms"
 	_ "github.com/metno/go-mms/pkg/statik"
@@ -43,7 +42,7 @@ import (
 // Service is a struct that wires up all data that is needed for this service to run.
 type Service struct {
 	cacheDB       *sql.DB
-	about         *metaservice.About
+	about         *About
 	htmlTemplates *template.Template
 	Router        *mux.Router
 }
@@ -82,10 +81,10 @@ func (service *Service) setRoutes() {
 	service.Router.HandleFunc("/api/v1/events", metrics.Endpoint("/v1/events", service.eventsHandler))
 
 	// Health of the service
-	service.Router.HandleFunc("/api/v1/healthz", metaservice.HealthzHandler(service.checkHealthz))
+	service.Router.HandleFunc("/api/v1/healthz", HealthzHandler(service.checkHealthz))
 
 	// Service discovery metadata for the world
-	service.Router.Handle("/api/v1/about", proxyHeaders(metaservice.AboutHandler(service.about)))
+	service.Router.Handle("/api/v1/about", proxyHeaders(AboutHandler(service.about)))
 
 	// Post Event API
 	service.Router.Handle("/api/v1/postevent", proxyHeaders(service.postEventHandler))
@@ -97,7 +96,7 @@ func (service *Service) setRoutes() {
 	service.Router.HandleFunc("/docs/{page}", service.docsHandler)
 
 	//http.HandleFunc("/", mockProductEvent)
-	service.Router.HandleFunc("/mockevent", metaservice.MockProductEvent)
+	service.Router.HandleFunc("/mockevent", MockProductEvent)
 
 	// Static assets.
 	service.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(statikFS)))
@@ -198,10 +197,10 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 	httpRespW.WriteHeader(http.StatusCreated)
 }
 
-// checkHealthz is supplied to metaservice.HealthzHandler as a callback function.
-func (service *Service) checkHealthz() (*metaservice.Healthz, error) {
-	return &metaservice.Healthz{
-		Status:      metaservice.HealthzStatusHealthy,
+// checkHealthz is supplied to HealthzHandler as a callback function.
+func (service *Service) checkHealthz() (*Healthz, error) {
+	return &Healthz{
+		Status:      HealthzStatusHealthy,
 		Description: "No deps, so everything is ok all the time.",
 	}, nil
 }

@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-package metaservice
+package server
 
 import (
 	"encoding/json"
