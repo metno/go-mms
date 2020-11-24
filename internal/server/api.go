@@ -87,8 +87,8 @@ func (service *Service) setRoutes() {
 	// Service discovery metadata for the world
 	service.Router.Handle("/api/v1/about", proxyHeaders(metaservice.AboutHandler(service.about)))
 
-	//
-	service.Router.HandleFunc("/api/v1/postevent", service.postEventHandler)
+	// Post Event API
+	service.Router.Handle("/api/v1/postevent", proxyHeaders(service.postEventHandler))
 
 	// Metrics of the service(service) for this app.
 	service.Router.Handle("/metrics", metrics.Handler())
@@ -152,7 +152,7 @@ func (service *Service) docsHandler(httpRespW http.ResponseWriter, httpReq *http
 	}
 }
 
-// Post an event to the api
+// Post an event to the API
 func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq *http.Request) {
 
 	if httpReq.Method != "POST" {
@@ -163,6 +163,13 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 	var err error
 	var pEvent mms.ProductEvent
 	var payLoad []byte
+
+	apiKey := httpReq.Header.Get("Api-Key")
+	if apiKey == "" {
+		http.Error(httpRespW, "API key invalid or missing", http.StatusUnauthorized)
+		log.Print("Unauthorized: API key invalid or missing")
+		return
+	}
 
 	payLoad, err = ioutil.ReadAll(httpReq.Body)
 	if err != nil {
