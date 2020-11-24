@@ -34,8 +34,6 @@ import (
 
 	"github.com/rakyll/statik/fs"
 
-	"github.com/metno/go-mms/pkg/metaservice"
-	"github.com/metno/go-mms/pkg/middleware"
 	"github.com/metno/go-mms/pkg/mms"
 	_ "github.com/metno/go-mms/pkg/statik"
 )
@@ -43,7 +41,7 @@ import (
 // Service is a struct that wires up all data that is needed for this service to run.
 type Service struct {
 	cacheDB       *sql.DB
-	about         *metaservice.About
+	about         *About
 	htmlTemplates *template.Template
 	Router        *mux.Router
 }
@@ -67,7 +65,7 @@ func NewService(templates *template.Template, cacheDB *sql.DB) *Service {
 }
 
 func (service *Service) setRoutes() {
-	var metrics = middleware.NewServiceMetrics(middleware.MetricsOpts{
+	var metrics = NewServiceMetrics(MetricsOpts{
 		Name:            "events",
 		Description:     "MMSd production hub events.",
 		ResponseBuckets: []float64{0.001, 0.002, 0.1, 0.5},
@@ -82,10 +80,10 @@ func (service *Service) setRoutes() {
 	service.Router.HandleFunc("/api/v1/events", metrics.Endpoint("/v1/events", service.eventsHandler))
 
 	// Health of the service
-	service.Router.HandleFunc("/api/v1/healthz", metaservice.HealthzHandler(service.checkHealthz))
+	service.Router.HandleFunc("/api/v1/healthz", HealthzHandler(service.checkHealthz))
 
 	// Service discovery metadata for the world
-	service.Router.Handle("/api/v1/about", proxyHeaders(metaservice.AboutHandler(service.about)))
+	service.Router.Handle("/api/v1/about", proxyHeaders(AboutHandler(service.about)))
 
 	// Post Event API
 	service.Router.Handle("/api/v1/postevent", proxyHeaders(service.postEventHandler))
@@ -97,7 +95,7 @@ func (service *Service) setRoutes() {
 	service.Router.HandleFunc("/docs/{page}", service.docsHandler)
 
 	//http.HandleFunc("/", mockProductEvent)
-	service.Router.HandleFunc("/mockevent", metaservice.MockProductEvent)
+	service.Router.HandleFunc("/mockevent", MockProductEvent)
 
 	// Static assets.
 	service.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(statikFS)))
@@ -106,7 +104,7 @@ func (service *Service) setRoutes() {
 	service.Router.HandleFunc("/", service.docsHandler)
 }
 
-// proxyHeaders is a http handler middleware function for setting scheme and host correctly when behind a proxy.
+// proxyHeaders is a http handler function for setting scheme and host correctly when behind a proxy.
 // Usually needed when the response consists of urls to the service.
 func proxyHeaders(next func(httpRespW http.ResponseWriter, httpReq *http.Request)) http.Handler {
 	setSchemeIfEmpty := func(httpRespW http.ResponseWriter, httpReq *http.Request) {
@@ -198,10 +196,10 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 	httpRespW.WriteHeader(http.StatusCreated)
 }
 
-// checkHealthz is supplied to metaservice.HealthzHandler as a callback function.
-func (service *Service) checkHealthz() (*metaservice.Healthz, error) {
-	return &metaservice.Healthz{
-		Status:      metaservice.HealthzStatusHealthy,
+// checkHealthz is supplied to HealthzHandler as a callback function.
+func (service *Service) checkHealthz() (*Healthz, error) {
+	return &Healthz{
+		Status:      HealthzStatusHealthy,
 		Description: "No deps, so everything is ok all the time.",
 	}, nil
 }
