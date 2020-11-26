@@ -113,7 +113,7 @@ func main() {
 			}
 
 			templates := server.CreateTemplates()
-			webService := server.NewService(templates, cacheDB)
+			webService := server.NewService(templates, cacheDB, natsURL)
 
 			startNATSServer(natsServer, natsURL)
 			startEventCaching(webService, natsURL)

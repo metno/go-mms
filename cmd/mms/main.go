@@ -34,11 +34,18 @@ func main() {
 	// Could be expanded to check and pick a file from a pre-defined list
 	var confFile string = "mms_config.yml"
 
+	listFlags := []cli.Flag{
+		&cli.StringFlag{
+			Name:  "production-hub",
+			Usage: "Name of the production-hub",
+		},
+	}
+
 	subFlags := []cli.Flag{
 		&cli.StringFlag{
-			Name:    "source",
-			Usage:   "Filter incoming events by setting specifying the source events are coming from.",
-			Aliases: []string{"s"}},
+			Name:  "production-hub",
+			Usage: "Name of the production-hub",
+		},
 	}
 
 	postFlags := []cli.Flag{
@@ -84,12 +91,13 @@ func main() {
 
 	app := &cli.App{
 		Name:  "mms",
-		Usage: "Get and post events and get info about production hubs, by talking to the MET Messaging system",
+		Usage: "Get and post events by talking to the MET Messaging System",
 		Commands: []*cli.Command{
 			{
 				Name:    "list-all",
 				Aliases: []string{"ls"},
 				Usage:   "List all the latest available events in the system",
+				Flags:   listFlags,
 				Action:  listAllEvents(hubs),
 			},
 			{
@@ -97,7 +105,7 @@ func main() {
 				Aliases: []string{"s"},
 				Usage:   "Listen for new incoming events, get them printed continuously. Optionally, set up filters to limit events you get.",
 				Flags:   subFlags,
-				Action:  subscribeEvents(hubs),
+				Action:  subscribeEvents(),
 			},
 			{
 				Name:    "post",
@@ -113,12 +121,7 @@ func main() {
 					return altsrc.ApplyInputSourceValues(ctx, inputSource, postFlags)
 				},
 				Flags:  postFlags,
-				Action: postEvent(hubs[0]),
-			},
-			{
-				Name:   "list-production-hubs",
-				Usage:  "List all available production hubs, aka. sources of events.",
-				Action: listProductionHubs,
+				Action: postEvent(),
 			},
 		},
 	}

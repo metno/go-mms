@@ -155,20 +155,9 @@ func ListProductEvents(eventCache string, opts Options) ([]*ProductEvent, error)
 }
 
 // MakeProductEvent prepares and sends the product event
-func MakeProductEvent(hubs []ProductionHub, pEvent *ProductEvent) error {
-	var hub ProductionHub
-	for _, h := range hubs {
-		if h.Name == pEvent.ProductionHub {
-			hub = h
-			break
-		}
-	}
+func MakeProductEvent(natsURL string, pEvent *ProductEvent) error {
 
-	if (hub == ProductionHub{}) {
-		return fmt.Errorf("could not find correct hub to send event")
-	}
-
-	mmsClient, err := NewNatsSenderClient(hub.NatsURL)
+	mmsClient, err := NewNatsSenderClient(natsURL)
 	if err != nil {
 		return fmt.Errorf("failed to post event to messaging service: %v", err)
 	}

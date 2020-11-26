@@ -46,20 +46,17 @@ func listAllEvents(hubs []mms.ProductionHub) func(*cli.Context) error {
 	}
 }
 
-func subscribeEvents(hubs []mms.ProductionHub) func(*cli.Context) error {
+func subscribeEvents() func(*cli.Context) error {
 	return func(ctx *cli.Context) error {
 		errChannel := make(chan error, 1)
-		for _, hub := range hubs {
-			go func(hub mms.ProductionHub) {
-				mmsClient, err := mms.NewNatsConsumerClient(hub.NatsURL)
-				if err != nil {
-					errChannel <- err
-					return
-				}
-				mmsClient.WatchProductEvents(productReceiver, mms.Options{})
-			}(hub)
-
-		}
+		go func(ctx *cli.Context) {
+			mmsClient, err := mms.NewNatsConsumerClient(ctx.String("production-hub"))
+			if err != nil {
+				errChannel <- err
+				return
+			}
+			mmsClient.WatchProductEvents(productReceiver, mms.Options{})
+		}(ctx)
 		select {
 		case err := <-errChannel:
 			return fmt.Errorf("one hub event subscription failed, ending: %v", err)
@@ -67,7 +64,7 @@ func subscribeEvents(hubs []mms.ProductionHub) func(*cli.Context) error {
 	}
 }
 
-func postEvent(productionHubs mms.ProductionHub) func(*cli.Context) error {
+func postEvent() func(*cli.Context) error {
 	return func(ctx *cli.Context) error {
 		productEvent := mms.ProductEvent{
 			JobName:         ctx.String("jobname"),
