@@ -17,7 +17,11 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
 	"time"
 
 	"github.com/metno/go-mms/pkg/mms"
@@ -63,7 +67,7 @@ func subscribeEvents(hubs []mms.ProductionHub) func(*cli.Context) error {
 	}
 }
 
-func postEvent(hubs []mms.ProductionHub) func(*cli.Context) error {
+func postEvent(productionHubs mms.ProductionHub) func(*cli.Context) error {
 	return func(ctx *cli.Context) error {
 		productEvent := mms.ProductEvent{
 			JobName:       ctx.String("jobname"),
@@ -73,7 +77,32 @@ func postEvent(hubs []mms.ProductionHub) func(*cli.Context) error {
 			NextEventAt:   time.Now().Add(time.Second * time.Duration(ctx.Int("event-interval"))),
 		}
 
-		return mms.MakeProductEvent(hubs, &productEvent)
+		// hardcoded to test-server. Should be findable from ProductionHub?
+		url := ctx.String("production-hub") + "/api/v1/postevent"
+
+		// Create a json-payload from productEvent
+		jsonStr, err := json.Marshal(&productEvent)
+		// Create a http-request to post the payload
+		httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+
+		// Hardcoded Api-Key, maybe in productEvent?
+		httpReq.Header.Set("Api-Key", "HARDCODED APIKEY CHANGE")
+		httpReq.Header.Set("Content-Type", "application/json")
+
+		// Create a http connection to the api.
+		httpClient := &http.Client{}
+		httpResp, err := httpClient.Do(httpReq)
+		if err != nil {
+			log.Fatalf("Failed to create http client: %v", err)
+		}
+		defer httpResp.Body.Close()
+
+		// If 201 is not returned, panic with http response
+		if httpResp.StatusCode != http.StatusCreated {
+			log.Fatalf("Product event not posted: %s", httpResp.Status)
+		}
+		return nil
+
 	}
 }
 

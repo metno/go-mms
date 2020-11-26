@@ -108,7 +108,7 @@ func main() {
 					return altsrc.ApplyInputSourceValues(ctx, inputSource, postFlags)
 				},
 				Flags:  postFlags,
-				Action: postEvent(hubs),
+				Action: postEvent(hubs[0]),
 			},
 			{
 				Name:   "list-production-hubs",
