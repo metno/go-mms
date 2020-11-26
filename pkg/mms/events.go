@@ -57,24 +57,6 @@ type EventClient struct {
 	cenatsSender cenats.Sender
 }
 
-// ProductionHub specifies the available hubs
-type ProductionHub struct {
-	Name       string
-	NatsURL    string
-	EventCache string
-}
-
-// ListProductionHubs to contact
-func ListProductionHubs() []ProductionHub {
-	return []ProductionHub{
-		{
-			Name:       "test-hub",
-			NatsURL:    "nats://localhost:4222",
-			EventCache: "http://localhost:8080",
-		},
-	}
-}
-
 // Generate a hub indetifier
 func MakeHubIdentifier() (string, error) {
 	var userName string

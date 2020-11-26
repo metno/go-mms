@@ -102,10 +102,6 @@ func postEvent() func(*cli.Context) error {
 	}
 }
 
-func listProductionHubs(ctx *cli.Context) error {
-	return nil
-}
-
 func productReceiver(event *mms.ProductEvent) error {
 	fmt.Println(event)
 	return nil
