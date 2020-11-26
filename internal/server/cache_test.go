@@ -75,7 +75,7 @@ func NewMockService() (*Service, sqlmock.Sqlmock, error) {
 	}
 
 	templates := CreateTemplates()
-	webService := NewService(templates, cacheDB)
+	webService := NewService(templates, cacheDB, "")
 
 	return webService, mock, nil
 }

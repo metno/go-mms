@@ -32,22 +32,22 @@ func main() {
 
 	listFlags := []cli.Flag{
 		&cli.StringFlag{
-			Name:  "production-hub",
-			Usage: "Name of the production-hub",
+			Name:  "production-hub", // HTTP
+			Usage: "The production hub HTTP URL",
 		},
 	}
 
-	subFlags := []cli.Flag{
+	subscriptionFlags := []cli.Flag{
 		&cli.StringFlag{
-			Name:  "production-hub",
-			Usage: "Name of the production-hub",
+			Name:  "production-hub", // NATS, but
+			Usage: "The production hub NATS URL",
 		},
 	}
 
 	postFlags := []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:    "production-hub",
-			Usage:   "Name of the production-hub",
+			Name:    "production-hub", // HTTP
+			Usage:   "The production hub HTTP URL",
 			EnvVars: []string{"MMS_PRODUCTION_HUB"},
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
@@ -100,7 +100,7 @@ func main() {
 				Name:    "subscribe",
 				Aliases: []string{"s"},
 				Usage:   "Listen for new incoming events, get them printed continuously. Optionally, set up filters to limit events you get.",
-				Flags:   subFlags,
+				Flags:   subscriptionFlags,
 				Action:  subscribeEvents(),
 			},
 			{
