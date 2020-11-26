@@ -20,37 +20,45 @@ import (
 	"log"
 	"os"
 
-	"github.com/metno/go-mms/pkg/mms"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 )
 
 func main() {
 
-	// Get ProductionHubs to contact
-	hubs := mms.ListProductionHubs()
-
 	// Default file name for config
 	// Could be expanded to check and pick a file from a pre-defined list
 	var confFile string = "mms_config.yml"
 
-	subFlags := []cli.Flag{
+	listFlags := []cli.Flag{
 		&cli.StringFlag{
-			Name:    "source",
-			Usage:   "Filter incoming events by setting specifying the source events are coming from.",
-			Aliases: []string{"s"}},
+			Name:  "production-hub", // HTTP
+			Usage: "The production hub HTTP URL",
+		},
+	}
+
+	subscriptionFlags := []cli.Flag{
+		&cli.StringFlag{
+			Name:  "production-hub", // NATS, but
+			Usage: "The production hub NATS URL",
+		},
 	}
 
 	postFlags := []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:    "production-hub",
-			Usage:   "Name of the production-hub",
+			Name:    "production-hub", // HTTP
+			Usage:   "The production hub HTTP URL",
 			EnvVars: []string{"MMS_PRODUCTION_HUB"},
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "product",
 			Usage:   "Name of the product.",
 			EnvVars: []string{"MMS_PRODUCT"},
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    "product-location",
+			Usage:   "Location of the product.",
+			EnvVars: []string{"MMS_PRODUCT_LOCATION"},
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "jobname",
@@ -79,20 +87,21 @@ func main() {
 
 	app := &cli.App{
 		Name:  "mms",
-		Usage: "Get and post events and get info about production hubs, by talking to the MET Messaging system",
+		Usage: "Get and post events by talking to the MET Messaging System",
 		Commands: []*cli.Command{
 			{
 				Name:    "list-all",
 				Aliases: []string{"ls"},
 				Usage:   "List all the latest available events in the system",
-				Action:  listAllEvents(hubs),
+				Flags:   listFlags,
+				Action:  listAllEvents(),
 			},
 			{
 				Name:    "subscribe",
 				Aliases: []string{"s"},
 				Usage:   "Listen for new incoming events, get them printed continuously. Optionally, set up filters to limit events you get.",
-				Flags:   subFlags,
-				Action:  subscribeEvents(hubs),
+				Flags:   subscriptionFlags,
+				Action:  subscribeEvents(),
 			},
 			{
 				Name:    "post",
@@ -108,12 +117,7 @@ func main() {
 					return altsrc.ApplyInputSourceValues(ctx, inputSource, postFlags)
 				},
 				Flags:  postFlags,
-				Action: postEvent(hubs[0]),
-			},
-			{
-				Name:   "list-production-hubs",
-				Usage:  "List all available production hubs, aka. sources of events.",
-				Action: listProductionHubs,
+				Action: postEvent(),
 			},
 		},
 	}

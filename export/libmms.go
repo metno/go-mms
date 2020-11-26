@@ -34,8 +34,7 @@ func PyProductEvent(cMsg *C.char) *C.char {
 	json.Unmarshal([]byte(msg), &productEvent)
 	productEvent.CreatedAt = time.Now()
 
-	hubs := mms.ListProductionHubs()
-	err := mms.MakeProductEvent(hubs, &productEvent)
+	err := mms.MakeProductEvent("", &productEvent)
 	if err != nil {
 		return C.CString(fmt.Sprintf("{\"err\": true, \"errmsg\": \"%s\"}", err.Error()))
 	} else {

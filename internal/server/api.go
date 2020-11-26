@@ -44,6 +44,7 @@ type Service struct {
 	about         *About
 	htmlTemplates *template.Template
 	Router        *mux.Router
+	NatsURL       string
 }
 
 // HTTPServerError is used when the server fails to return a correct response to the user.
@@ -52,12 +53,13 @@ type HTTPServerError struct {
 }
 
 // NewService creates a service struct, containing all that is needed for a mmsd server to run.
-func NewService(templates *template.Template, cacheDB *sql.DB) *Service {
+func NewService(templates *template.Template, cacheDB *sql.DB, natsURL string) *Service {
 	service := Service{
 		cacheDB:       cacheDB,
 		about:         aboutMMSd(),
 		htmlTemplates: templates,
 		Router:        mux.NewRouter(),
+		NatsURL:       natsURL,
 	}
 	service.setRoutes()
 
@@ -185,8 +187,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 
 	cacheProductEvent(service.cacheDB, &pEvent)
 
-	hubs := mms.ListProductionHubs() // To be removed
-	err = mms.MakeProductEvent(hubs, &pEvent)
+	err = mms.MakeProductEvent(service.NatsURL, &pEvent)
 	if err != nil {
 		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusBadRequest)
 		log.Printf("Bad Request: %v", err)

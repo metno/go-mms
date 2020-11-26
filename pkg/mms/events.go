@@ -36,10 +36,10 @@ import (
 type ProductEvent struct {
 	JobName         string
 	Product         string // shortname, i.e., file(object) name without timestamp
+	ProductLocation string // Storage system + protocol + filename or object name
 	ProductionHub   string
 	CreatedAt       time.Time // timestamp of the produced file (object)
 	NextEventAt     time.Time // timestamp of the next event
-	ProductLocation string    //storage system + protocol + filename or object name
 }
 
 // Options defines the filtering options you can set to limit what kinds of events you will receive.
@@ -55,24 +55,6 @@ type ProductEventCallback func(e *ProductEvent) error
 type EventClient struct {
 	ceClient     cloudevents.Client
 	cenatsSender cenats.Sender
-}
-
-// ProductionHub specifies the available hubs
-type ProductionHub struct {
-	Name       string
-	NatsURL    string
-	EventCache string
-}
-
-// ListProductionHubs to contact
-func ListProductionHubs() []ProductionHub {
-	return []ProductionHub{
-		{
-			Name:       "test-hub",
-			NatsURL:    "nats://localhost:4222",
-			EventCache: "http://localhost:8080",
-		},
-	}
 }
 
 // Generate a hub indetifier
@@ -129,10 +111,10 @@ func (eClient *EventClient) WatchProductEvents(callback ProductEventCallback, op
 }
 
 // ListProductEvents will give all available events from the specified events cache.
-func ListProductEvents(eventCache string, opts Options) ([]*ProductEvent, error) {
+func ListProductEvents(apiURL string, opts Options) ([]*ProductEvent, error) {
 	events := []*ProductEvent{}
 
-	resp, err := http.Get(eventCache)
+	resp, err := http.Get(apiURL)
 	if err != nil {
 		return nil, fmt.Errorf("Could not get events from local http server:%v", err)
 	}
@@ -155,20 +137,9 @@ func ListProductEvents(eventCache string, opts Options) ([]*ProductEvent, error)
 }
 
 // MakeProductEvent prepares and sends the product event
-func MakeProductEvent(hubs []ProductionHub, pEvent *ProductEvent) error {
-	var hub ProductionHub
-	for _, h := range hubs {
-		if h.Name == pEvent.ProductionHub {
-			hub = h
-			break
-		}
-	}
+func MakeProductEvent(natsURL string, pEvent *ProductEvent) error {
 
-	if (hub == ProductionHub{}) {
-		return fmt.Errorf("could not find correct hub to send event")
-	}
-
-	mmsClient, err := NewNatsSenderClient(hub.NatsURL)
+	mmsClient, err := NewNatsSenderClient(natsURL)
 	if err != nil {
 		return fmt.Errorf("failed to post event to messaging service: %v", err)
 	}
