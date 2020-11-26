@@ -53,6 +53,11 @@ func main() {
 			EnvVars: []string{"MMS_PRODUCT"},
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    "product-location",
+			Usage:   "Location of the product.",
+			EnvVars: []string{"MMS_PRODUCT_LOCATION"},
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "jobname",
 			Usage:   "Name of the job.",
 			EnvVars: []string{"MMS_JOBNAME"},

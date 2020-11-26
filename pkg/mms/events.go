@@ -36,10 +36,10 @@ import (
 type ProductEvent struct {
 	JobName         string
 	Product         string // shortname, i.e., file(object) name without timestamp
+	ProductLocation string // Storage system + protocol + filename or object name
 	ProductionHub   string
 	CreatedAt       time.Time // timestamp of the produced file (object)
 	NextEventAt     time.Time // timestamp of the next event
-	ProductLocation string    //storage system + protocol + filename or object name
 }
 
 // Options defines the filtering options you can set to limit what kinds of events you will receive.

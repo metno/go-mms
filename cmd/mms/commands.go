@@ -70,11 +70,12 @@ func subscribeEvents(hubs []mms.ProductionHub) func(*cli.Context) error {
 func postEvent(productionHubs mms.ProductionHub) func(*cli.Context) error {
 	return func(ctx *cli.Context) error {
 		productEvent := mms.ProductEvent{
-			JobName:       ctx.String("jobname"),
-			Product:       ctx.String("product"),
-			ProductionHub: ctx.String("production-hub"),
-			CreatedAt:     time.Now(),
-			NextEventAt:   time.Now().Add(time.Second * time.Duration(ctx.Int("event-interval"))),
+			JobName:         ctx.String("jobname"),
+			Product:         ctx.String("product"),
+			ProductLocation: ctx.String("product-location"),
+			ProductionHub:   ctx.String("production-hub"),
+			CreatedAt:       time.Now(),
+			NextEventAt:     time.Now().Add(time.Second * time.Duration(ctx.Int("event-interval"))),
 		}
 
 		// hardcoded to test-server. Should be findable from ProductionHub?
