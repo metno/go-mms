@@ -17,7 +17,10 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/metno/go-mms/pkg/mms"
@@ -73,7 +76,32 @@ func postEvent(hubs []mms.ProductionHub) func(*cli.Context) error {
 			NextEventAt:   time.Now().Add(time.Second * time.Duration(ctx.Int("event-interval"))),
 		}
 
-		return mms.MakeProductEvent(hubs, &productEvent)
+		// hardcoded to test-server. Should be findable from ProductionHub?
+		url := "http://mms-test.modellprod.met.no:8080/api/v1/postevent"
+
+		// Create a json-payload from productEvent
+		jsonStr, err := json.Marshal(&productEvent)
+		// Create a http-request to post the payload
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+
+		// Hardcoded Api-Key, maybe in productEvent?
+		req.Header.Set("Api-Key", "HARDCODED APIKEY CHANGE")
+		req.Header.Set("Content-Type", "application/json")
+
+		// Create a http connection to the api.
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			panic(err)
+		}
+		defer resp.Body.Close()
+
+		// If 201 is not returned, panic with http response
+		if resp.Status != "201 Created" {
+			panic(resp.Status)
+		}
+		return nil
+
 	}
 }
 
