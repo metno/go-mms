@@ -20,15 +20,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/metno/go-mms/pkg/mms"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 )
 
 func main() {
-
-	// Get ProductionHubs to contact
-	hubs := mms.ListProductionHubs()
 
 	// Default file name for config
 	// Could be expanded to check and pick a file from a pre-defined list
@@ -98,7 +94,7 @@ func main() {
 				Aliases: []string{"ls"},
 				Usage:   "List all the latest available events in the system",
 				Flags:   listFlags,
-				Action:  listAllEvents(hubs),
+				Action:  listAllEvents(),
 			},
 			{
 				Name:    "subscribe",

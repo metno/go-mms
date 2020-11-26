@@ -28,16 +28,14 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func listAllEvents(hubs []mms.ProductionHub) func(*cli.Context) error {
+func listAllEvents() func(*cli.Context) error {
 	return func(ctx *cli.Context) error {
 		events := []*mms.ProductEvent{}
-		for _, hub := range hubs {
-			newEvents, err := mms.ListProductEvents(hub.EventCache, mms.Options{})
-			if err != nil {
-				return fmt.Errorf("failed to access events: %v", err)
-			}
-			events = append(events, newEvents...)
+		newEvents, err := mms.ListProductEvents(ctx.String("prduction-hub"), mms.Options{})
+		if err != nil {
+			return fmt.Errorf("failed to access events: %v", err)
 		}
+		events = append(events, newEvents...)
 
 		for _, event := range events {
 			fmt.Printf("Event: %+v\n", event)

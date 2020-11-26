@@ -129,10 +129,10 @@ func (eClient *EventClient) WatchProductEvents(callback ProductEventCallback, op
 }
 
 // ListProductEvents will give all available events from the specified events cache.
-func ListProductEvents(eventCache string, opts Options) ([]*ProductEvent, error) {
+func ListProductEvents(apiURL string, opts Options) ([]*ProductEvent, error) {
 	events := []*ProductEvent{}
 
-	resp, err := http.Get(eventCache)
+	resp, err := http.Get(apiURL)
 	if err != nil {
 		return nil, fmt.Errorf("Could not get events from local http server:%v", err)
 	}
