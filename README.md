@@ -7,7 +7,7 @@ Go client for MET Messaging system (MMS)
 # How to use
 ## Build and run in shell
 
-For being able to use `statik` binary, you need to have go's bin directory in the path, most probably `~/go/bin or ~/.local/go/bin`.
+For being able to use `statik` binary, you need to have go's bin directory in the path, most probably `~/go/bin` or `~/.local/go/bin`.
 
 Shell 1:
 - `cd go-mms`
@@ -27,15 +27,6 @@ You should now get a printout of an MMS message in `Shell 2`
 ```
 make image
 docker run -i -p 4222:4222 -p 8080:8080 mmsd
-```
-
-## Python Interface
-
-The python interface is meant to be used from [py-mms](https://github.com/metno/py-mms).
-
-Build `libmms.so` with:
-```bash
-go build -o libmms.so -buildmode=c-shared ./export/
 ```
 
 ## Generate code diagram
