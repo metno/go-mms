@@ -15,7 +15,7 @@ require (
 	github.com/nats-io/jwt v1.2.0 // indirect
 	github.com/nats-io/nats-server/v2 v2.1.9
 	github.com/nats-io/nkeys v0.2.0 // indirect
-	github.com/prometheus/client_golang v1.8.0
+	github.com/prometheus/client_golang v1.9.0
 	github.com/rakyll/statik v0.1.7
 	github.com/urfave/cli/v2 v2.3.0
 	go.opencensus.io v0.22.5 // indirect
