@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -89,13 +88,13 @@ func postEvent() func(*cli.Context) error {
 		httpClient := &http.Client{}
 		httpResp, err := httpClient.Do(httpReq)
 		if err != nil {
-			log.Fatalf("Failed to create http client: %v", err)
+			return fmt.Errorf("Failed to create http client: %v", err)
 		}
 		defer httpResp.Body.Close()
 
 		// If 201 is not returned, panic with http response
 		if httpResp.StatusCode != http.StatusCreated {
-			log.Fatalf("Product event not posted: %s", httpResp.Status)
+			return fmt.Errorf("Product event not posted: %s", httpResp.Status)
 		}
 		return nil
 
