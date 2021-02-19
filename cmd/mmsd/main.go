@@ -17,8 +17,10 @@ limitations under the License.
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"time"
@@ -41,7 +43,6 @@ func main() {
 
 	// Create an identifier
 	hubID, err = mms.MakeHubIdentifier()
-	log.Print(hubID)
 	if err != nil {
 		log.Printf("Failed to create identifier, %s", err.Error())
 		hubID = "error"
@@ -121,6 +122,20 @@ func main() {
 
 			return nil
 		},
+		Commands: []*cli.Command{
+			{
+				Name:  "keygen",
+				Usage: "Generate a new API key and add it to the authorized_keys file",
+				Flags: []cli.Flag{
+					altsrc.NewStringFlag(&cli.StringFlag{
+						Name:    "message",
+						Aliases: []string{"m"},
+						Usage:   "A descriptive message for the key",
+					}),
+				},
+				Action: generateAPIKey(),
+			},
+		},
 	}
 
 	err = app.Run(os.Args)
@@ -171,4 +186,20 @@ func startWebServer(webService *server.Service, apiURL string) {
 	}
 	log.Printf("Starting webserver on %s ...\n", server.Addr)
 	log.Fatal(server.ListenAndServe())
+}
+
+func generateAPIKey() func(*cli.Context) error {
+	return func(ctx *cli.Context) error {
+		rand.Seed(time.Now().UnixNano())
+
+		byteKey := make([]byte, 32)
+		for i := range byteKey {
+			byteKey[i] = byte(rand.Intn(256))
+		}
+
+		apiKey := base64.StdEncoding.EncodeToString([]byte(byteKey))
+		fmt.Println(apiKey)
+
+		return nil
+	}
 }
