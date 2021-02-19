@@ -34,6 +34,7 @@ import (
 )
 
 const productionHubName = "default"
+const authKeysFile = "mms_authorized_keys"
 
 func main() {
 
@@ -125,7 +126,7 @@ func main() {
 		Commands: []*cli.Command{
 			{
 				Name:  "keygen",
-				Usage: "Generate a new API key and add it to the authorized_keys file",
+				Usage: fmt.Sprintf("Generate a new API key and add it to the %s file", authKeysFile),
 				Flags: []cli.Flag{
 					altsrc.NewStringFlag(&cli.StringFlag{
 						Name:    "message",
@@ -192,14 +193,34 @@ func generateAPIKey() func(*cli.Context) error {
 	return func(ctx *cli.Context) error {
 		rand.Seed(time.Now().UnixNano())
 
+		// Generate the key
 		byteKey := make([]byte, 32)
 		for i := range byteKey {
 			byteKey[i] = byte(rand.Intn(256))
 		}
 
 		apiKey := base64.StdEncoding.EncodeToString([]byte(byteKey))
-		fmt.Println(apiKey)
 
+		// Write the File
+		outFile, err := os.OpenFile(authKeysFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		if err != nil {
+			panic(err)
+		}
+
+		defer outFile.Close()
+
+		keyMsg := ctx.String("message")
+		if keyMsg == "" {
+			keyMsg = "Unnamed key"
+		}
+		keyMsg = fmt.Sprintf("%s (%s)", keyMsg, time.Now().Format(time.RFC3339))
+
+		fileEntry := fmt.Sprintf("api-key %s # %s\n", apiKey, keyMsg)
+		fmt.Printf("Added: %s", fileEntry)
+
+		if _, err = outFile.WriteString(fileEntry); err != nil {
+			panic(err)
+		}
 		return nil
 	}
 }
