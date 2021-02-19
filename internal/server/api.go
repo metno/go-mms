@@ -78,17 +78,15 @@ func (service *Service) setRoutes() {
 		log.Fatal(err)
 	}
 
-	// The Eventscache endpoint.
-	service.Router.HandleFunc("/api/v1/events", metrics.Endpoint("/v1/events", service.eventsHandler))
+	// Events
+	service.Router.HandleFunc("/api/v1/events", metrics.Endpoint("/v1/events", service.eventsHandler)).Methods("GET")
+	service.Router.Handle("/api/v1/events", proxyHeaders(service.postEventHandler)).Methods("POST")
 
 	// Health of the service
 	service.Router.HandleFunc("/api/v1/healthz", HealthzHandler(service.checkHealthz))
 
 	// Service discovery metadata for the world
 	service.Router.Handle("/api/v1/about", proxyHeaders(AboutHandler(service.about)))
-
-	// Post Event API
-	service.Router.Handle("/api/v1/postevent", proxyHeaders(service.postEventHandler))
 
 	// Metrics of the service(service) for this app.
 	service.Router.Handle("/metrics", metrics.Handler())

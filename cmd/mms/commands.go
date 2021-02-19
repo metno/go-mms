@@ -74,7 +74,7 @@ func postEvent() func(*cli.Context) error {
 		}
 
 		// hardcoded to test-server. Should be findable from ProductionHub?
-		url := ctx.String("production-hub") + "/api/v1/postevent"
+		url := ctx.String("production-hub") + "/api/v1/events"
 
 		// Create a json-payload from productEvent
 		jsonStr, err := json.Marshal(&productEvent)
