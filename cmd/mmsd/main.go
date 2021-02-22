@@ -196,7 +196,7 @@ func generateAPIKey() func(*cli.Context) error {
 		// Generate the key
 		byteKey := make([]byte, 32)
 		for i := range byteKey {
-			byteKey[i] = byte(rand.Intn(256))
+			byteKey[i] = byte(rand.Intn(255))
 		}
 
 		apiKey := base64.StdEncoding.EncodeToString([]byte(byteKey))
@@ -216,11 +216,11 @@ func generateAPIKey() func(*cli.Context) error {
 		keyMsg = fmt.Sprintf("%s (%s)", keyMsg, time.Now().Format(time.RFC3339))
 
 		fileEntry := fmt.Sprintf("api-key %s # %s\n", apiKey, keyMsg)
-		fmt.Printf("Added: %s", fileEntry)
-
+		fmt.Printf("Generated: %s", fileEntry)
 		if _, err = outFile.WriteString(fileEntry); err != nil {
 			panic(err)
 		}
+
 		return nil
 	}
 }
