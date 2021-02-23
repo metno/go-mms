@@ -23,6 +23,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/metno/go-mms/internal/server"
@@ -41,6 +42,7 @@ func main() {
 	var err error
 	var hubID string
 	var confFile string = "mmsd_config.yml"
+	var dbFile string = "events.db"
 
 	// Create an identifier
 	hubID, err = mms.MakeHubIdentifier()
@@ -51,10 +53,10 @@ func main() {
 
 	cmdFlags := []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:    "pstorage",
-			Aliases: []string{"p"},
-			Value:   "./events.sqlite",
-			Usage:   "Set persistent event storage location",
+			Name:    "work-dir",
+			Aliases: []string{"w"},
+			Value:   ".",
+			Usage:   "The working directory where the files for this instance are stored.",
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:  "hubid",
@@ -76,18 +78,12 @@ func main() {
 			Usage: "Specify the port number for the NATS listening port.",
 			Value: 4222,
 		}),
-		&cli.StringFlag{
-			Name:    "config",
-			Aliases: []string{"c"},
-			Usage:   "Load configuration from file.",
-			EnvVars: []string{"MMSD_CONFIG"},
-			Value:   confFile,
-		},
 	}
 
 	app := &cli.App{
 		Before: func(ctx *cli.Context) error {
-			inputSource, err := altsrc.NewYamlSourceFromFlagFunc("config")(ctx)
+			confPath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), confFile))
+			inputSource, err := altsrc.NewYamlSourceFromFile(confPath)
 			if err != nil {
 				// If there is no file, just return without error
 				return nil
@@ -109,7 +105,8 @@ func main() {
 				nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
 			}
 
-			cacheDB, err := server.NewDB(ctx.String("pstorage"))
+			dbPath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbFile))
+			cacheDB, err := server.NewDB(dbPath)
 			if err != nil {
 				log.Fatalf("could not open cache db: %s", err)
 			}
