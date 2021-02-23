@@ -103,7 +103,8 @@ func main() {
 				nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
 			}
 
-			cacheDB, err := server.NewDB(fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbFile)))
+			dbPath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbFile))
+			cacheDB, err := server.NewDB(dbPath)
 			if err != nil {
 				log.Fatalf("could not open cache db: %s", err)
 			}
