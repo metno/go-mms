@@ -42,7 +42,8 @@ func main() {
 	var err error
 	var hubID string
 	var confFile string = "mmsd_config.yml"
-	var dbFile string = "events.db"
+	var dbCacheFile string = "events.db"
+	var dbStateFile string = "state.db"
 
 	// Create an identifier
 	hubID, err = mms.MakeHubIdentifier()
@@ -105,14 +106,20 @@ func main() {
 				nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
 			}
 
-			dbPath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbFile))
-			cacheDB, err := server.NewCacheDB(dbPath)
+			cachePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbCacheFile))
+			cacheDB, err := server.NewCacheDB(cachePath)
+			if err != nil {
+				log.Fatalf("could not open cache db: %s", err)
+			}
+
+			statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbStateFile))
+			stateDB, err := server.NewStateDB(statePath)
 			if err != nil {
 				log.Fatalf("could not open cache db: %s", err)
 			}
 
 			templates := server.CreateTemplates()
-			webService := server.NewService(templates, cacheDB, natsURL)
+			webService := server.NewService(templates, cacheDB, stateDB, natsURL)
 
 			startNATSServer(natsServer, natsURL)
 			startEventCaching(webService, natsURL)
