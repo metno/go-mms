@@ -106,7 +106,7 @@ func main() {
 			}
 
 			dbPath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbFile))
-			cacheDB, err := server.NewDB(dbPath)
+			cacheDB, err := server.NewCacheDB(dbPath)
 			if err != nil {
 				log.Fatalf("could not open cache db: %s", err)
 			}

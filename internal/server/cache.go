@@ -29,8 +29,8 @@ import (
 	"github.com/metno/go-mms/pkg/mms"
 )
 
-// NewDB returns an sql database object, initialized with necessary tables.
-func NewDB(filePath string) (*sql.DB, error) {
+// NewCacheDB returns an sql database object, initialized with necessary tables.
+func NewCacheDB(filePath string) (*sql.DB, error) {
 	if filePath == "" {
 		return nil, fmt.Errorf("empty file path for sqlite database")
 	}
