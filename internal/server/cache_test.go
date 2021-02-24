@@ -53,9 +53,9 @@ func TestGetAllEvents(t *testing.T) {
 	}
 }
 
-func TestNewDB(t *testing.T) {
+func TestNewCacheDB(t *testing.T) {
 	dbTestFile := fmt.Sprintf("/tmp/mmsdtestsqlite%d.db", rand.Int())
-	db, err := NewDB(dbTestFile)
+	db, err := NewCacheDB(dbTestFile)
 	if err != nil {
 		t.Errorf("failed to create db: %s", err)
 	}
