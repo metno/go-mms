@@ -20,9 +20,10 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"time"
 )
 
-// NewCacheDB returns an sql database object, initialized with necessary tables.
+// NewStateDB returns an sql database object, initialised with necessary tables.
 func NewStateDB(filePath string) (*sql.DB, error) {
 	if filePath == "" {
 		return nil, fmt.Errorf("empty file path for sqlite database")
@@ -30,8 +31,20 @@ func NewStateDB(filePath string) (*sql.DB, error) {
 	return createStateDB(filePath)
 }
 
+func saveApiKey(db *sql.DB, apiKey string, keyMsg string) error {
+
+	insertSQL := `INSERT INTO api_keys (apiKey, createdDate, createMsg) VALUES (?, ?, ?)`
+	statement, err := db.Prepare(insertSQL)
+	_, err = statement.Exec(apiKey, time.Now().Format(time.RFC3339), keyMsg)
+	if err != nil {
+		return fmt.Errorf("failed to store event in db: %s", err)
+	}
+
+	return nil
+}
+
 func createStateDB(dbFilePath string) (*sql.DB, error) {
-	// Create file if it does not exist.
+	// Create database file if it does not exist.
 	file, err := os.OpenFile(dbFilePath, os.O_CREATE, 0660)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create db file: %s", err)
