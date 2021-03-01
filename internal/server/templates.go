@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 
+	// When this is not a blank import, then VSCode removes it when saving the file
 	_ "github.com/metno/go-mms/pkg/statik"
 	"github.com/rakyll/statik/fs"
 )
