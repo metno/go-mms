@@ -18,6 +18,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -86,7 +87,16 @@ func postEvent() func(*cli.Context) error {
 		httpReq.Header.Set("Content-Type", "application/json")
 
 		// Create a http connection to the api.
-		httpClient := &http.Client{}
+		var tr *http.Transport
+		if ctx.Bool("insecure") {
+			tr = &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			}
+		} else {
+			tr = &http.Transport{}
+		}
+
+		httpClient := &http.Client{Transport: tr}
 		httpResp, err := httpClient.Do(httpReq)
 		if err != nil {
 			log.Fatalf("Failed to create http client: %v", err)

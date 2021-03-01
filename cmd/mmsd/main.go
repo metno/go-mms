@@ -72,16 +72,46 @@ func main() {
 		altsrc.NewIntFlag(&cli.IntFlag{
 			Name:  "api-port",
 			Usage: "Specify the port number for the API listening port.",
-			Value: 8080,
+			Value: 0,
 		}),
 		altsrc.NewIntFlag(&cli.IntFlag{
 			Name:  "nats-port",
 			Usage: "Specify the port number for the NATS listening port.",
 			Value: 4222,
 		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "certificate",
+			Usage: "Specify the path to the certificate.",
+			Value: "cert.pem",
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "key",
+			Usage: "Specify the path to the key.",
+			Value: "key.pem",
+		}),
+		altsrc.NewBoolFlag(&cli.BoolFlag{
+			Name:  "tls",
+			Usage: "Enable TLS",
+			Value: false,
+		}),
+	}
+
+	gcFlags := []cli.Flag{
+		&cli.BoolFlag{
+			Name:  "selfsigned",
+			Usage: "",
+			// Value: false,
+		},
+		&cli.StringFlag{
+			Name:  "hosts",
+			Usage: "Comma separated list of Alternative Names for certificate generation",
+			Value: "localhost",
+		},
 	}
 
 	app := &cli.App{
+		Usage: "The Met Messaging System (MMS) daemon",
+
 		Before: func(ctx *cli.Context) error {
 			confPath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), confFile))
 			inputSource, err := altsrc.NewYamlSourceFromFile(confPath)
@@ -94,13 +124,27 @@ func main() {
 		},
 		Flags: cmdFlags,
 		Action: func(ctx *cli.Context) error {
+			var apiPort int
+			tlsEnabled := ctx.Bool("tls")
+			if ctx.Int("api-port") > 0 {
+				apiPort = ctx.Int("api-port")
+			} else {
+				if tlsEnabled {
+					apiPort = 8443
+				} else {
+					apiPort = 8080
+				}
+			}
+
 			natsURL := fmt.Sprintf("nats://%s:%d", ctx.String("hostname"), ctx.Int("nats-port"))
-			apiURL := fmt.Sprintf("%s:%d", ctx.String("hostname"), ctx.Int("api-port"))
+			apiURL := fmt.Sprintf("%s:%d", ctx.String("hostname"), apiPort)
 
 			natsServer, err := nats.NewServer(&nats.Options{
 				ServerName: fmt.Sprintf("mmsd-nats-server-%s", productionHubName),
 				Host:       ctx.String("hostname"),
 				Port:       ctx.Int("nats-port"),
+				//	TLSConfig: ,
+
 			})
 			if err != nil {
 				nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
@@ -122,8 +166,8 @@ func main() {
 			webService := server.NewService(templates, cacheDB, stateDB, natsURL)
 
 			startNATSServer(natsServer, natsURL)
-			startEventCaching(webService, natsURL)
-			startWebServer(webService, apiURL)
+			startEventHistoryPurger(webService)
+			startWebServer(webService, apiURL, ctx.Bool("tls"), ctx.String("certificate"), ctx.String("key"))
 
 			return nil
 		},
@@ -139,6 +183,13 @@ func main() {
 					}),
 				},
 				Action: generateAPIKey(),
+			},
+			{
+				Name:    "gen-cert",
+				Aliases: []string{"gc"},
+				Usage:   "Generate SSL certificate for the daemon.",
+				Flags:   gcFlags,
+				Action:  generateCertificate(),
 			},
 		},
 	}
@@ -159,15 +210,8 @@ func startNATSServer(natsServer *nats.Server, natsURL string) {
 	}()
 }
 
-func startEventCaching(webService *server.Service, natsURL string) {
-	go func() {
-		log.Println("Start caching incoming events ...")
-
-		if err := webService.RunCache(natsURL); err != nil {
-			log.Fatalf("Caching events failed: %s", err)
-		}
-	}()
-
+func startEventHistoryPurger(webService *server.Service) {
+	log.Printf("Starting event history purger...")
 	// Start a separate go routine for regularly deleting old events from the events cache db.
 	ticker := time.NewTicker(1 * time.Hour)
 	go func() {
@@ -182,7 +226,7 @@ func startEventCaching(webService *server.Service, natsURL string) {
 	}()
 }
 
-func startWebServer(webService *server.Service, apiURL string) {
+func startWebServer(webService *server.Service, apiURL string, tlsEnabled bool, certificatePath string, keyPath string) {
 	server := &http.Server{
 		Addr:         apiURL,
 		Handler:      webService.Router,
@@ -190,7 +234,11 @@ func startWebServer(webService *server.Service, apiURL string) {
 		IdleTimeout:  10 * time.Second,
 	}
 	log.Printf("Starting webserver on %s ...\n", server.Addr)
-	log.Fatal(server.ListenAndServe())
+	if tlsEnabled {
+		log.Fatal(server.ListenAndServeTLS(certificatePath, keyPath))
+	} else {
+		log.Fatal(server.ListenAndServe())
+	}
 }
 
 func generateAPIKey() func(*cli.Context) error {
