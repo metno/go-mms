@@ -13,8 +13,9 @@
 coverage.txt
 
 # Runtime
-events.db
-events.sqlite
+*.db
+*.sqlite
+mms_authorized_keys
 
 # Config
 /mms_config.yml

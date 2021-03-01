@@ -132,9 +132,9 @@ func createCacheDB(dbFilePath string) (*sql.DB, error) {
 	}
 	createEventTable := `CREATE TABLE IF NOT EXISTS events (
 		"id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-		"createdAt" string,	
+		"createdAt" string,
 		"event" BLOB
-	  );`
+	);`
 
 	_, err = db.Exec(createEventTable)
 

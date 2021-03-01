@@ -41,6 +41,7 @@ import (
 // Service is a struct that wires up all data that is needed for this service to run.
 type Service struct {
 	cacheDB       *sql.DB
+	stateDB       *sql.DB
 	about         *About
 	htmlTemplates *template.Template
 	Router        *mux.Router
@@ -53,9 +54,10 @@ type HTTPServerError struct {
 }
 
 // NewService creates a service struct, containing all that is needed for a mmsd server to run.
-func NewService(templates *template.Template, cacheDB *sql.DB, natsURL string) *Service {
+func NewService(templates *template.Template, cacheDB *sql.DB, stateDB *sql.DB, natsURL string) *Service {
 	service := Service{
 		cacheDB:       cacheDB,
+		stateDB:       stateDB,
 		about:         aboutMMSd(),
 		htmlTemplates: templates,
 		Router:        mux.NewRouter(),

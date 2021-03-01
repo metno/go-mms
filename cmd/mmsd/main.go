@@ -17,8 +17,10 @@ limitations under the License.
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -33,17 +35,18 @@ import (
 )
 
 const productionHubName = "default"
+const authKeysFile = "mms_authorized_keys"
 
 func main() {
 
 	var err error
 	var hubID string
 	var confFile string = "mmsd_config.yml"
-	var dbFile string = "events.db"
+	var dbCacheFile string = "events.db"
+	var dbStateFile string = "state.db"
 
 	// Create an identifier
 	hubID, err = mms.MakeHubIdentifier()
-	log.Print(hubID)
 	if err != nil {
 		log.Printf("Failed to create identifier, %s", err.Error())
 		hubID = "error"
@@ -103,20 +106,40 @@ func main() {
 				nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
 			}
 
-			dbPath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbFile))
-			cacheDB, err := server.NewCacheDB(dbPath)
+			cachePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbCacheFile))
+			cacheDB, err := server.NewCacheDB(cachePath)
+			if err != nil {
+				log.Fatalf("could not open cache db: %s", err)
+			}
+
+			statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbStateFile))
+			stateDB, err := server.NewStateDB(statePath)
 			if err != nil {
 				log.Fatalf("could not open cache db: %s", err)
 			}
 
 			templates := server.CreateTemplates()
-			webService := server.NewService(templates, cacheDB, natsURL)
+			webService := server.NewService(templates, cacheDB, stateDB, natsURL)
 
 			startNATSServer(natsServer, natsURL)
 			startEventCaching(webService, natsURL)
 			startWebServer(webService, apiURL)
 
 			return nil
+		},
+		Commands: []*cli.Command{
+			{
+				Name:  "keygen",
+				Usage: fmt.Sprintf("Generate a new API key and add it to the %s file", authKeysFile),
+				Flags: []cli.Flag{
+					altsrc.NewStringFlag(&cli.StringFlag{
+						Name:    "message",
+						Aliases: []string{"m"},
+						Usage:   "A descriptive message for the key",
+					}),
+				},
+				Action: generateAPIKey(),
+			},
 		},
 	}
 
@@ -168,4 +191,40 @@ func startWebServer(webService *server.Service, apiURL string) {
 	}
 	log.Printf("Starting webserver on %s ...\n", server.Addr)
 	log.Fatal(server.ListenAndServe())
+}
+
+func generateAPIKey() func(*cli.Context) error {
+	return func(ctx *cli.Context) error {
+		rand.Seed(time.Now().UnixNano())
+
+		// Generate the key
+		byteKey := make([]byte, 32)
+		for i := range byteKey {
+			byteKey[i] = byte(rand.Intn(255))
+		}
+
+		apiKey := base64.StdEncoding.EncodeToString([]byte(byteKey))
+
+		// Write the File
+		outFile, err := os.OpenFile(authKeysFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		if err != nil {
+			panic(err)
+		}
+
+		defer outFile.Close()
+
+		keyMsg := ctx.String("message")
+		if keyMsg == "" {
+			keyMsg = "Unnamed key"
+		}
+		keyMsg = fmt.Sprintf("%s (%s)", keyMsg, time.Now().Format(time.RFC3339))
+
+		fileEntry := fmt.Sprintf("api-key %s # %s\n", apiKey, keyMsg)
+		fmt.Printf("Generated: %s", fileEntry)
+		if _, err = outFile.WriteString(fileEntry); err != nil {
+			panic(err)
+		}
+
+		return nil
+	}
 }
