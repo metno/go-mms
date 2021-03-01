@@ -122,7 +122,7 @@ func main() {
 			webService := server.NewService(templates, cacheDB, stateDB, natsURL)
 
 			startNATSServer(natsServer, natsURL)
-			startEventCaching(webService, natsURL)
+			startEventHistoryPurger(webService)
 			startWebServer(webService, apiURL)
 
 			return nil
@@ -159,15 +159,8 @@ func startNATSServer(natsServer *nats.Server, natsURL string) {
 	}()
 }
 
-func startEventCaching(webService *server.Service, natsURL string) {
-	go func() {
-		log.Println("Start caching incoming events ...")
-
-		if err := webService.RunCache(natsURL); err != nil {
-			log.Fatalf("Caching events failed: %s", err)
-		}
-	}()
-
+func startEventHistoryPurger(webService *server.Service) {
+	log.Printf("Starting event history purger...")
 	// Start a separate go routine for regularly deleting old events from the events cache db.
 	ticker := time.NewTicker(1 * time.Hour)
 	go func() {
