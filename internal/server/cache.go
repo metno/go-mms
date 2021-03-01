@@ -37,19 +37,6 @@ func NewCacheDB(filePath string) (*sql.DB, error) {
 	return createCacheDB(filePath)
 }
 
-// RunCache starts up a watch of incoming events from NATS. Each incoming event is stored in the cache database.
-// This function blocks forever, until it fails to subscribe to NATS for some reason.
-func (service *Service) RunCache(natsURL string) error {
-	eventClient, err := mms.NewNatsConsumerClient(natsURL)
-	if err != nil {
-		return fmt.Errorf("failed to create nats consumer client: %s", err)
-	}
-
-	eventClient.WatchProductEvents(cacheProductEventCallback(service.cacheDB), mms.Options{})
-
-	return nil
-}
-
 // GetAllEvents returns all product events it can find in the cache database.
 func (service *Service) GetAllEvents(ctx context.Context) ([]*mms.ProductEvent, error) {
 	rows, err := service.cacheDB.QueryContext(ctx, "SELECT * FROM events")
@@ -80,24 +67,6 @@ func (service *Service) DeleteOldEvents(maxAge time.Time) error {
 	deleteOldEvents := `DELETE FROM events WHERE createdAt < "` + maxAge.Format(time.RFC3339) + `";`
 	_, err := service.cacheDB.Exec(deleteOldEvents)
 	return err
-}
-
-func cacheProductEventCallback(db *sql.DB) func(event *mms.ProductEvent) error {
-	return func(event *mms.ProductEvent) error {
-		payload, err := json.Marshal(event)
-		if err != nil {
-			return fmt.Errorf("failed to create json blob for storage: %s", err)
-		}
-
-		insertEventSQL := `INSERT INTO events(createdAt,event) VALUES (?, ?)`
-		statement, err := db.Prepare(insertEventSQL)
-		_, err = statement.Exec(event.CreatedAt.Format(time.RFC3339), payload)
-		if err != nil {
-			return fmt.Errorf("failed to store event in db: %s", err)
-		}
-
-		return nil
-	}
 }
 
 func cacheProductEvent(db *sql.DB, event *mms.ProductEvent) error {
