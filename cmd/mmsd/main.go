@@ -211,7 +211,7 @@ func generateAPIKey() func(*cli.Context) error {
 		}
 
 		// Save the new key entry
-		err = server.AddStateApiKey(stateDB, apiKey, ctx.String("message"))
+		err = server.AddNewApiKey(stateDB, apiKey, ctx.String("message"))
 		if err != nil {
 			log.Fatalf("error in state db: %s", err)
 		}

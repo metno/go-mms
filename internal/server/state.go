@@ -31,8 +31,7 @@ func NewStateDB(filePath string) (*sql.DB, error) {
 	return createStateDB(filePath)
 }
 
-func AddStateApiKey(db *sql.DB, apiKey string, keyMsg string) error {
-
+func AddNewApiKey(db *sql.DB, apiKey string, keyMsg string) error {
 	insertSQL := `INSERT INTO api_keys (apiKey, createdDate, createMsg) VALUES (?, ?, ?)`
 	statement, err := db.Prepare(insertSQL)
 	_, err = statement.Exec(apiKey, time.Now().Format(time.RFC3339), keyMsg)
@@ -41,6 +40,18 @@ func AddStateApiKey(db *sql.DB, apiKey string, keyMsg string) error {
 	}
 
 	return nil
+}
+
+func ValidateApiKey(db *sql.DB, apiKey string) (bool, error) {
+	checkSQL := `UPDATE api_keys SET lastUsed = ? WHERE apiKey = ?`
+	statement, err := db.Prepare(checkSQL)
+	result, err := statement.Exec(time.Now().Format(time.RFC3339), apiKey)
+	if err != nil {
+		return false, fmt.Errorf("failed to update api key record in db: %s", err)
+	}
+	nRows, err := result.RowsAffected()
+
+	return nRows == 1, err
 }
 
 func createStateDB(dbFilePath string) (*sql.DB, error) {

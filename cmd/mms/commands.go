@@ -82,7 +82,7 @@ func postEvent() func(*cli.Context) error {
 		httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 
 		// Hardcoded Api-Key, maybe in productEvent?
-		httpReq.Header.Set("Api-Key", "HARDCODED APIKEY CHANGE")
+		httpReq.Header.Set("Api-Key", ctx.String("api-key"))
 		httpReq.Header.Set("Content-Type", "application/json")
 
 		// Create a http connection to the api.

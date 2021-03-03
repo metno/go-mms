@@ -171,6 +171,13 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 		return
 	}
 
+	validKey, err := ValidateApiKey(service.stateDB, apiKey)
+	if !validKey {
+		http.Error(httpRespW, "Unauthorized API key submitted", http.StatusUnauthorized)
+		log.Print("Unauthorized: API key not accepted")
+		return
+	}
+
 	payLoad, err = ioutil.ReadAll(httpReq.Body)
 	if err != nil {
 		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusInternalServerError)
