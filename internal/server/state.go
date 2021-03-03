@@ -73,6 +73,9 @@ func createStateDB(dbFilePath string) (*sql.DB, error) {
 		"lastUsed" TEXT,
 		"createMsg" TEXT,
 		PRIMARY KEY("apiKey")
+	);
+	CREATE INDEX IF NOT EXISTS "api_keys_idx" ON "api_keys" (
+		"apiKey"
 	);`
 
 	_, err = db.Exec(createTable)

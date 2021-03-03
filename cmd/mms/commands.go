@@ -31,7 +31,7 @@ import (
 func listAllEvents() func(*cli.Context) error {
 	return func(ctx *cli.Context) error {
 		events := []*mms.ProductEvent{}
-		newEvents, err := mms.ListProductEvents(ctx.String("prduction-hub"), mms.Options{})
+		newEvents, err := mms.ListProductEvents(ctx.String("production-hub"), mms.Options{})
 		if err != nil {
 			return fmt.Errorf("failed to access events: %v", err)
 		}
@@ -81,7 +81,6 @@ func postEvent() func(*cli.Context) error {
 		// Create a http-request to post the payload
 		httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 
-		// Hardcoded Api-Key, maybe in productEvent?
 		httpReq.Header.Set("Api-Key", ctx.String("api-key"))
 		httpReq.Header.Set("Content-Type", "application/json")
 
@@ -97,8 +96,8 @@ func postEvent() func(*cli.Context) error {
 		if httpResp.StatusCode != http.StatusCreated {
 			log.Fatalf("Product event not posted: %s", httpResp.Status)
 		}
-		return nil
 
+		return nil
 	}
 }
 
