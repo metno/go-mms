@@ -31,13 +31,13 @@ func NewStateDB(filePath string) (*sql.DB, error) {
 	return createStateDB(filePath)
 }
 
-func saveApiKey(db *sql.DB, apiKey string, keyMsg string) error {
+func AddStateApiKey(db *sql.DB, apiKey string, keyMsg string) error {
 
 	insertSQL := `INSERT INTO api_keys (apiKey, createdDate, createMsg) VALUES (?, ?, ?)`
 	statement, err := db.Prepare(insertSQL)
 	_, err = statement.Exec(apiKey, time.Now().Format(time.RFC3339), keyMsg)
 	if err != nil {
-		return fmt.Errorf("failed to store event in db: %s", err)
+		return fmt.Errorf("failed to add api key to db: %s", err)
 	}
 
 	return nil
