@@ -216,6 +216,8 @@ func generateAPIKey() func(*cli.Context) error {
 			log.Fatalf("error in state db: %s", err)
 		}
 
+		fmt.Printf("Generated Key: %s\n", apiKey)
+
 		return nil
 	}
 }
