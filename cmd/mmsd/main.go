@@ -139,9 +139,15 @@ func main() {
 						Usage:   "Generate a new API key and add it to the autorized keys.",
 					}),
 					altsrc.NewStringFlag(&cli.StringFlag{
+						Name:    "add",
+						Aliases: []string{"a"},
+						Usage:   "Add a new API key and add it to the autorized keys.",
+						Value:   "None",
+					}),
+					altsrc.NewStringFlag(&cli.StringFlag{
 						Name:    "message",
 						Aliases: []string{"m"},
-						Usage:   "A descriptive message for the key.",
+						Usage:   "A descriptive message for the generated or added key.",
 						Value:   "Unnamed key",
 					}),
 				},
@@ -153,11 +159,18 @@ func main() {
 						log.Fatalf("could not open state db: %s", err)
 					}
 
-					if ctx.Bool("generate") {
+					if ctx.Bool("gen") {
 						err := generateAPIKey(stateDB, ctx.String("message"))
 						if err != nil {
-							log.Fatalf("key generation failed: %s", err)
+							log.Fatalf("failed to generate key: %s", err)
 						}
+					} else if ctx.String("add") != "None" {
+						err := server.AddNewApiKey(stateDB, ctx.String("add"), ctx.String("message"))
+						if err != nil {
+							log.Fatalf("failed to add key: %s", err)
+						}
+						fmt.Printf("Added Key:   %s\n", ctx.String("add"))
+						fmt.Printf("Key Message: %s\n", ctx.String("message"))
 					}
 
 					return nil
@@ -229,7 +242,8 @@ func generateAPIKey(stateDB *sql.DB, keyMsg string) error {
 		log.Fatalf("error in state db: %s", err)
 	}
 
-	log.Printf("Generated Key: %s\n", apiKey)
+	fmt.Printf("Generated Key: %s\n", apiKey)
+	fmt.Printf("Key Message:   %s\n", keyMsg)
 
 	return nil
 }

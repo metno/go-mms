@@ -18,6 +18,7 @@ package server
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"time"
@@ -32,6 +33,16 @@ func NewStateDB(filePath string) (*sql.DB, error) {
 }
 
 func AddNewApiKey(db *sql.DB, apiKey string, keyMsg string) error {
+	// Check that the key is a base64 encoded 32 byte string
+	rawKey, err := base64.StdEncoding.DecodeString(apiKey)
+	if err != nil {
+		return fmt.Errorf("not a valid base64 api key: %s", err)
+	}
+	if len(rawKey) != 32 {
+		return fmt.Errorf("not a valid mmsd api key")
+	}
+
+	// Insert it into the database. Duplicate entries will be rejected.
 	insertSQL := `INSERT INTO api_keys (apiKey, createdDate, createMsg) VALUES (?, ?, ?)`
 	statement, err := db.Prepare(insertSQL)
 	_, err = statement.Exec(apiKey, time.Now().Format(time.RFC3339), keyMsg)
