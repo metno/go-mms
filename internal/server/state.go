@@ -87,6 +87,32 @@ func ValidateApiKey(db *sql.DB, apiKey string) (bool, error) {
 	return nRows == 1, err
 }
 
+func ListApiKeys(db *sql.DB) error {
+	result, err := db.Query("SELECT apiKey, createdDate, lastUsed, createMsg FROM api_keys ORDER BY createdDate ASC")
+	if err != nil {
+		return fmt.Errorf("failed to list api keys from db: %s", err)
+	}
+	defer result.Close()
+
+	fmt.Printf("%-44s  %-25s  %-25s  %s\n", "API Key", "Created On", "Last Used", "Message")
+	for result.Next() {
+		var apiKey string
+		var createdDate string
+		var lastUsedNull sql.NullString
+		var lastUsed string
+		var createMsg string
+		result.Scan(&apiKey, &createdDate, &lastUsedNull, &createMsg)
+		if lastUsedNull.Valid {
+			lastUsed = lastUsedNull.String
+		} else {
+			lastUsed = "Never Used"
+		}
+		fmt.Printf("%-44s  %-25s  %-25s  %s\n", apiKey, createdDate, lastUsed, createMsg)
+	}
+
+	return nil
+}
+
 func createStateDB(dbFilePath string) (*sql.DB, error) {
 	// Create database file if it does not exist.
 	file, err := os.OpenFile(dbFilePath, os.O_CREATE, 0660)

@@ -138,10 +138,15 @@ func main() {
 						Aliases: []string{"g"},
 						Usage:   "Generate a new API key and add it to the autorized keys.",
 					}),
+					altsrc.NewBoolFlag(&cli.BoolFlag{
+						Name:    "list",
+						Aliases: []string{"l"},
+						Usage:   "List all keys in autorized keys.",
+					}),
 					altsrc.NewStringFlag(&cli.StringFlag{
 						Name:    "add",
 						Aliases: []string{"a"},
-						Usage:   "Add a new API key and add it to the autorized keys.",
+						Usage:   "Add a new API key to autorized keys.",
 						Value:   "None",
 					}),
 					altsrc.NewStringFlag(&cli.StringFlag{
@@ -169,6 +174,11 @@ func main() {
 						err := generateAPIKey(stateDB, ctx.String("message"))
 						if err != nil {
 							log.Fatalf("failed to generate key: %s", err)
+						}
+					} else if ctx.Bool("list") {
+						err := server.ListApiKeys(stateDB)
+						if err != nil {
+							log.Fatalf("failed to list keys: %s", err)
 						}
 					} else if ctx.String("add") != "None" {
 						err := server.AddNewApiKey(stateDB, ctx.String("add"), ctx.String("message"))
