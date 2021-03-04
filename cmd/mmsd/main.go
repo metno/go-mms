@@ -36,7 +36,6 @@ import (
 )
 
 const productionHubName = "default"
-const authKeysFile = "mms_authorized_keys"
 const confFile = "mmsd_config.yml"
 const dbCacheFile = "events.db"
 const dbStateFile = "state.db"
