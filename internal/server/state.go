@@ -32,14 +32,11 @@ func NewStateDB(filePath string) (*sql.DB, error) {
 	return createStateDB(filePath)
 }
 
+// AddNewApiKey adds a given key and message to the keys table. Invalid keys are rejected.
 func AddNewApiKey(db *sql.DB, apiKey string, keyMsg string) error {
-	// Check that the key is a base64 encoded 32 byte string
-	rawKey, err := base64.StdEncoding.DecodeString(apiKey)
+	err := checkKeyFormat(apiKey)
 	if err != nil {
-		return fmt.Errorf("not a valid base64 api key: %s", err)
-	}
-	if len(rawKey) != 32 {
-		return fmt.Errorf("not a valid mmsd api key")
+		return fmt.Errorf("api key rejected: %s", err)
 	}
 
 	// Insert it into the database. Duplicate entries will be rejected.
@@ -53,14 +50,11 @@ func AddNewApiKey(db *sql.DB, apiKey string, keyMsg string) error {
 	return nil
 }
 
+// RemoveApiKey removes a given key from the keys table. Invalid keys are rejected.
 func RemoveApiKey(db *sql.DB, apiKey string) (bool, error) {
-	// Check that the key is a base64 encoded 32 byte string
-	rawKey, err := base64.StdEncoding.DecodeString(apiKey)
+	err := checkKeyFormat(apiKey)
 	if err != nil {
-		return false, fmt.Errorf("not a valid base64 api key: %s", err)
-	}
-	if len(rawKey) != 32 {
-		return false, fmt.Errorf("not a valid mmsd api key")
+		return false, fmt.Errorf("api key rejected: %s", err)
 	}
 
 	// Delete the key from the database
@@ -75,7 +69,13 @@ func RemoveApiKey(db *sql.DB, apiKey string) (bool, error) {
 	return nRows == 1, err
 }
 
+// ValidateApiKey checks a given key against the keys table. Invalid keys are rejected.
 func ValidateApiKey(db *sql.DB, apiKey string) (bool, error) {
+	err := checkKeyFormat(apiKey)
+	if err != nil {
+		return false, fmt.Errorf("api key rejected: %s", err)
+	}
+
 	checkSQL := `UPDATE api_keys SET lastUsed = ? WHERE apiKey = ?`
 	statement, err := db.Prepare(checkSQL)
 	result, err := statement.Exec(time.Now().Format(time.RFC3339), apiKey)
@@ -87,6 +87,7 @@ func ValidateApiKey(db *sql.DB, apiKey string) (bool, error) {
 	return nRows == 1, err
 }
 
+// ListApiKeys lists all keys in the keys table
 func ListApiKeys(db *sql.DB) error {
 	result, err := db.Query("SELECT apiKey, createdDate, lastUsed, createMsg FROM api_keys ORDER BY createdDate ASC")
 	if err != nil {
@@ -110,6 +111,18 @@ func ListApiKeys(db *sql.DB) error {
 		fmt.Printf("%-44s  %-25s  %-25s  %s\n", apiKey, createdDate, lastUsed, createMsg)
 	}
 
+	return nil
+}
+
+// Check that the key is a base64 encoded 32 byte string
+func checkKeyFormat(apiKey string) error {
+	rawKey, err := base64.StdEncoding.DecodeString(apiKey)
+	if err != nil {
+		return fmt.Errorf("the key could not be base64 decoded: %s", err)
+	}
+	if len(rawKey) != 32 {
+		return fmt.Errorf("the key is not 256 bit")
+	}
 	return nil
 }
 
