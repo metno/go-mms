@@ -145,6 +145,12 @@ func main() {
 						Value:   "None",
 					}),
 					altsrc.NewStringFlag(&cli.StringFlag{
+						Name:    "remove",
+						Aliases: []string{"r"},
+						Usage:   "Remove an API key from autorized keys.",
+						Value:   "None",
+					}),
+					altsrc.NewStringFlag(&cli.StringFlag{
 						Name:    "message",
 						Aliases: []string{"m"},
 						Usage:   "A descriptive message for the generated or added key.",
@@ -171,6 +177,16 @@ func main() {
 						}
 						fmt.Printf("Added Key:   %s\n", ctx.String("add"))
 						fmt.Printf("Key Message: %s\n", ctx.String("message"))
+					} else if ctx.String("remove") != "None" {
+						isOk, err := server.RemoveApiKey(stateDB, ctx.String("remove"))
+						if err != nil {
+							log.Fatalf("failed to remove key: %s", err)
+						}
+						if isOk {
+							fmt.Printf("Removed Key: %s\n", ctx.String("remove"))
+						} else {
+							fmt.Printf("Key Not Found: %s\n", ctx.String("remove"))
+						}
 					}
 
 					return nil

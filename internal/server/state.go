@@ -53,6 +53,28 @@ func AddNewApiKey(db *sql.DB, apiKey string, keyMsg string) error {
 	return nil
 }
 
+func RemoveApiKey(db *sql.DB, apiKey string) (bool, error) {
+	// Check that the key is a base64 encoded 32 byte string
+	rawKey, err := base64.StdEncoding.DecodeString(apiKey)
+	if err != nil {
+		return false, fmt.Errorf("not a valid base64 api key: %s", err)
+	}
+	if len(rawKey) != 32 {
+		return false, fmt.Errorf("not a valid mmsd api key")
+	}
+
+	// Delete the key from the database
+	deleteSQL := `DELETE FROM api_keys WHERE apiKey = ?`
+	statement, err := db.Prepare(deleteSQL)
+	result, err := statement.Exec(apiKey)
+	if err != nil {
+		return false, fmt.Errorf("failed to remove api key from db: %s", err)
+	}
+	nRows, err := result.RowsAffected()
+
+	return nRows == 1, err
+}
+
 func ValidateApiKey(db *sql.DB, apiKey string) (bool, error) {
 	checkSQL := `UPDATE api_keys SET lastUsed = ? WHERE apiKey = ?`
 	statement, err := db.Prepare(checkSQL)
