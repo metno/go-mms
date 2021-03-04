@@ -46,6 +46,10 @@ func main() {
 
 	postFlags := []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "api-key",
+			Usage: "The authorized API key",
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "production-hub", // HTTP
 			Usage:   "The production hub HTTP URL",
 			EnvVars: []string{"MMS_PRODUCTION_HUB"},

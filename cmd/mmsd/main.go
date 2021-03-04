@@ -36,14 +36,14 @@ import (
 
 const productionHubName = "default"
 const authKeysFile = "mms_authorized_keys"
+const confFile = "mmsd_config.yml"
+const dbCacheFile = "events.db"
+const dbStateFile = "state.db"
 
 func main() {
 
 	var err error
 	var hubID string
-	var confFile string = "mmsd_config.yml"
-	var dbCacheFile string = "events.db"
-	var dbStateFile string = "state.db"
 
 	// Create an identifier
 	hubID, err = mms.MakeHubIdentifier()
@@ -109,13 +109,13 @@ func main() {
 			cachePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbCacheFile))
 			cacheDB, err := server.NewCacheDB(cachePath)
 			if err != nil {
-				log.Fatalf("could not open cache db: %s", err)
+				log.Fatalf("could not open events db: %s", err)
 			}
 
 			statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbStateFile))
 			stateDB, err := server.NewStateDB(statePath)
 			if err != nil {
-				log.Fatalf("could not open cache db: %s", err)
+				log.Fatalf("could not open state db: %s", err)
 			}
 
 			templates := server.CreateTemplates()
@@ -136,6 +136,7 @@ func main() {
 						Name:    "message",
 						Aliases: []string{"m"},
 						Usage:   "A descriptive message for the key",
+						Value:   "Unnamed key",
 					}),
 				},
 				Action: generateAPIKey(),
@@ -188,6 +189,11 @@ func startWebServer(webService *server.Service, apiURL string) {
 
 func generateAPIKey() func(*cli.Context) error {
 	return func(ctx *cli.Context) error {
+
+		// Seeding the random generator for each call may be risky since it may produce the same
+		// seed twice if the time resolution is low and the function is called often. However, the
+		// function is only called once in a single instance of mmsd, and the database should error
+		// on a duplicate key entry.
 		rand.Seed(time.Now().UnixNano())
 
 		// Generate the key
@@ -195,28 +201,22 @@ func generateAPIKey() func(*cli.Context) error {
 		for i := range byteKey {
 			byteKey[i] = byte(rand.Intn(255))
 		}
-
 		apiKey := base64.StdEncoding.EncodeToString([]byte(byteKey))
 
-		// Write the File
-		outFile, err := os.OpenFile(authKeysFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		// Open the database
+		statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbStateFile))
+		stateDB, err := server.NewStateDB(statePath)
 		if err != nil {
-			panic(err)
+			log.Fatalf("could not open state db: %s", err)
 		}
 
-		defer outFile.Close()
-
-		keyMsg := ctx.String("message")
-		if keyMsg == "" {
-			keyMsg = "Unnamed key"
+		// Save the new key entry
+		err = server.AddNewApiKey(stateDB, apiKey, ctx.String("message"))
+		if err != nil {
+			log.Fatalf("error in state db: %s", err)
 		}
-		keyMsg = fmt.Sprintf("%s (%s)", keyMsg, time.Now().Format(time.RFC3339))
 
-		fileEntry := fmt.Sprintf("api-key %s # %s\n", apiKey, keyMsg)
-		fmt.Printf("Generated: %s", fileEntry)
-		if _, err = outFile.WriteString(fileEntry); err != nil {
-			panic(err)
-		}
+		log.Printf("Generated Key: %s\n", apiKey)
 
 		return nil
 	}
