@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"database/sql"
 	"encoding/base64"
 	"fmt"
 	"log"
@@ -35,7 +36,6 @@ import (
 )
 
 const productionHubName = "default"
-const authKeysFile = "mms_authorized_keys"
 const confFile = "mmsd_config.yml"
 const dbCacheFile = "events.db"
 const dbStateFile = "state.db"
@@ -129,17 +129,77 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:  "keygen",
-				Usage: fmt.Sprintf("Generate a new API key and add it to the %s file", authKeysFile),
+				Name:  "keys",
+				Usage: fmt.Sprintf("Manage API keys."),
 				Flags: []cli.Flag{
+					altsrc.NewBoolFlag(&cli.BoolFlag{
+						Name:    "gen",
+						Aliases: []string{"g"},
+						Usage:   "Generate a new API key and add it to the autorized keys.",
+					}),
+					altsrc.NewBoolFlag(&cli.BoolFlag{
+						Name:    "list",
+						Aliases: []string{"l"},
+						Usage:   "List all keys in autorized keys.",
+					}),
+					altsrc.NewStringFlag(&cli.StringFlag{
+						Name:    "add",
+						Aliases: []string{"a"},
+						Usage:   "Add a new API key to autorized keys.",
+						Value:   "None",
+					}),
+					altsrc.NewStringFlag(&cli.StringFlag{
+						Name:    "remove",
+						Aliases: []string{"r"},
+						Usage:   "Remove an API key from autorized keys.",
+						Value:   "None",
+					}),
 					altsrc.NewStringFlag(&cli.StringFlag{
 						Name:    "message",
 						Aliases: []string{"m"},
-						Usage:   "A descriptive message for the key",
+						Usage:   "A descriptive message for the generated or added key.",
 						Value:   "Unnamed key",
 					}),
 				},
-				Action: generateAPIKey(),
+				Action: func(ctx *cli.Context) error {
+					// Open the database
+					statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbStateFile))
+					stateDB, err := server.NewStateDB(statePath)
+					if err != nil {
+						log.Fatalf("could not open state db: %s", err)
+					}
+
+					if ctx.Bool("gen") {
+						err := generateAPIKey(stateDB, ctx.String("message"))
+						if err != nil {
+							log.Fatalf("failed to generate key: %s", err)
+						}
+					} else if ctx.Bool("list") {
+						err := server.ListApiKeys(stateDB)
+						if err != nil {
+							log.Fatalf("failed to list keys: %s", err)
+						}
+					} else if ctx.String("add") != "None" {
+						err := server.AddNewApiKey(stateDB, ctx.String("add"), ctx.String("message"))
+						if err != nil {
+							log.Fatalf("failed to add key: %s", err)
+						}
+						fmt.Printf("Added Key:   %s\n", ctx.String("add"))
+						fmt.Printf("Key Message: %s\n", ctx.String("message"))
+					} else if ctx.String("remove") != "None" {
+						isOk, err := server.RemoveApiKey(stateDB, ctx.String("remove"))
+						if err != nil {
+							log.Fatalf("failed to remove key: %s", err)
+						}
+						if isOk {
+							fmt.Printf("Removed Key: %s\n", ctx.String("remove"))
+						} else {
+							fmt.Printf("Key Not Found: %s\n", ctx.String("remove"))
+						}
+					}
+
+					return nil
+				},
 			},
 		},
 	}
@@ -187,37 +247,28 @@ func startWebServer(webService *server.Service, apiURL string) {
 	log.Fatal(server.ListenAndServe())
 }
 
-func generateAPIKey() func(*cli.Context) error {
-	return func(ctx *cli.Context) error {
+func generateAPIKey(stateDB *sql.DB, keyMsg string) error {
+	// Seeding the random generator for each call may be risky since it may produce the same
+	// seed twice if the time resolution is low and the function is called often. However, the
+	// function is only called once in a single instance of mmsd, and the database should error
+	// on a duplicate key entry.
+	rand.Seed(time.Now().UnixNano())
 
-		// Seeding the random generator for each call may be risky since it may produce the same
-		// seed twice if the time resolution is low and the function is called often. However, the
-		// function is only called once in a single instance of mmsd, and the database should error
-		// on a duplicate key entry.
-		rand.Seed(time.Now().UnixNano())
-
-		// Generate the key
-		byteKey := make([]byte, 32)
-		for i := range byteKey {
-			byteKey[i] = byte(rand.Intn(255))
-		}
-		apiKey := base64.StdEncoding.EncodeToString([]byte(byteKey))
-
-		// Open the database
-		statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbStateFile))
-		stateDB, err := server.NewStateDB(statePath)
-		if err != nil {
-			log.Fatalf("could not open state db: %s", err)
-		}
-
-		// Save the new key entry
-		err = server.AddNewApiKey(stateDB, apiKey, ctx.String("message"))
-		if err != nil {
-			log.Fatalf("error in state db: %s", err)
-		}
-
-		log.Printf("Generated Key: %s\n", apiKey)
-
-		return nil
+	// Generate the key
+	byteKey := make([]byte, 32)
+	for i := range byteKey {
+		byteKey[i] = byte(rand.Intn(255))
 	}
+	apiKey := base64.StdEncoding.EncodeToString([]byte(byteKey))
+
+	// Save the new key entry
+	err := server.AddNewApiKey(stateDB, apiKey, keyMsg)
+	if err != nil {
+		log.Fatalf("error in state db: %s", err)
+	}
+
+	fmt.Printf("Generated Key: %s\n", apiKey)
+	fmt.Printf("Key Message:   %s\n", keyMsg)
+
+	return nil
 }
