@@ -53,9 +53,9 @@ func TestGetAllEvents(t *testing.T) {
 	}
 }
 
-func TestNewCacheDB(t *testing.T) {
+func TestNewEventsDB(t *testing.T) {
 	dbTestFile := fmt.Sprintf("/tmp/mmsdtestsqlite%d.db", rand.Int())
-	db, err := NewCacheDB(dbTestFile)
+	db, err := NewEventsDB(dbTestFile)
 	if err != nil {
 		t.Errorf("failed to create db: %s", err)
 	}
@@ -69,13 +69,13 @@ func TestNewCacheDB(t *testing.T) {
 }
 
 func NewMockService() (*Service, sqlmock.Sqlmock, error) {
-	cacheDB, mock, err := sqlmock.New()
+	eventsDB, mock, err := sqlmock.New()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create mock cache DB: %s", err)
+		return nil, nil, fmt.Errorf("failed to create mock events db: %s", err)
 	}
 
 	templates := CreateTemplates()
-	webService := NewService(templates, cacheDB, nil, "")
+	webService := NewService(templates, eventsDB, nil, "")
 
 	return webService, mock, nil
 }

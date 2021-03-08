@@ -37,7 +37,7 @@ import (
 
 const productionHubName = "default"
 const confFile = "mmsd_config.yml"
-const dbCacheFile = "events.db"
+const dbEventsFile = "events.db"
 const dbStateFile = "state.db"
 
 func main() {
@@ -106,8 +106,8 @@ func main() {
 				nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
 			}
 
-			cachePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbCacheFile))
-			cacheDB, err := server.NewCacheDB(cachePath)
+			eventsPath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbEventsFile))
+			eventsDB, err := server.NewEventsDB(eventsPath)
 			if err != nil {
 				log.Fatalf("could not open events db: %s", err)
 			}
@@ -119,7 +119,7 @@ func main() {
 			}
 
 			templates := server.CreateTemplates()
-			webService := server.NewService(templates, cacheDB, stateDB, natsURL)
+			webService := server.NewService(templates, eventsDB, stateDB, natsURL)
 
 			startNATSServer(natsServer, natsURL)
 			startEventHistoryPurger(webService)
@@ -222,14 +222,14 @@ func startNATSServer(natsServer *nats.Server, natsURL string) {
 
 func startEventHistoryPurger(webService *server.Service) {
 	log.Printf("Starting event history purger...")
-	// Start a separate go routine for regularly deleting old events from the events cache db.
+	// Start a separate go routine for regularly deleting old events from the events db.
 	ticker := time.NewTicker(1 * time.Hour)
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
 				if err := webService.DeleteOldEvents(time.Now().AddDate(0, 0, -3)); err != nil {
-					log.Printf("failed to delete old events from cache db: %s", err)
+					log.Printf("failed to delete old events from events db: %s", err)
 				}
 			}
 		}
