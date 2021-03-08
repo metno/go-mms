@@ -40,7 +40,7 @@ import (
 
 // Service is a struct that wires up all data that is needed for this service to run.
 type Service struct {
-	cacheDB       *sql.DB
+	eventsDB      *sql.DB
 	stateDB       *sql.DB
 	about         *About
 	htmlTemplates *template.Template
@@ -54,9 +54,9 @@ type HTTPServerError struct {
 }
 
 // NewService creates a service struct, containing all that is needed for a mmsd server to run.
-func NewService(templates *template.Template, cacheDB *sql.DB, stateDB *sql.DB, natsURL string) *Service {
+func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB, natsURL string) *Service {
 	service := Service{
-		cacheDB:       cacheDB,
+		eventsDB:      eventsDB,
 		stateDB:       stateDB,
 		about:         aboutMMSd(),
 		htmlTemplates: templates,
@@ -192,7 +192,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 		return
 	}
 
-	cacheProductEvent(service.cacheDB, &pEvent)
+	saveProductEvent(service.eventsDB, &pEvent)
 
 	err = mms.MakeProductEvent(service.NatsURL, &pEvent)
 	if err != nil {

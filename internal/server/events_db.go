@@ -29,17 +29,17 @@ import (
 	"github.com/metno/go-mms/pkg/mms"
 )
 
-// NewCacheDB returns an sql database object, initialized with necessary tables.
-func NewCacheDB(filePath string) (*sql.DB, error) {
+// NewEventsDB returns an sql database object, initialized with necessary tables.
+func NewEventsDB(filePath string) (*sql.DB, error) {
 	if filePath == "" {
 		return nil, fmt.Errorf("empty file path for sqlite database")
 	}
-	return createCacheDB(filePath)
+	return createEventsDB(filePath)
 }
 
-// GetAllEvents returns all product events it can find in the cache database.
+// GetAllEvents returns all product events in the events database.
 func (service *Service) GetAllEvents(ctx context.Context) ([]*mms.ProductEvent, error) {
-	rows, err := service.cacheDB.QueryContext(ctx, "SELECT * FROM events")
+	rows, err := service.eventsDB.QueryContext(ctx, "SELECT * FROM events")
 	if err != nil {
 		return nil, fmt.Errorf("could not access db to get events: %s", err)
 	}
@@ -65,11 +65,11 @@ func (service *Service) GetAllEvents(ctx context.Context) ([]*mms.ProductEvent, 
 // DeleteOldEvents removes events older than a specified datetime.
 func (service *Service) DeleteOldEvents(maxAge time.Time) error {
 	deleteOldEvents := `DELETE FROM events WHERE createdAt < "` + maxAge.Format(time.RFC3339) + `";`
-	_, err := service.cacheDB.Exec(deleteOldEvents)
+	_, err := service.eventsDB.Exec(deleteOldEvents)
 	return err
 }
 
-func cacheProductEvent(db *sql.DB, event *mms.ProductEvent) error {
+func saveProductEvent(db *sql.DB, event *mms.ProductEvent) error {
 
 	payload, err := json.Marshal(event)
 	if err != nil {
@@ -86,7 +86,7 @@ func cacheProductEvent(db *sql.DB, event *mms.ProductEvent) error {
 	return nil
 }
 
-func createCacheDB(dbFilePath string) (*sql.DB, error) {
+func createEventsDB(dbFilePath string) (*sql.DB, error) {
 	// Create file if it does not exist.
 	file, err := os.OpenFile(dbFilePath, os.O_CREATE, 0660)
 	if err != nil {
