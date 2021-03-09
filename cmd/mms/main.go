@@ -75,6 +75,11 @@ func main() {
 			EnvVars: []string{"MMS_EVENT_INTERVAL"},
 			Value:   0,
 		}),
+		altsrc.NewBoolFlag(&cli.BoolFlag{
+			Name:  "insecure",
+			Usage: "Accept invalid certificates, useful for testing with self-signed ones.",
+			Value: false,
+		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:  "type",
 			Usage: "Type of event. Default is created, but you can set the following type: created, updated, deleted.",

@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/metno/go-mms/internal/server"
+	"github.com/metno/go-mms/pkg/gencert"
 	"github.com/metno/go-mms/pkg/mms"
 
 	nats "github.com/nats-io/nats-server/v2/server"
@@ -79,6 +80,45 @@ func main() {
 			Usage: "Specify the port number for the NATS listening port.",
 			Value: 4222,
 		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    "certificate",
+			Aliases: []string{"cert"},
+			Usage:   "Specify the path to the certificate.",
+			Value:   "cert.pem",
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "key",
+			Usage: "Specify the path to the key.",
+			Value: "key.pem",
+		}),
+		altsrc.NewBoolFlag(&cli.BoolFlag{
+			Name:  "tls",
+			Usage: "Enable TLS",
+			Value: false,
+		}),
+	}
+
+	certFlags := []cli.Flag{
+		&cli.StringFlag{
+			Name:  "common-name",
+			Usage: "CN of the certificate.",
+			Value: "localhost",
+		},
+		&cli.StringFlag{
+			Name:  "alternative-names",
+			Usage: "Comma separated list of Alternative Names for certificate generation",
+			Value: "",
+		},
+		&cli.StringFlag{
+			Name:  "country",
+			Usage: "Country abbreviation for the issued certificate.",
+			Value: "NO",
+		},
+		&cli.BoolFlag{
+			Name:  "overwrite",
+			Usage: "If key.pem exists from before, it won't be overwritten unless --overwrite is specified.",
+			Value: false,
+		},
 	}
 
 	app := &cli.App{
@@ -123,7 +163,7 @@ func main() {
 
 			startNATSServer(natsServer, natsURL)
 			startEventHistoryPurger(webService)
-			startWebServer(webService, apiURL)
+			startWebServer(webService, apiURL, ctx.Bool("tls"), ctx.String("certificate"), ctx.String("key"))
 
 			return nil
 		},
@@ -203,6 +243,20 @@ func main() {
 					return nil
 				},
 			},
+			{
+				Name:    "generate-certificate",
+				Aliases: []string{"gencert"},
+				Usage:   "Generate a private key (key.pem) and X509 certificate (cert.pem).",
+				Flags:   certFlags,
+				Action:  gencert.GenerateCertificate(),
+			},
+			{
+				Name:    "generate-csr",
+				Aliases: []string{"gencsr"},
+				Usage:   "Generate a private key (key.pem) and a signing request (cert.csr).",
+				Flags:   certFlags,
+				Action:  gencert.GenerateCSR(),
+			},
 		},
 	}
 
@@ -238,7 +292,7 @@ func startEventHistoryPurger(webService *server.Service) {
 	}()
 }
 
-func startWebServer(webService *server.Service, apiURL string) {
+func startWebServer(webService *server.Service, apiURL string, tlsEnabled bool, certificatePath string, keyPath string) {
 	server := &http.Server{
 		Addr:         apiURL,
 		Handler:      webService.Router,
@@ -246,7 +300,11 @@ func startWebServer(webService *server.Service, apiURL string) {
 		IdleTimeout:  10 * time.Second,
 	}
 	log.Printf("Starting webserver on %s ...\n", server.Addr)
-	log.Fatal(server.ListenAndServe())
+	if tlsEnabled {
+		log.Fatal(server.ListenAndServeTLS(certificatePath, keyPath))
+	} else {
+		log.Fatal(server.ListenAndServe())
+	}
 }
 
 func generateAPIKey(stateDB *sql.DB, keyMsg string) error {
