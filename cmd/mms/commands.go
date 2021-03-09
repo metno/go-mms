@@ -31,7 +31,8 @@ import (
 func listAllEvents() func(*cli.Context) error {
 	return func(ctx *cli.Context) error {
 		events := []*mms.ProductEvent{}
-		newEvents, err := mms.ListProductEvents(ctx.String("production-hub"), mms.Options{})
+		url := ctx.String("production-hub") + "/api/v1/events"
+		newEvents, err := mms.ListProductEvents(url, mms.Options{})
 		if err != nil {
 			return fmt.Errorf("failed to access events: %v", err)
 		}
