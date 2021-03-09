@@ -94,7 +94,7 @@ func postEvent() func(*cli.Context) error {
 
 		// If 201 is not returned, panic with http response
 		if httpResp.StatusCode != http.StatusCreated {
-			log.Fatalf("Product event not posted: %s", httpResp.Status)
+			log.Fatalln(httpResp.Status)
 		}
 
 		return nil

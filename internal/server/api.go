@@ -192,7 +192,12 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 		return
 	}
 
-	saveProductEvent(service.eventsDB, &pEvent)
+	err = saveProductEvent(service.eventsDB, &pEvent)
+	if err != nil {
+		log.Printf("Could not save to database: %v", err)
+		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusInternalServerError)
+		return
+	}
 
 	err = mms.MakeProductEvent(service.NatsURL, &pEvent)
 	if err != nil {
