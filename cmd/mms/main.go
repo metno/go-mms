@@ -39,7 +39,7 @@ func main() {
 
 	subscriptionFlags := []cli.Flag{
 		&cli.StringFlag{
-			Name:  "production-hub", // NATS, but
+			Name:  "production-hub", // NATS
 			Usage: "The production hub NATS URL",
 		},
 	}
