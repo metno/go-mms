@@ -78,7 +78,7 @@ func TestListProductEvents(t *testing.T) {
 		fmt.Fprintln(w, correctEventData)
 	}))
 
-	list, err := ListProductEvents(ts.URL, Options{})
+	list, err := ListProductEvents(ts.URL)
 	if err != nil {
 		t.Errorf("Expected no errors; Got %v", err)
 	}
@@ -96,7 +96,7 @@ func TestPostProductEvent(t *testing.T) {
 	eClient := newMockCloudeventsClient()
 
 	event := ProductEvent{ProductionHub: "test-hub", Product: "test"}
-	err := eClient.PostProductEvent(&event, Options{})
+	err := eClient.PostProductEvent(&event)
 
 	if err != nil {
 		t.Errorf("Expected no errors; Got this error: %s", err)
