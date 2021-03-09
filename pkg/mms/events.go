@@ -112,7 +112,6 @@ func (eClient *EventClient) WatchProductEvents(callback ProductEventCallback, op
 
 // ListProductEvents will give all available events from the specified events cache.
 func ListProductEvents(apiURL string, opts Options) ([]*ProductEvent, error) {
-	events := []*ProductEvent{}
 
 	resp, err := http.Get(apiURL)
 	if err != nil {
@@ -120,18 +119,11 @@ func ListProductEvents(apiURL string, opts Options) ([]*ProductEvent, error) {
 	}
 	defer resp.Body.Close()
 
-	event := cloudevents.NewEvent()
-	if err = json.NewDecoder(resp.Body).Decode(&event); err != nil {
+	events := []*ProductEvent{}
+	err = json.NewDecoder(resp.Body).Decode(&events)
+	if err != nil {
 		return nil, fmt.Errorf("failed to decode event: %v", err)
 	}
-
-	eventData := ProductEvent{}
-	if err = event.DataAs(&eventData); err != nil {
-		return nil, fmt.Errorf("failed to decode message in event: %v", err)
-	}
-	eventData.ProductionHub = event.Source()
-
-	events = append(events, &eventData)
 
 	return events, nil
 }
