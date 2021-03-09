@@ -31,7 +31,11 @@ import (
 func listAllEvents() func(*cli.Context) error {
 	return func(ctx *cli.Context) error {
 		events := []*mms.ProductEvent{}
-		newEvents, err := mms.ListProductEvents(ctx.String("production-hub"), mms.Options{})
+		if ctx.String("production-hub") == "" {
+			return fmt.Errorf("No production-hub specified")
+		}
+		url := ctx.String("production-hub") + "/api/v1/events"
+		newEvents, err := mms.ListProductEvents(url, mms.Options{})
 		if err != nil {
 			return fmt.Errorf("failed to access events: %v", err)
 		}
@@ -73,7 +77,9 @@ func postEvent() func(*cli.Context) error {
 			NextEventAt:     time.Now().Add(time.Second * time.Duration(ctx.Int("event-interval"))),
 		}
 
-		// hardcoded to test-server. Should be findable from ProductionHub?
+		if ctx.String("production-hub") == "" {
+			return fmt.Errorf("No production-hub specified")
+		}
 		url := ctx.String("production-hub") + "/api/v1/events"
 
 		// Create a json-payload from productEvent
