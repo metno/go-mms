@@ -112,7 +112,7 @@ func main() {
 				Aliases: []string{"p"},
 				Usage:   "Post a message about a product update.",
 				Before: func(ctx *cli.Context) error {
-					inputSource, err := altsrc.NewYamlSourceFromFlagFunc("config")(ctx)
+					inputSource, err := altsrc.NewYamlSourceFromFile(ctx.String("config"))
 					if err != nil {
 						// If there is no file, just return without error
 						return nil
