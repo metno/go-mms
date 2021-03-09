@@ -81,9 +81,10 @@ func main() {
 			Value: 4222,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:  "certificate",
-			Usage: "Specify the path to the certificate.",
-			Value: "cert.pem",
+			Name:    "certificate",
+			Aliases: []string{"cert"},
+			Usage:   "Specify the path to the certificate.",
+			Value:   "cert.pem",
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:  "key",
