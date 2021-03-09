@@ -78,11 +78,16 @@ func saveProductEvent(db *sql.DB, event *mms.ProductEvent) error {
 
 	insertEventSQL := `INSERT INTO events(createdAt,event) VALUES (?, ?)`
 	statement, err := db.Prepare(insertEventSQL)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %s", err)
+	}
 	_, err = statement.Exec(event.CreatedAt.Format(time.RFC3339), payload)
 	if err != nil {
+
 		return fmt.Errorf("failed to store event in db: %s", err)
 	}
 
+	_ = statement.Close()
 	return nil
 }
 
