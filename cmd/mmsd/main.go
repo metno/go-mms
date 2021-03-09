@@ -196,6 +196,8 @@ func main() {
 						} else {
 							fmt.Printf("Key Not Found: %s\n", ctx.String("remove"))
 						}
+					} else {
+						fmt.Println("No action selected, please refer to help by using 'keys --help' or 'keys -h'")
 					}
 
 					return nil
