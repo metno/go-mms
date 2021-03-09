@@ -20,3 +20,7 @@ mms_authorized_keys
 # Config
 /mms_config.yml
 /mmsd_config.yml
+
+# Certificates
+*.csr
+*.pem
