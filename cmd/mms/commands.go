@@ -36,7 +36,7 @@ func listAllEvents() func(*cli.Context) error {
 			return fmt.Errorf("No production-hub specified")
 		}
 		url := ctx.String("production-hub") + "/api/v1/events"
-		newEvents, err := mms.ListProductEvents(url, mms.Options{})
+		newEvents, err := mms.ListProductEvents(url)
 		if err != nil {
 			return fmt.Errorf("failed to access events: %v", err)
 		}
@@ -58,7 +58,7 @@ func subscribeEvents() func(*cli.Context) error {
 				errChannel <- err
 				return
 			}
-			mmsClient.WatchProductEvents(productReceiver, mms.Options{})
+			mmsClient.WatchProductEvents(productReceiver)
 		}(ctx)
 		select {
 		case err := <-errChannel:

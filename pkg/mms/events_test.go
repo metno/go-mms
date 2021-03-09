@@ -46,21 +46,13 @@ var erroneousEventData = `
 }`
 
 var correctEventData = `
-{
-	"data": {
+[{
 	"Product": "Arome Arctic",
 	"ProductionHub": "ecflow.modellprod",
 	"Product": "arome_arctic_sfx_2_5km",
 	"CreatedAt": "2020-08-26T12:18:48.281847242+02:00",
 	"ProductLocation": ""
-	},
-	"datacontenttype": "application/json",
-	"id": "0173c5ce-e1fb-11ea-9c78-6b708419aa07",
-	"source": "ecflow/modellprod",
-	"specversion": "1.0",
-	"subject": "arome.arctic",
-	"type": "no.met.Product.created.v1"
-}`
+}]`
 
 func TestProductEvent(t *testing.T) {
 	eventData := ProductEvent{}
@@ -78,7 +70,7 @@ func TestListProductEvents(t *testing.T) {
 		fmt.Fprintln(w, correctEventData)
 	}))
 
-	list, err := ListProductEvents(ts.URL, Options{})
+	list, err := ListProductEvents(ts.URL)
 	if err != nil {
 		t.Errorf("Expected no errors; Got %v", err)
 	}
@@ -96,7 +88,7 @@ func TestPostProductEvent(t *testing.T) {
 	eClient := newMockCloudeventsClient()
 
 	event := ProductEvent{ProductionHub: "test-hub", Product: "test"}
-	err := eClient.PostProductEvent(&event, Options{})
+	err := eClient.PostProductEvent(&event)
 
 	if err != nil {
 		t.Errorf("Expected no errors; Got this error: %s", err)

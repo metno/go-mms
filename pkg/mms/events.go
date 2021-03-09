@@ -42,12 +42,6 @@ type ProductEvent struct {
 	NextEventAt     time.Time // timestamp of the next event
 }
 
-// Options defines the filtering options you can set to limit what kinds of events you will receive.
-type Options struct {
-	Product       string
-	ProductionHub string
-}
-
 // ProductEventCallback specifies the function signature for receiving ProductEvent events.
 type ProductEventCallback func(e *ProductEvent) error
 
@@ -102,7 +96,7 @@ func NewNatsSenderClient(natsURL string) (*EventClient, error) {
 }
 
 // WatchProductEvents will call your callback function on each incoming event from the MMS Nats server.
-func (eClient *EventClient) WatchProductEvents(callback ProductEventCallback, opts Options) {
+func (eClient *EventClient) WatchProductEvents(callback ProductEventCallback) {
 	for {
 		if err := eClient.ceClient.StartReceiver(context.Background(), productReceiver(callback)); err != nil {
 			log.Printf("failed to start nats receiver, %s", err.Error())
@@ -111,7 +105,7 @@ func (eClient *EventClient) WatchProductEvents(callback ProductEventCallback, op
 }
 
 // ListProductEvents will give all available events from the specified events cache.
-func ListProductEvents(apiURL string, opts Options) ([]*ProductEvent, error) {
+func ListProductEvents(apiURL string) ([]*ProductEvent, error) {
 
 	resp, err := http.Get(apiURL)
 	if err != nil {
@@ -136,7 +130,7 @@ func MakeProductEvent(natsURL string, pEvent *ProductEvent) error {
 		return fmt.Errorf("failed to post event to messaging service: %v", err)
 	}
 
-	err = mmsClient.PostProductEvent(pEvent, Options{})
+	err = mmsClient.PostProductEvent(pEvent)
 	if err != nil {
 		return fmt.Errorf("failed to post event to messaging service: %v", err)
 	}
@@ -147,7 +141,7 @@ func MakeProductEvent(natsURL string, pEvent *ProductEvent) error {
 }
 
 // PostProductEvent generates an event and sends it to the specified messaging service.
-func (eClient *EventClient) PostProductEvent(pEvent *ProductEvent, opts Options) error {
+func (eClient *EventClient) PostProductEvent(pEvent *ProductEvent) error {
 	event := cloudevents.NewEvent()
 	event.SetID(uuid.New().String())
 	event.SetType("no.met.mms.product.v1")
