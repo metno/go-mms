@@ -42,6 +42,12 @@ func main() {
 			Name:  "production-hub", // NATS
 			Usage: "The production hub NATS URL",
 		},
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    "command",
+			Usage:   "File location of script or executable run after incoming event",
+			Value:   "None",
+			Aliases: []string{"cmd"},
+		}),
 	}
 
 	postFlags := []cli.Flag{
@@ -108,7 +114,7 @@ func main() {
 			{
 				Name:    "subscribe",
 				Aliases: []string{"s"},
-				Usage:   "Listen for new incoming events, get them printed continuously. Optionally, set up filters to limit events you get.",
+				Usage:   "Listen for new incoming events, get them printed continuously.",
 				Flags:   subscriptionFlags,
 				Action:  subscribeEvents(),
 			},
