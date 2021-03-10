@@ -83,13 +83,13 @@ func main() {
 		altsrc.NewIntFlag(&cli.IntFlag{
 			Name:    "counter",
 			Aliases: []string{"i"},
-			Usage:   "A counter value if the event is one of a series of connected events.",
+			Usage:   "A counter value for when the event is one of a series of connected events.",
 			Value:   1,
 		}),
 		altsrc.NewIntFlag(&cli.IntFlag{
 			Name:    "ntotal",
 			Aliases: []string{"n"},
-			Usage:   "The total number of events to expect for this series.",
+			Usage:   "The total number of events to expect for this series of connected events.",
 			Value:   1,
 		}),
 		altsrc.NewBoolFlag(&cli.BoolFlag{
