@@ -20,3 +20,5 @@ parsers:
       loop: yes
       method: no
       macro: no
+
+comment: no
