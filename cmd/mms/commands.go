@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os/exec"
 	"time"
 
 	"github.com/metno/go-mms/pkg/mms"
@@ -58,7 +59,14 @@ func subscribeEvents() func(*cli.Context) error {
 				errChannel <- err
 				return
 			}
-			mmsClient.WatchProductEvents(productReceiver)
+			if ctx.String("command") != "None" {
+				callback := createExecutableCallback(ctx.String("command"))
+				mmsClient.WatchProductEvents(callback)
+			} else {
+				// Same as Aviso-echo
+				mmsClient.WatchProductEvents(productReceiver)
+			}
+
 		}(ctx)
 		select {
 		case err := <-errChannel:
@@ -120,4 +128,30 @@ func postEvent() func(*cli.Context) error {
 func productReceiver(event *mms.ProductEvent) error {
 	fmt.Println(event)
 	return nil
+}
+
+func createExecutableCallback(filepath string) func(event *mms.ProductEvent) error {
+	_, err := exec.LookPath(filepath)
+	fmt.Println(filepath)
+	if err != nil {
+		panic(fmt.Errorf("command executable not found, %s", err.Error()))
+
+	}
+
+	return func(event *mms.ProductEvent) error {
+		command := exec.Command(filepath)
+
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		command.Stdout = &stdout
+		command.Stderr = &stderr
+		err = command.Run()
+		if err != nil {
+			fmt.Println("Failed", err, stderr.String())
+			return fmt.Errorf("Failed to run executable, %s", err.Error())
+		}
+		fmt.Println(stdout.String())
+		return nil
+	}
+
 }
