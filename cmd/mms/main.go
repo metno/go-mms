@@ -71,7 +71,7 @@ func main() {
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:  "reftime",
-			Usage: "The event reference time.",
+			Usage: "The event reference time in RFC3339 format ('2006-01-02T15:04:05Z' or '2006-01-02T15:04:05+01:00').",
 			Value: "now",
 		}),
 		altsrc.NewIntFlag(&cli.IntFlag{
