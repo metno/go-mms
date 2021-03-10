@@ -75,7 +75,11 @@ func postEvent() func(*cli.Context) error {
 		if ctx.String("reftime") != "now" {
 			refTime, err = time.Parse(time.RFC3339, ctx.String("reftime"))
 			if err != nil {
-				log.Fatalf("Could not parse reftime: %v", err)
+				log.Println("Could not parse reftime")
+				log.Println("Please use RFC 3339 format:")
+				log.Println("- 'YYYY-MM-DDTHH:mm:ssZ' for UTC")
+				log.Println("- 'YYYY-MM-DDTHH:mm:ss±HH:mm' for other time zones")
+				log.Fatalf("Parser error: %v", err)
 			}
 		}
 
