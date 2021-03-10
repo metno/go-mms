@@ -33,18 +33,18 @@ func main() {
 	listFlags := []cli.Flag{
 		&cli.StringFlag{
 			Name:  "production-hub", // HTTP
-			Usage: "The production hub HTTP URL",
+			Usage: "The production hub HTTP URL.",
 		},
 	}
 
 	subscriptionFlags := []cli.Flag{
 		&cli.StringFlag{
 			Name:  "production-hub", // NATS
-			Usage: "The production hub NATS URL",
+			Usage: "The production hub NATS URL.",
 		},
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "command",
-			Usage:   "File location of script or executable run after incoming event",
+			Usage:   "File location of script or executable run after incoming event.",
 			Value:   "None",
 			Aliases: []string{"cmd"},
 		}),
@@ -53,11 +53,11 @@ func main() {
 	postFlags := []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:  "api-key",
-			Usage: "The authorized API key",
+			Usage: "The authorized API key.",
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "production-hub", // HTTP
-			Usage:   "The production hub HTTP URL",
+			Usage:   "The production hub HTTP URL.",
 			EnvVars: []string{"MMS_PRODUCTION_HUB"},
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
@@ -107,7 +107,7 @@ func main() {
 			{
 				Name:    "list-all",
 				Aliases: []string{"ls"},
-				Usage:   "List all the latest available events in the system",
+				Usage:   "List all the latest available events in the system.",
 				Flags:   listFlags,
 				Action:  listAllEvents(),
 			},
