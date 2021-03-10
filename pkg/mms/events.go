@@ -38,6 +38,9 @@ type ProductEvent struct {
 	Product         string // shortname, i.e., file(object) name without timestamp
 	ProductLocation string // Storage system + protocol + filename or object name
 	ProductionHub   string
+	Counter         int
+	TotalCount      int
+	RefTime         time.Time // Reference time
 	CreatedAt       time.Time // timestamp of the produced file (object)
 	NextEventAt     time.Time // timestamp of the next event
 }
