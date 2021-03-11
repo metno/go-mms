@@ -33,7 +33,7 @@ func main() {
 	listFlags := []cli.Flag{
 		&cli.StringFlag{
 			Name:  "production-hub", // HTTP
-			Usage: "The production hub HTTP URL.",
+			Usage: "The production hub URL.",
 		},
 	}
 
@@ -62,7 +62,7 @@ func main() {
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "production-hub", // HTTP
-			Usage:   "The production hub HTTP URL.",
+			Usage:   "The production hub URL.",
 			EnvVars: []string{"MMS_PRODUCTION_HUB"},
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
