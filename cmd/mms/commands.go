@@ -69,11 +69,28 @@ func subscribeEvents() func(*cli.Context) error {
 
 func postEvent() func(*cli.Context) error {
 	return func(ctx *cli.Context) error {
+		var err error
+
+		refTime := time.Now()
+		if ctx.String("reftime") != "now" {
+			refTime, err = time.Parse(time.RFC3339, ctx.String("reftime"))
+			if err != nil {
+				log.Println("Could not parse reftime")
+				log.Println("Please use RFC 3339 format:")
+				log.Println("- '2006-01-02T15:04:05Z' for UTC")
+				log.Println("- '2006-01-02T15:04:05+01:00' for other time zones")
+				log.Fatalf("Parser error: %v", err)
+			}
+		}
+
 		productEvent := mms.ProductEvent{
 			JobName:         ctx.String("jobname"),
 			Product:         ctx.String("product"),
 			ProductLocation: ctx.String("product-location"),
 			ProductionHub:   ctx.String("production-hub"),
+			Counter:         ctx.Int("counter"),
+			TotalCount:      ctx.Int("ntotal"),
+			RefTime:         refTime,
 			CreatedAt:       time.Now(),
 			NextEventAt:     time.Now().Add(time.Second * time.Duration(ctx.Int("event-interval"))),
 		}
