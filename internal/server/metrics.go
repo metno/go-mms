@@ -31,10 +31,9 @@ type MetricsOpts struct {
 }
 
 type metrics struct {
-	registry      *prometheus.Registry
-	counter       *prometheus.CounterVec
-	duration      *prometheus.HistogramVec
-	UptimeCounter *prometheus.Counter
+	registry *prometheus.Registry
+	counter  *prometheus.CounterVec
+	duration *prometheus.HistogramVec
 }
 
 func NewServiceMetrics(opts MetricsOpts) *metrics {

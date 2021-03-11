@@ -15,13 +15,13 @@ type Product struct {
 
 type Productstatus struct {
 	Products map[string]Product
-	gaugeVec *prometheus.GaugeVec
+	GaugeVec *prometheus.GaugeVec
 }
 
 func NewProductstatus(m *metrics) *Productstatus {
 	productstatus := Productstatus{
 		Products: make(map[string]Product),
-		gaugeVec: prometheus.NewGaugeVec(
+		GaugeVec: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Subsystem: "mmsd",
 				Name:      "product_delay",
@@ -34,7 +34,7 @@ func NewProductstatus(m *metrics) *Productstatus {
 		),
 	}
 
-	m.MustRegister(productstatus.gaugeVec)
+	m.MustRegister(productstatus.GaugeVec)
 
 	return &productstatus
 }
@@ -61,7 +61,7 @@ func (p *Productstatus) GetProductDelays(t time.Time) {
 func (p *Productstatus) UpdateMetrics() {
 	for k, v := range p.Products {
 		diff := time.Now().Sub(v.NextInstanceExpected)
-		p.gaugeVec.WithLabelValues(k).Set(diff.Seconds())
+		p.GaugeVec.WithLabelValues(k).Set(diff.Seconds())
 	}
 }
 

@@ -7,7 +7,7 @@ import (
 	"github.com/metno/go-mms/pkg/mms"
 )
 
-func Test_pushEvent(t *testing.T) {
+func TestPushEvent(t *testing.T) {
 	metrics := NewServiceMetrics(MetricsOpts{})
 	ps := NewProductstatus(metrics)
 
