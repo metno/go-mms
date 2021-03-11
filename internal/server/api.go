@@ -47,6 +47,7 @@ type Service struct {
 	Router        *mux.Router
 	NatsURL       string
 	Metrics       *metrics
+	Productstatus *Productstatus
 }
 
 // HTTPServerError is used when the server fails to return a correct response to the user.
@@ -56,6 +57,8 @@ type HTTPServerError struct {
 
 // NewService creates a service struct, containing all that is needed for a mmsd server to run.
 func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB, natsURL string) *Service {
+	m := NewServiceMetrics(MetricsOpts{})
+
 	service := Service{
 		eventsDB:      eventsDB,
 		stateDB:       stateDB,
@@ -63,11 +66,8 @@ func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB,
 		htmlTemplates: templates,
 		Router:        mux.NewRouter(),
 		NatsURL:       natsURL,
-		Metrics: NewServiceMetrics(MetricsOpts{
-			Name:            "events",
-			Description:     "MMSd production hub events.",
-			ResponseBuckets: []float64{0.001, 0.002, 0.1, 0.5},
-		}),
+		Metrics:       m,
+		Productstatus: NewProductstatus(m),
 	}
 	service.setRoutes()
 
@@ -208,6 +208,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 	}
 
 	httpRespW.WriteHeader(http.StatusCreated)
+	service.Productstatus.PushEvent(pEvent)
 }
 
 // checkHealthz is supplied to HealthzHandler as a callback function.

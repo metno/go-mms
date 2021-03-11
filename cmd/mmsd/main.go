@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/base64"
 	"fmt"
@@ -162,6 +163,13 @@ func main() {
 			templates := server.CreateTemplates()
 			webService := server.NewService(templates, eventsDB, stateDB, natsURL)
 
+			log.Println("Populating productstatus from the local events database ...")
+			events, err := webService.GetAllEvents(context.Background())
+			if err != nil {
+				log.Fatalf("could not read all events %s", err)
+			}
+			webService.Productstatus.Populate(events)
+
 			startNATSServer(natsServer, natsURL)
 			startEventLoop(webService)
 			startWebServer(webService, apiURL, ctx.Bool("tls"), ctx.String("certificate"), ctx.String("key"))
@@ -282,8 +290,9 @@ func startEventLoop(webService *server.Service) {
 	// Start a separate go routine serving as an event loop for maintenance tasks.
 
 	uptimeCounter := prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "mmsd_uptime_seconds_total",
-		Help: "The total number of seconds since the start of the application.",
+		Subsystem: "mmsd",
+		Name:      "uptime_seconds_total",
+		Help:      "The total number of seconds since the start of the application.",
 	})
 
 	webService.Metrics.MustRegister(uptimeCounter)
@@ -294,6 +303,7 @@ func startEventLoop(webService *server.Service) {
 			select {
 			case <-secondTicker.C:
 				uptimeCounter.Inc()
+				webService.Productstatus.UpdateMetrics()
 			}
 		}
 	}()
