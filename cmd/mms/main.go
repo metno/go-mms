@@ -69,11 +69,28 @@ func main() {
 			Usage:   "Name of the job.",
 			EnvVars: []string{"MMS_JOBNAME"},
 		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "reftime",
+			Usage: "The event reference time in RFC3339 format ('2006-01-02T15:04:05Z' or '2006-01-02T15:04:05+01:00').",
+			Value: "now",
+		}),
 		altsrc.NewIntFlag(&cli.IntFlag{
 			Name:    "event-interval",
 			Usage:   "Expected time between events (in seconds).",
 			EnvVars: []string{"MMS_EVENT_INTERVAL"},
 			Value:   0,
+		}),
+		altsrc.NewIntFlag(&cli.IntFlag{
+			Name:    "counter",
+			Aliases: []string{"i"},
+			Usage:   "A counter value for when the event is one of a series of connected events.",
+			Value:   1,
+		}),
+		altsrc.NewIntFlag(&cli.IntFlag{
+			Name:    "ntotal",
+			Aliases: []string{"n"},
+			Usage:   "The total number of events to expect for this series of connected events.",
+			Value:   1,
 		}),
 		altsrc.NewBoolFlag(&cli.BoolFlag{
 			Name:  "insecure",
