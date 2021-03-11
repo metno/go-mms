@@ -48,6 +48,11 @@ func main() {
 			Value:   "None",
 			Aliases: []string{"cmd"},
 		}),
+		altsrc.NewBoolFlag(&cli.BoolFlag{
+			Name:  "filter",
+			Usage: "Toggles wether to send productname as arg[1] in executable",
+			Value: true,
+		}),
 	}
 
 	postFlags := []cli.Flag{
