@@ -17,6 +17,8 @@ For being able to use `statik` binary, you need to have go's bin directory in th
 ## Use
 See [mms](docs/tldr/mms.md) and [mmsd](docs/tldr/mmsd.md)
 
+The first step is only relevant for a system where MMS has been installed as a module.
+
 ## Build and run MMSd as docker container
 ```
 make image
