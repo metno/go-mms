@@ -30,6 +30,7 @@ import (
 	"github.com/metno/go-mms/internal/server"
 	"github.com/metno/go-mms/pkg/gencert"
 	"github.com/metno/go-mms/pkg/mms"
+	"github.com/prometheus/client_golang/prometheus"
 
 	nats "github.com/nats-io/nats-server/v2/server"
 	"github.com/urfave/cli/v2"
@@ -162,7 +163,7 @@ func main() {
 			webService := server.NewService(templates, eventsDB, stateDB, natsURL)
 
 			startNATSServer(natsServer, natsURL)
-			startEventHistoryPurger(webService)
+			startEventLoop(webService)
 			startWebServer(webService, apiURL, ctx.Bool("tls"), ctx.String("certificate"), ctx.String("key"))
 
 			return nil
@@ -276,14 +277,32 @@ func startNATSServer(natsServer *nats.Server, natsURL string) {
 	}()
 }
 
-func startEventHistoryPurger(webService *server.Service) {
-	log.Printf("Starting event history purger...")
-	// Start a separate go routine for regularly deleting old events from the events db.
-	ticker := time.NewTicker(1 * time.Hour)
+func startEventLoop(webService *server.Service) {
+	log.Printf("Starting event loop ...")
+	// Start a separate go routine serving as an event loop for maintenance tasks.
+
+	uptimeCounter := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "mmsd_uptime_seconds_total",
+		Help: "The total number of seconds since the start of the application.",
+	})
+
+	webService.Metrics.MustRegister(uptimeCounter)
+
+	secondTicker := time.NewTicker(1 * time.Second)
 	go func() {
 		for {
 			select {
-			case <-ticker.C:
+			case <-secondTicker.C:
+				uptimeCounter.Inc()
+			}
+		}
+	}()
+
+	hourTicker := time.NewTicker(1 * time.Hour)
+	go func() {
+		for {
+			select {
+			case <-hourTicker.C:
 				if err := webService.DeleteOldEvents(time.Now().AddDate(0, 0, -3)); err != nil {
 					log.Printf("failed to delete old events from events db: %s", err)
 				}

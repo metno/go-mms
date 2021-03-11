@@ -31,13 +31,16 @@ type MetricsOpts struct {
 }
 
 type metrics struct {
-	registry *prometheus.Registry
-	counter  *prometheus.CounterVec
-	duration *prometheus.HistogramVec
+	registry      *prometheus.Registry
+	counter       *prometheus.CounterVec
+	duration      *prometheus.HistogramVec
+	UptimeCounter *prometheus.Counter
 }
 
 func NewServiceMetrics(opts MetricsOpts) *metrics {
 	registry := prometheus.NewRegistry()
+
+	goCollector := prometheus.NewGoCollector()
 
 	counter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -59,6 +62,7 @@ func NewServiceMetrics(opts MetricsOpts) *metrics {
 	)
 	registry.MustRegister(counter)
 	registry.MustRegister(duration)
+	registry.MustRegister(goCollector)
 
 	return &metrics{
 		registry: registry,
@@ -75,4 +79,8 @@ func (m *metrics) Endpoint(endpoint string, h http.HandlerFunc) http.HandlerFunc
 
 func (m *metrics) Handler() http.Handler {
 	return promhttp.HandlerFor(m.registry, promhttp.HandlerOpts{})
+}
+
+func (m *metrics) MustRegister(cs ...prometheus.Collector) {
+	m.registry.MustRegister(cs...)
 }
