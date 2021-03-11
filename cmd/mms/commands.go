@@ -60,7 +60,7 @@ func subscribeEvents() func(*cli.Context) error {
 				return
 			}
 			if ctx.String("command") != "None" {
-				callback := createExecutableCallback(ctx.String("command"))
+				callback := createExecutableCallback(ctx.String("command"), ctx.Bool("filter"))
 				mmsClient.WatchProductEvents(callback)
 			} else {
 				// Same as Aviso-echo
@@ -147,7 +147,7 @@ func productReceiver(event *mms.ProductEvent) error {
 	return nil
 }
 
-func createExecutableCallback(filepath string) func(event *mms.ProductEvent) error {
+func createExecutableCallback(filepath string, filter bool) func(event *mms.ProductEvent) error {
 	_, err := exec.LookPath(filepath)
 	fmt.Println(filepath)
 	if err != nil {
@@ -156,17 +156,27 @@ func createExecutableCallback(filepath string) func(event *mms.ProductEvent) err
 	}
 
 	return func(event *mms.ProductEvent) error {
-		command := exec.Command(filepath)
+		var productslug string
+
+		if filter {
+			productslug = event.Product
+		} else {
+			productslug = ""
+		}
+		command := exec.Command(filepath, productslug)
 
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
 		command.Stdout = &stdout
 		command.Stderr = &stderr
+
 		err = command.Run()
+
 		if err != nil {
 			fmt.Println("Failed", err, stderr.String())
 			return fmt.Errorf("Failed to run executable, %s", err.Error())
 		}
+
 		fmt.Println(stdout.String())
 		return nil
 	}
