@@ -151,8 +151,7 @@ func createExecutableCallback(filepath string, filter bool) func(event *mms.Prod
 	_, err := exec.LookPath(filepath)
 
 	if err != nil {
-		log.Print(fmt.Errorf("command executable not found, %s", err.Error()))
-		return productReceiver
+		log.Fatalf("command executable not found, %s", err)
 	}
 
 	return func(event *mms.ProductEvent) error {
