@@ -152,7 +152,7 @@ func createExecutableCallback(filepath string, filter bool) func(event *mms.Prod
 
 	if err != nil {
 		log.Print(fmt.Errorf("command executable not found, %s", err.Error()))
-
+		return productReceiver
 	}
 
 	return func(event *mms.ProductEvent) error {
