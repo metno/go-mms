@@ -108,11 +108,6 @@ func main() {
 			Usage: "Accept invalid certificates, useful for testing with self-signed ones.",
 			Value: false,
 		}),
-		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:  "type",
-			Usage: "Type of event. Default is created, but you can set the following type: created, updated, deleted.",
-			Value: "created",
-		}),
 		&cli.StringFlag{
 			Name:    "config",
 			Aliases: []string{"c"},
