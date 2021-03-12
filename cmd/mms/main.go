@@ -50,7 +50,7 @@ func main() {
 		}),
 		altsrc.NewBoolFlag(&cli.BoolFlag{
 			Name:  "filter",
-			Usage: "Toggles wether to send productname as arg[1] in executable",
+			Usage: "Toggles sending of productLocation as arg[1] in executable",
 			Value: true,
 		}),
 	}

@@ -156,14 +156,14 @@ func createExecutableCallback(filepath string, filter bool) func(event *mms.Prod
 	}
 
 	return func(event *mms.ProductEvent) error {
-		var productslug string
+		var productLocation string
 
 		if filter {
-			productslug = event.Product
+			productLocation = event.ProductLocation
 		} else {
-			productslug = ""
+			productLocation = ""
 		}
-		command := exec.Command(filepath, productslug)
+		command := exec.Command(filepath, productLocation)
 
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
