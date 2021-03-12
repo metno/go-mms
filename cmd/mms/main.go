@@ -33,25 +33,36 @@ func main() {
 	listFlags := []cli.Flag{
 		&cli.StringFlag{
 			Name:  "production-hub", // HTTP
-			Usage: "The production hub HTTP URL",
+			Usage: "The production hub URL.",
 		},
 	}
 
 	subscriptionFlags := []cli.Flag{
 		&cli.StringFlag{
 			Name:  "production-hub", // NATS
-			Usage: "The production hub NATS URL",
+			Usage: "The production hub NATS URL.",
 		},
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    "command",
+			Usage:   "File location of script or executable run after incoming event.",
+			Value:   "None",
+			Aliases: []string{"cmd"},
+		}),
+		altsrc.NewBoolFlag(&cli.BoolFlag{
+			Name:  "args",
+			Usage: "Toggles sending of productLocation as arg[1] in executable",
+			Value: true,
+		}),
 	}
 
 	postFlags := []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:  "api-key",
-			Usage: "The authorized API key",
+			Usage: "The authorized API key.",
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "production-hub", // HTTP
-			Usage:   "The production hub HTTP URL",
+			Usage:   "The production hub URL.",
 			EnvVars: []string{"MMS_PRODUCTION_HUB"},
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
@@ -113,14 +124,14 @@ func main() {
 			{
 				Name:    "list-all",
 				Aliases: []string{"ls"},
-				Usage:   "List all the latest available events in the system",
+				Usage:   "List all the latest available events in the system.",
 				Flags:   listFlags,
 				Action:  listAllEvents(),
 			},
 			{
 				Name:    "subscribe",
 				Aliases: []string{"s"},
-				Usage:   "Listen for new incoming events, get them printed continuously. Optionally, set up filters to limit events you get.",
+				Usage:   "Listen for new incoming events, get them printed continuously.",
 				Flags:   subscriptionFlags,
 				Action:  subscribeEvents(),
 			},
