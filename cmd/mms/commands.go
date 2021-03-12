@@ -60,7 +60,7 @@ func subscribeEvents() func(*cli.Context) error {
 				return
 			}
 			if ctx.String("command") != "None" {
-				callback := createExecutableCallback(ctx.String("command"), ctx.Bool("filter"))
+				callback := createExecutableCallback(ctx.String("command"), ctx.Bool("args"))
 				mmsClient.WatchProductEvents(callback)
 			} else {
 				// Same as Aviso-echo
@@ -147,7 +147,7 @@ func productReceiver(event *mms.ProductEvent) error {
 	return nil
 }
 
-func createExecutableCallback(filepath string, filter bool) func(event *mms.ProductEvent) error {
+func createExecutableCallback(filepath string, args bool) func(event *mms.ProductEvent) error {
 	_, err := exec.LookPath(filepath)
 
 	if err != nil {
@@ -157,7 +157,7 @@ func createExecutableCallback(filepath string, filter bool) func(event *mms.Prod
 	return func(event *mms.ProductEvent) error {
 		var productLocation string
 
-		if filter {
+		if args {
 			productLocation = event.ProductLocation
 		} else {
 			productLocation = ""

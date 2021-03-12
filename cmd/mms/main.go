@@ -49,7 +49,7 @@ func main() {
 			Aliases: []string{"cmd"},
 		}),
 		altsrc.NewBoolFlag(&cli.BoolFlag{
-			Name:  "filter",
+			Name:  "args",
 			Usage: "Toggles sending of productLocation as arg[1] in executable",
 			Value: true,
 		}),
