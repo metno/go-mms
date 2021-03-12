@@ -46,6 +46,8 @@ type Service struct {
 	htmlTemplates *template.Template
 	Router        *mux.Router
 	NatsURL       string
+	Metrics       *metrics
+	Productstatus *Productstatus
 }
 
 // HTTPServerError is used when the server fails to return a correct response to the user.
@@ -55,6 +57,8 @@ type HTTPServerError struct {
 
 // NewService creates a service struct, containing all that is needed for a mmsd server to run.
 func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB, natsURL string) *Service {
+	m := NewServiceMetrics(MetricsOpts{})
+
 	service := Service{
 		eventsDB:      eventsDB,
 		stateDB:       stateDB,
@@ -62,6 +66,8 @@ func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB,
 		htmlTemplates: templates,
 		Router:        mux.NewRouter(),
 		NatsURL:       natsURL,
+		Metrics:       m,
+		Productstatus: NewProductstatus(m),
 	}
 	service.setRoutes()
 
@@ -69,11 +75,6 @@ func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB,
 }
 
 func (service *Service) setRoutes() {
-	var metrics = NewServiceMetrics(MetricsOpts{
-		Name:            "events",
-		Description:     "MMSd production hub events.",
-		ResponseBuckets: []float64{0.001, 0.002, 0.1, 0.5},
-	})
 
 	statikFS, err := fs.New()
 	if err != nil {
@@ -81,7 +82,7 @@ func (service *Service) setRoutes() {
 	}
 
 	// Events
-	service.Router.HandleFunc("/api/v1/events", metrics.Endpoint("/v1/events", service.eventsHandler)).Methods("GET")
+	service.Router.HandleFunc("/api/v1/events", service.Metrics.Endpoint("/v1/events", service.eventsHandler)).Methods("GET")
 	service.Router.Handle("/api/v1/events", proxyHeaders(service.postEventHandler)).Methods("POST")
 
 	// Health of the service
@@ -91,7 +92,7 @@ func (service *Service) setRoutes() {
 	service.Router.Handle("/api/v1/about", proxyHeaders(AboutHandler(service.about)))
 
 	// Metrics of the service(service) for this app.
-	service.Router.Handle("/metrics", metrics.Handler())
+	service.Router.Handle("/metrics", service.Metrics.Handler())
 
 	// Documentation of the service(service)
 	service.Router.HandleFunc("/docs/{page}", service.docsHandler)
@@ -207,6 +208,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 	}
 
 	httpRespW.WriteHeader(http.StatusCreated)
+	service.Productstatus.PushEvent(pEvent)
 }
 
 // checkHealthz is supplied to HealthzHandler as a callback function.
