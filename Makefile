@@ -25,8 +25,10 @@ statik:
 go_mod:
 	go mod download
 
-deps:
+edeps:
 	go get github.com/rakyll/statik
+
+deps:
 	go get -v -t -d ./...
 
 release:
