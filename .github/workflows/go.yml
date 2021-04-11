@@ -20,11 +20,14 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
-      - name: Get dependencies
-        run: make deps
+      - name: Get external dependencies
+        run: make edeps
 
       - name: Generate static files package
         run: make statik
+
+      - name: Get other dependencies
+        run: make deps
 
       - name: Build
         run: make
