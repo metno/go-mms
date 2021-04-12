@@ -4,10 +4,9 @@ go 1.15
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/cloudevents/sdk-go/protocol/nats/v2 v2.3.1
-	github.com/cloudevents/sdk-go/v2 v2.3.1
+	github.com/cloudevents/sdk-go/protocol/nats/v2 v2.4.0
+	github.com/cloudevents/sdk-go/v2 v2.4.0
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
-	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
@@ -16,7 +15,6 @@ require (
 	github.com/prometheus/client_golang v1.9.0
 	github.com/rakyll/statik v0.1.7
 	github.com/urfave/cli/v2 v2.3.0
-	go.opencensus.io v0.22.5 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
