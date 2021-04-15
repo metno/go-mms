@@ -59,8 +59,10 @@ github.com/client9/misspell v0.3.4 h1:ta993UF76GwbvJcIo3Y68y/M3WxlpEHPWIGDkJYwzJ
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cloudevents/sdk-go/protocol/nats/v2 v2.4.0 h1:bRE8A4dqvoqwkyb5QQwo58HbfRl4enH23q55tepGnyA=
 github.com/cloudevents/sdk-go/protocol/nats/v2 v2.4.0/go.mod h1:EGkPGmEXaEtRXaS+Hm4pDt+m27q6BUphZzjIY3JfbOY=
+github.com/cloudevents/sdk-go/protocol/nats/v2 v2.4.1/go.mod h1:kzfTncVPzOdNCp2T0hAUBbUL449nFe0fXTGX+Zk6CBM=
 github.com/cloudevents/sdk-go/v2 v2.4.0 h1:IkzAOizTvn+M13KWDLFOiTb44YBuwAvbenzSg43bWM4=
 github.com/cloudevents/sdk-go/v2 v2.4.0/go.mod h1:MZiMwmAh5tGj+fPFvtHv9hKurKqXtdB9haJYMJ/7GJY=
+github.com/cloudevents/sdk-go/v2 v2.4.1/go.mod h1:MZiMwmAh5tGj+fPFvtHv9hKurKqXtdB9haJYMJ/7GJY=
 github.com/cockroachdb/datadriven v0.0.0-20190809214429-80d97fb3cbaa h1:OaNxuTZr7kxeODyLWsRMC+OD03aFUH+mW6r2d+MWa5Y=
 github.com/cockroachdb/datadriven v0.0.0-20190809214429-80d97fb3cbaa/go.mod h1:zn76sxSg3SzpJ0PPJaLDCu+Bu0Lg3sKTORVIj19EIF8=
 github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd h1:qMd81Ts1T2OTKmB4acZcyKaMtRnY5Y44NuXGX2GFJ1w=
