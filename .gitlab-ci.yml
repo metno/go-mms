@@ -1,0 +1,73 @@
+stages:
+  - build
+  - release
+
+docker-build-master:
+  stage: build
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker build --pull -t "$CI_REGISTRY_IMAGE" .
+    - docker build --pull -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" .
+    - docker push "$CI_REGISTRY_IMAGE"
+    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+    - mkdir .images
+    - echo "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" > .images/go-mms
+  artifacts:
+    paths:
+      - .images/*
+  only:
+    - master
+  tags:
+    - ${RUNNER_PRIV}
+
+docker-build:
+  stage: build
+  script:
+    - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" ${CI_REGISTRY}
+    - docker build --pull -t "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}" .
+  except:
+    - master
+  tags:
+    - ${RUNNER_PRIV}
+
+.release:
+  stage: release
+  image: "${IMAGE_KUSTOMIZE}"
+  tags:
+    - ${RUNNER_UNPRIV}
+  variables:
+    AUTO_RELEASE: "true"
+  script:
+    - release --repo "${DESTINATION_KUBERNETES_REPOSITORY}"
+      --access-token "${TJENESTE_ACCESS_TOKEN}"
+      --automatic "${AUTO_RELEASE}"
+      --environment "${ENVIRONMENT}"
+      --updates-dir .images
+#        --exclude-maintainers "$EXCLUDE_MAINTAINERS"
+
+dev:
+  extends: .release
+  variables:
+    ENVIRONMENT: "dev"
+    AUTO_RELEASE: "true"
+  only:
+    refs:
+      - master
+
+staging:
+  extends: .release
+  variables:
+    ENVIRONMENT: "staging"
+    AUTO_RELEASE: "true"
+  only:
+    refs:
+      - master
+
+production:
+  extends: .release
+  variables:
+    ENVIRONMENT: "production"
+    AUTO_RELEASE: "false"
+  only:
+    refs:
+      - master
