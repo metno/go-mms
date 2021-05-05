@@ -23,7 +23,6 @@ RUN make test
 FROM ubuntu:bionic
 
 COPY --from=build-app /build/app/mmsd /app/
-COPY --from=build-app /build/app/templates /app/templates
 
 WORKDIR /app
 USER nobody:nogroup
