@@ -1,5 +1,5 @@
 # FIRST STAGE:  build the app.
-FROM golang:1.15 AS build-app
+FROM golang:1.16 AS build-app
 WORKDIR /build/app
 
 # We want to populate the module cache based on the go.{mod,sum} files.
@@ -20,7 +20,7 @@ RUN make
 RUN make test
 
 # SECOND STAGE: create the app runtime image.
-FROM ubuntu:bionic
+FROM debian:buster-slim
 
 COPY --from=build-app /build/app/mmsd /app/
 
