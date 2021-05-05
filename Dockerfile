@@ -12,6 +12,8 @@ RUN go mod download
 # Copy the rest of the source files.
 COPY . .
 
+RUN make edeps
+RUN make statik
 RUN make deps
 
 RUN make
