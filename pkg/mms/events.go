@@ -43,6 +43,7 @@ type ProductEvent struct {
 	RefTime         time.Time // Reference time
 	CreatedAt       time.Time // timestamp of the produced file (object)
 	NextEventAt     time.Time // timestamp of the next event
+	ProductType     string
 }
 
 // ProductEventCallback specifies the function signature for receiving ProductEvent events.
@@ -130,7 +131,7 @@ func MakeProductEvent(natsURL string, pEvent *ProductEvent) error {
 
 	mmsClient, err := NewNatsSenderClient(natsURL)
 	if err != nil {
-		return fmt.Errorf("failed to post event to messaging service: %v", err)
+		return fmt.Errorf("failed to create messaging service: %v", err)
 	}
 
 	err = mmsClient.PostProductEvent(pEvent)
@@ -147,7 +148,11 @@ func MakeProductEvent(natsURL string, pEvent *ProductEvent) error {
 func (eClient *EventClient) PostProductEvent(pEvent *ProductEvent) error {
 	event := cloudevents.NewEvent()
 	event.SetID(uuid.New().String())
-	event.SetType("no.met.mms.product.v1")
+	if pEvent.ProductType == "" {
+		event.SetType("no.met.mms.product.v1")
+	} else {
+		event.SetType(pEvent.ProductType)
+	}
 	event.SetTime(time.Now())
 	event.SetSource(pEvent.ProductionHub)
 	event.SetSubject(pEvent.Product)
