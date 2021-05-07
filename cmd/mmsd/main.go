@@ -299,16 +299,14 @@ func startNATSServer(natsServer *nats.Server, natsURL string) {
 
 func startHeartBeat(heartBeatInterval int, NatsURL string) {
 
-	var pEvent mms.ProductEvent
+	var pEvent mms.HeartBeatEvent
 	log.Printf("Starting heartbeat sender with interval: %d s", heartBeatInterval)
 
 	interval := time.Duration(heartBeatInterval)
 	ticker := time.NewTicker(interval * time.Second)
 
-	pEvent = mms.ProductEvent{
-		Product:       "HeartBeat",
-		ProductionHub: "Heart",
-		ProductType:   "no.met.mms.heartBeat.v1",
+	pEvent = mms.HeartBeatEvent{
+		ProductionHub: "heartBeat",
 	}
 
 	go func() {
@@ -317,7 +315,7 @@ func startHeartBeat(heartBeatInterval int, NatsURL string) {
 			case <-ticker.C:
 				pEvent.CreatedAt = time.Now()
 				pEvent.NextEventAt = time.Now().Add(interval)
-				if err := mms.MakeProductEvent(NatsURL, &pEvent); err != nil {
+				if err := mms.MakeHeartBeatEvent(NatsURL, &pEvent); err != nil {
 					log.Printf("failed to send HeartBeat message: %s", err)
 				}
 			}
