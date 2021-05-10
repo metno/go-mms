@@ -98,6 +98,11 @@ func main() {
 			Usage: "Enable TLS",
 			Value: false,
 		}),
+		altsrc.NewIntFlag(&cli.IntFlag{
+			Name:  "heartbeat-interval",
+			Usage: "Specify the interval for sending heartbeats. Turn off with 0 or negative value",
+			Value: 10,
+		}),
 	}
 
 	certFlags := []cli.Flag{
@@ -170,7 +175,14 @@ func main() {
 			}
 			webService.Productstatus.Populate(events)
 
+			heartBeatInterval := ctx.Int("heartbeat-interval")
+
 			startNATSServer(natsServer, natsURL)
+
+			if heartBeatInterval > 0 {
+				startHeartBeat(heartBeatInterval, natsURL)
+			}
+
 			startEventLoop(webService)
 			startWebServer(webService, apiURL, ctx.Bool("tls"), ctx.String("certificate"), ctx.String("key"))
 
@@ -282,6 +294,32 @@ func startNATSServer(natsServer *nats.Server, natsURL string) {
 			nats.PrintAndDie(err.Error())
 		}
 		natsServer.WaitForShutdown()
+	}()
+}
+
+func startHeartBeat(heartBeatInterval int, NatsURL string) {
+
+	var pEvent mms.HeartBeatEvent
+	log.Printf("Starting heartbeat sender with interval: %d s", heartBeatInterval)
+
+	interval := time.Duration(heartBeatInterval)
+	ticker := time.NewTicker(interval * time.Second)
+
+	pEvent = mms.HeartBeatEvent{
+		ProductionHub: "heartBeat",
+	}
+
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				pEvent.CreatedAt = time.Now()
+				pEvent.NextEventAt = time.Now().Add(interval)
+				if err := mms.MakeHeartBeatEvent(NatsURL, &pEvent); err != nil {
+					log.Printf("failed to send HeartBeat message: %s", err.Error())
+				}
+			}
+		}
 	}()
 }
 

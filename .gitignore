@@ -10,7 +10,7 @@
 /.vscode/
 
 # Test coverage artifacts
-coverage.txt
+coverage.*
 
 # Runtime
 *.db
