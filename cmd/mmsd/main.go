@@ -316,7 +316,7 @@ func startHeartBeat(heartBeatInterval int, NatsURL string) {
 				pEvent.CreatedAt = time.Now()
 				pEvent.NextEventAt = time.Now().Add(interval)
 				if err := mms.MakeHeartBeatEvent(NatsURL, &pEvent); err != nil {
-					log.Printf("failed to send HeartBeat message: %s", err)
+					log.Printf("failed to send HeartBeat message: %s", err.Error())
 				}
 			}
 		}
