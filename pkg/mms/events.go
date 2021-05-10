@@ -45,6 +45,12 @@ type ProductEvent struct {
 	NextEventAt     time.Time // timestamp of the next event
 }
 
+type HeartBeatEvent struct {
+	ProductionHub string
+	CreatedAt     time.Time // timestamp of the produced file (object)
+	NextEventAt   time.Time // timestamp of the next event
+}
+
 // ProductEventCallback specifies the function signature for receiving ProductEvent events.
 type ProductEventCallback func(e *ProductEvent) error
 
@@ -130,12 +136,30 @@ func MakeProductEvent(natsURL string, pEvent *ProductEvent) error {
 
 	mmsClient, err := NewNatsSenderClient(natsURL)
 	if err != nil {
-		return fmt.Errorf("failed to post event to messaging service: %v", err)
+		return fmt.Errorf("failed to create messaging service: %v", err)
 	}
 
 	err = mmsClient.PostProductEvent(pEvent)
 	if err != nil {
-		return fmt.Errorf("failed to post event to messaging service: %v", err)
+		return fmt.Errorf("failed to post product to messaging service: %v", err)
+	}
+
+	mmsClient.cenatsSender.Close(context.Background())
+
+	return nil
+}
+
+// MakeProductEvent prepares and sends the product event
+func MakeHeartBeatEvent(natsURL string, hEvent *HeartBeatEvent) error {
+
+	mmsClient, err := NewNatsSenderClient(natsURL)
+	if err != nil {
+		return fmt.Errorf("failed to create messaging service: %v", err)
+	}
+
+	err = mmsClient.PostHeartBeat(hEvent)
+	if err != nil {
+		return fmt.Errorf("failed to post heartbeat to messaging service: %v", err)
 	}
 
 	mmsClient.cenatsSender.Close(context.Background())
@@ -155,6 +179,27 @@ func (eClient *EventClient) PostProductEvent(pEvent *ProductEvent) error {
 	err := event.SetData("application/json", pEvent)
 	if err != nil {
 		return fmt.Errorf("failed to properly encode event data for product event: %v", err)
+	}
+
+	if result := eClient.ceClient.Send(context.Background(), event); cloudevents.IsUndelivered(result) {
+		return fmt.Errorf("failed to send: %v", result.Error())
+	}
+
+	return nil
+}
+
+// PostProductEvent generates an event and sends it to the specified messaging service.
+func (eClient *EventClient) PostHeartBeat(hEvent *HeartBeatEvent) error {
+	event := cloudevents.NewEvent()
+	event.SetID(uuid.New().String())
+	event.SetType("no.met.mms.heartbeat.v1")
+	event.SetTime(time.Now())
+	event.SetSource("heartBeat")
+	event.SetSubject("heartBeat")
+
+	err := event.SetData("application/json", hEvent)
+	if err != nil {
+		return fmt.Errorf("failed to properly encode event data for heartbeat event: %v", err)
 	}
 
 	if result := eClient.ceClient.Send(context.Background(), event); cloudevents.IsUndelivered(result) {
