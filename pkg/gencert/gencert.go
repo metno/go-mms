@@ -78,6 +78,7 @@ func GenerateCSR() func(*cli.Context) error {
 
 		template := x509.CertificateRequest{
 			Subject:            subj,
+			DNSNames:           strings.Split(ctx.String("alternative-names"), ","),
 			SignatureAlgorithm: x509.SHA256WithRSA,
 		}
 
