@@ -24,3 +24,4 @@ mms_authorized_keys
 # Certificates
 *.csr
 *.pem
+dist/

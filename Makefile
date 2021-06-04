@@ -1,7 +1,7 @@
 VERSION := $(shell cat ./VERSION)
 all: build_mmsd build_mms
 
-build_mmsd: go_mod statik
+build_mmsd: go_mod go_generate statik
 	go build ./cmd/mmsd
 
 build_mms: go_mod
@@ -30,6 +30,9 @@ edeps:
 
 deps:
 	go get -v -t -d ./...
+
+go_generate:
+	go generate ./...
 
 release:
 	git tag -a $(VERSION) -m "Release" || true
