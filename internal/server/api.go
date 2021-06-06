@@ -175,7 +175,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 	validKey, err := ValidateApiKey(service.stateDB, apiKey)
 	if !validKey {
 		http.Error(httpRespW, "Unauthorized API key submitted", http.StatusUnauthorized)
-		log.Print("Unauthorized: API key not accepted")
+		log.Printf("Unauthorized: API key not accepted:\n %v", err)
 		return
 	}
 

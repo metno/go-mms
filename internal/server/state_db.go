@@ -42,6 +42,9 @@ func AddNewApiKey(db *sql.DB, apiKey string, keyMsg string) error {
 	// Insert it into the database. Duplicate entries will be rejected.
 	insertSQL := `INSERT INTO api_keys (apiKey, createdDate, createMsg) VALUES (?, ?, ?)`
 	statement, err := db.Prepare(insertSQL)
+	if err != nil {
+		return err
+	}
 	_, err = statement.Exec(apiKey, time.Now().Format(time.RFC3339), keyMsg)
 	if err != nil {
 		return fmt.Errorf("failed to add api key to db: %s", err)
@@ -78,6 +81,9 @@ func ValidateApiKey(db *sql.DB, apiKey string) (bool, error) {
 
 	checkSQL := `UPDATE api_keys SET lastUsed = ? WHERE apiKey = ?`
 	statement, err := db.Prepare(checkSQL)
+	if err != nil {
+		return false, err
+	}
 	result, err := statement.Exec(time.Now().Format(time.RFC3339), apiKey)
 	if err != nil {
 		return false, fmt.Errorf("failed to update api key record in db: %s", err)
@@ -139,6 +145,12 @@ func createStateDB(dbFilePath string) (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to sqlite database: %s", err)
 	}
+
+	err = createStateDBTables(db)
+	return db, err
+}
+
+func createStateDBTables(db *sql.DB) error {
 	createTable := `CREATE TABLE IF NOT EXISTS "api_keys" (
 		"apiKey" TEXT UNIQUE,
 		"createdDate" TEXT,
@@ -150,7 +162,7 @@ func createStateDB(dbFilePath string) (*sql.DB, error) {
 		"apiKey"
 	);`
 
-	_, err = db.Exec(createTable)
+	_, err := db.Exec(createTable)
 
-	return db, err
+	return err
 }

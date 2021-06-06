@@ -29,12 +29,12 @@ import (
 const productionHubName = "default"
 
 func TestGetAllEvents(t *testing.T) {
-	service, mock, err := NewMockService()
+	service, eventsDBMock, _, err := NewMockService()
 	if err != nil {
 		t.Errorf("failed to setup mock service: %s", err)
 	}
 	// Add expected queries and results to the mock sqlite db.
-	mock.ExpectQuery("SELECT (.+) FROM events").
+	eventsDBMock.ExpectQuery("SELECT (.+) FROM events").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "createdAt", "event"}).
 			AddRow(1, "2020-08-26T12:18:48.281847242+02:00", `{
 				"ProductionHub": "ecflow.modellprod",
@@ -68,14 +68,19 @@ func TestNewEventsDB(t *testing.T) {
 	os.Remove(dbTestFile)
 }
 
-func NewMockService() (*Service, sqlmock.Sqlmock, error) {
-	eventsDB, mock, err := sqlmock.New()
+func NewMockService() (*Service, sqlmock.Sqlmock, sqlmock.Sqlmock, error) {
+	eventsDB, eventsDBMock, err := sqlmock.New()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create mock events db: %s", err)
+		return nil, nil, nil, fmt.Errorf("failed to create mock events db: %s", err)
+	}
+
+	stateDB, stateDBMock, err := sqlmock.New()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to create mock state db: %s", err)
 	}
 
 	templates := CreateTemplates()
-	webService := NewService(templates, eventsDB, nil, "")
+	webService := NewService(templates, eventsDB, stateDB, "")
 
-	return webService, mock, nil
+	return webService, eventsDBMock, stateDBMock, nil
 }
