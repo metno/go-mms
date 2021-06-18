@@ -40,8 +40,9 @@ puml:
 	go-plantuml generate -rd . -o go-mms.puml
 
 test_integration: build_mmsd
+	$(eval MMSD_KEY=$(shell ./mmsd keys --gen|awk 'NR==1{print $$3}'))
 	./mmsd 2>/dev/null & echo "$$!" > ./mmsd.pid
-	go test --tags=integration ./cmd/mms/ || (kill `cat ./mmsd.pid`; unlink ./mmsd.pid; exit 1)
+	API_KEY="${MMSD_KEY}" go test --tags=integration ./cmd/mms/ || (kill `cat ./mmsd.pid`; unlink ./mmsd.pid; exit 1)
 
 	@kill `cat ./mmsd.pid`
 	@unlink ./mmsd.pid
