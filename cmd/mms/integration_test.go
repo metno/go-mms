@@ -28,19 +28,13 @@ func TestHelpOption(t *testing.T) {
 }
 
 func TestFilteredSubscribe(t *testing.T) {
-	apiKey := os.Getenv("API_KEY")
-	if apiKey == "" {
-		t.Errorf("Expected env variable API_KEY to be there; Got: No API_KEY env variable.%s", apiKey)
-		return
-	}
-
 	subscribeArgs := os.Args[0:1]
 	subscribeArgs = append(subscribeArgs, "subscribe", "--production-hub", "nats://localhost:4222", "--product", "good")
 
 	go run(subscribeArgs)
 
 	postArgsGood := os.Args[0:1]
-	postArgsGood = append(postArgsGood, "post", "--production-hub", "http://localhost:8080", "--product", "good", "--api-key", apiKey)
+	postArgsGood = append(postArgsGood, "post", "--production-hub", "http://localhost:8080", "--product", "good", "--api-key", "97fIjjoKsYxFiJd67EpC1VuZuFPTNUqQv9eTuKEyRXQ=")
 	output := captureOutput(postArgsGood, run)
 
 	goodEvent := mms.ProductEvent{}
@@ -55,13 +49,13 @@ func TestFilteredSubscribe(t *testing.T) {
 	}
 
 	postArgsBad := os.Args[0:1]
-	postArgsBad = append(postArgsBad, "post", "--production-hub", "http://localhost:8080", "--product", "bad", "--api-key", apiKey)
+	postArgsBad = append(postArgsBad, "post", "--production-hub", "http://localhost:8080", "--product", "bad", "--api-key", "97fIjjoKsYxFiJd67EpC1VuZuFPTNUqQv9eTuKEyRXQ=")
 	output = captureOutput(postArgsBad, run)
 
 	var badEvent mms.ProductEvent
 	err = json.Unmarshal([]byte(output), &badEvent)
 	if err == nil {
-		t.Errorf("Expected failed unmarshal event json; Got valid json from this output: %s", output)
+		t.Errorf("Expected empty output from stdout; Got valid json from this output: %s", output)
 		return
 	}
 }
