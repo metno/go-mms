@@ -24,8 +24,7 @@ import (
 	"github.com/urfave/cli/v2/altsrc"
 )
 
-func main() {
-
+func run(args []string) error {
 	// Default file name for config
 	// Could be expanded to check and pick a file from a pre-defined list
 	var confFile string = "mms_config.yml"
@@ -47,6 +46,11 @@ func main() {
 			Usage:   "File location of script or executable run after incoming event.",
 			Value:   "None",
 			Aliases: []string{"cmd"},
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    "product",
+			Usage:   "Name of the product.",
+			EnvVars: []string{"MMS_PRODUCT"},
 		}),
 		altsrc.NewBoolFlag(&cli.BoolFlag{
 			Name:  "args",
@@ -126,14 +130,14 @@ func main() {
 				Aliases: []string{"ls"},
 				Usage:   "List all the latest available events in the system.",
 				Flags:   listFlags,
-				Action:  listAllEvents(),
+				Action:  listAllEventsCmd,
 			},
 			{
 				Name:    "subscribe",
 				Aliases: []string{"s"},
 				Usage:   "Listen for new incoming events, get them printed continuously.",
 				Flags:   subscriptionFlags,
-				Action:  subscribeEvents(),
+				Action:  subscribeEventsCmd,
 			},
 			{
 				Name:    "post",
@@ -149,12 +153,16 @@ func main() {
 					return altsrc.ApplyInputSourceValues(ctx, inputSource, postFlags)
 				},
 				Flags:  postFlags,
-				Action: postEvent(),
+				Action: postEventCmd,
 			},
 		},
 	}
 
-	err := app.Run(os.Args)
+	return app.Run(args)
+}
+
+func main() {
+	err := run(os.Args)
 	if err != nil {
 		log.Fatal(err)
 	}
