@@ -55,7 +55,7 @@ func TestFilteredSubscribe(t *testing.T) {
 	var badEvent mms.ProductEvent
 	err = json.Unmarshal([]byte(output), &badEvent)
 	if err == nil {
-		t.Errorf("Expected empty output from stdout; Got valid json from this output: %s", output)
+		t.Errorf("Expected empty output from stdout; Got valid json instead: %s", output)
 		return
 	}
 }

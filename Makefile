@@ -40,7 +40,7 @@ puml:
 	go-plantuml generate -rd . -o go-mms.puml
 
 integration_test: build_mmsd
-	./mmsd 2>/dev/null & echo "$$!" > ./mmsd.pid
+	./mmsd -w ./test_data 2>/dev/null & echo "$$!" > ./mmsd.pid
 	go test --tags=integration ./cmd/mms/ || (kill `cat ./mmsd.pid`; unlink ./mmsd.pid; exit 1)
 
 	@kill `cat ./mmsd.pid`
