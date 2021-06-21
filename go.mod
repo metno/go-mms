@@ -11,11 +11,11 @@ require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/mattn/go-sqlite3 v1.14.7
-	github.com/nats-io/nats-server/v2 v2.2.5
-	github.com/prometheus/client_golang v1.10.0
+	github.com/nats-io/nats-server/v2 v2.2.6
+	github.com/prometheus/client_golang v1.11.0
 	github.com/rakyll/statik v0.1.7
 	github.com/urfave/cli/v2 v2.3.0
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0 // indirect
-	google.golang.org/protobuf v1.25.0 // indirect
+	golang.org/x/tools v0.0.0-20200103221440-774c71fcf114 // indirect
 )
