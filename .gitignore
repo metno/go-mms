@@ -13,8 +13,8 @@
 coverage.*
 
 # Runtime
-*.db
 *.sqlite
+events.db
 mms_authorized_keys
 
 # Config
