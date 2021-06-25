@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"time"
 
@@ -136,6 +137,8 @@ func productReceiver(product string) func(event *mms.ProductEvent) error {
 	}
 }
 
+// createExecutableCallback generate a callback that filter on product and call the command at filepath.
+// The command gets the product-location as first argument and the complete serialized event as the env variable MMS_EVENT.
 func createExecutableCallback(filepath string, args bool, product string) func(event *mms.ProductEvent) error {
 	_, err := exec.LookPath(filepath)
 
@@ -155,7 +158,14 @@ func createExecutableCallback(filepath string, args bool, product string) func(e
 		} else {
 			productLocation = ""
 		}
+
+		serializedEvent, err := json.Marshal(event)
+		if err != nil {
+			return fmt.Errorf("could not json serialize mms event: %s", err)
+		}
 		command := exec.Command(filepath, productLocation)
+		command.Env = os.Environ()
+		command.Env = append(command.Env, fmt.Sprintf("MMS_EVENT=%s", string(serializedEvent)))
 
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
@@ -166,7 +176,7 @@ func createExecutableCallback(filepath string, args bool, product string) func(e
 
 		if err != nil {
 			fmt.Println("Failed", err, stderr.String())
-			return fmt.Errorf("Failed to run executable, %s", err.Error())
+			return fmt.Errorf("failed to run executable, %s", err.Error())
 		}
 
 		fmt.Println(stdout.String())

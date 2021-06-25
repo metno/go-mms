@@ -27,7 +27,14 @@ func TestHelpOption(t *testing.T) {
 	}
 }
 
-func TestFilteredSubscribe(t *testing.T) {
+// TestWithStdOut runs ALL tests that check stdout serially.
+// This is done to have predictable captured output from stdout.
+func TestWithStdOut(t *testing.T) {
+	filteredSubscribe(t)
+	subscribeWithCommand(t)
+}
+
+func filteredSubscribe(t *testing.T) {
 	subscribeArgs := os.Args[0:1]
 	subscribeArgs = append(subscribeArgs, "subscribe", "--production-hub", "nats://localhost:4222", "--product", "good")
 
@@ -56,6 +63,31 @@ func TestFilteredSubscribe(t *testing.T) {
 	err = json.Unmarshal([]byte(output), &badEvent)
 	if err == nil {
 		t.Errorf("Expected empty output from stdout; Got valid json instead: %s", output)
+		return
+	}
+}
+
+// subscribeWithCommand should receive an event like this:
+// {"JobName":"vibrations","Product":"good","ProductLocation":"https://best.place.ever","ProductionHub":"http://localhost:8080","Counter":1,"TotalCount":1,"RefTime":"2021-06-25T16:47:05.978454+02:00","CreatedAt":"2021-06-25T16:47:05.978463+02:00","NextEventAt":"2021-06-25T16:47:05.978463+02:00"}
+func subscribeWithCommand(t *testing.T) {
+	subscribeArgs := os.Args[0:1]
+	subscribeArgs = append(subscribeArgs, "subscribe", "--production-hub", "nats://localhost:4222", "--product", "good",
+		"--command", "./test_command.sh")
+
+	go run(subscribeArgs)
+
+	postArgsGood := os.Args[0:1]
+	postArgsGood = append(postArgsGood, "post", "--production-hub", "http://localhost:8080", "--product", "good",
+		"--jobname", "vibrations", "--product-location", "https://best.place.ever", "--api-key", "97fIjjoKsYxFiJd67EpC1VuZuFPTNUqQv9eTuKEyRXQ=")
+	output := captureOutput(postArgsGood, run)
+
+	if !strings.Contains(output, "MMS_EVENT={\"JobName\":\"vibrations\",\"Product\":\"good") {
+		t.Errorf("Expected command output to include: MMS_EVENT={\"JobName\":\"vibrations\",\"Product\":\"good; Got %s", output)
+		return
+	}
+
+	if !strings.Contains(output, "product-location=https://best.place.ever") {
+		t.Errorf("Expected command output to include: product-location=https://best.place.ever; Got %s", output)
 		return
 	}
 }
