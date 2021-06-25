@@ -58,7 +58,6 @@ type ProductEventCallback func(e *ProductEvent) error
 type EventClient struct {
 	ceClient     cloudevents.Client
 	cenatsSender cenats.Sender
-	eventType    string
 }
 
 // Generate a hub indetifier
