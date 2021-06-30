@@ -40,6 +40,7 @@ func filteredSubscribe(t *testing.T) {
 
 	go run(subscribeArgs)
 
+	// Check that filtered product is received
 	postArgsGood := os.Args[0:1]
 	postArgsGood = append(postArgsGood, "post", "--production-hub", "http://localhost:8080", "--product", "good", "--api-key", "97fIjjoKsYxFiJd67EpC1VuZuFPTNUqQv9eTuKEyRXQ=")
 	output := captureOutput(postArgsGood, run)
@@ -50,11 +51,13 @@ func filteredSubscribe(t *testing.T) {
 		t.Errorf("Expected ok unmarshal; Got error; %s, from output %s", err, output)
 		return
 	}
+
 	if goodEvent.Product != "good" {
 		t.Errorf("Expected event.Product: good; Got %s", goodEvent.Product)
 		return
 	}
 
+	// Check that non-filtered products are NOT received
 	postArgsBad := os.Args[0:1]
 	postArgsBad = append(postArgsBad, "post", "--production-hub", "http://localhost:8080", "--product", "bad", "--api-key", "97fIjjoKsYxFiJd67EpC1VuZuFPTNUqQv9eTuKEyRXQ=")
 	output = captureOutput(postArgsBad, run)
@@ -72,7 +75,7 @@ func filteredSubscribe(t *testing.T) {
 func subscribeWithCommand(t *testing.T) {
 	subscribeArgs := os.Args[0:1]
 	subscribeArgs = append(subscribeArgs, "subscribe", "--production-hub", "nats://localhost:4222", "--product", "good",
-		"--command", "./test_command.sh")
+		"--command", "../../test/command.sh")
 
 	go run(subscribeArgs)
 
@@ -81,13 +84,15 @@ func subscribeWithCommand(t *testing.T) {
 		"--jobname", "vibrations", "--product-location", "https://best.place.ever", "--api-key", "97fIjjoKsYxFiJd67EpC1VuZuFPTNUqQv9eTuKEyRXQ=")
 	output := captureOutput(postArgsGood, run)
 
-	if !strings.Contains(output, "MMS_EVENT={\"JobName\":\"vibrations\",\"Product\":\"good") {
-		t.Errorf("Expected command output to include: MMS_EVENT={\"JobName\":\"vibrations\",\"Product\":\"good; Got %s", output)
+	expectedOutput := `MMS_EVENT={"JobName":"vibrations","Product":"good"`
+	if !strings.Contains(output, expectedOutput) {
+		t.Errorf("Expected command output to include: %s; Got %s", expectedOutput, output)
 		return
 	}
 
-	if !strings.Contains(output, "product-location=https://best.place.ever") {
-		t.Errorf("Expected command output to include: product-location=https://best.place.ever; Got %s", output)
+	expectedOutput = "product-location=https://best.place.ever"
+	if !strings.Contains(output, expectedOutput) {
+		t.Errorf("Expected command output to include: %s; Got %s", expectedOutput, output)
 		return
 	}
 }
