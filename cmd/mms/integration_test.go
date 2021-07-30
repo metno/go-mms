@@ -84,16 +84,17 @@ func subscribeWithCommand(t *testing.T) {
 		"--jobname", "vibrations", "--product-location", "https://best.place.ever", "--api-key", "97fIjjoKsYxFiJd67EpC1VuZuFPTNUqQv9eTuKEyRXQ=")
 	output := captureOutput(postArgsGood, run)
 
-	expectedOutput := `MMS_EVENT={"JobName":"vibrations","Product":"good"`
-	if !strings.Contains(output, expectedOutput) {
-		t.Errorf("Expected command output to include: %s; Got %s", expectedOutput, output)
-		return
+	expectedOutputStrings := []string{
+		"product-location=https://best.place.ever",
+		"MMS_PRODUCT_EVENT_PRODUCT=good",
+		"MMS_PRODUCT_EVENT_PRODUCT_LOCATION=https://best.place.ever",
 	}
 
-	expectedOutput = "product-location=https://best.place.ever"
-	if !strings.Contains(output, expectedOutput) {
-		t.Errorf("Expected command output to include: %s; Got %s", expectedOutput, output)
-		return
+	for _, expectedOutput := range expectedOutputStrings {
+		if !strings.Contains(output, expectedOutput) {
+			t.Errorf("Expected command output to include: %s; Got %s", expectedOutput, output)
+			return
+		}
 	}
 }
 

@@ -29,6 +29,8 @@ import (
 
 	"github.com/metno/go-mms/pkg/mms"
 	"github.com/urfave/cli/v2"
+
+	env "github.com/Netflix/go-env"
 )
 
 func listAllEventsCmd(ctx *cli.Context) error {
@@ -149,6 +151,7 @@ func createExecutableCallback(filepath string, args bool, product string) func(e
 	return func(event *mms.ProductEvent) error {
 		var productLocation string
 
+		// Ignore events not matching product filter, if set.
 		if product != "" && event.Product != product {
 			return nil
 		}
@@ -159,13 +162,13 @@ func createExecutableCallback(filepath string, args bool, product string) func(e
 			productLocation = ""
 		}
 
-		serializedEvent, err := json.Marshal(event)
-		if err != nil {
-			return fmt.Errorf("could not json serialize mms event: %s", err)
-		}
 		command := exec.Command(filepath, productLocation)
 		command.Env = os.Environ()
-		command.Env = append(command.Env, fmt.Sprintf("MMS_EVENT=%s", string(serializedEvent)))
+		envVars, err := eventAsEnvVariables(event)
+		if err != nil {
+			return err
+		}
+		command.Env = append(command.Env, envVars...)
 
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
@@ -182,5 +185,17 @@ func createExecutableCallback(filepath string, args bool, product string) func(e
 		fmt.Println(stdout.String())
 		return nil
 	}
+}
 
+// eventAsEnvVariables creates a list of environment variables, one var for each ProductEvent attribute.
+func eventAsEnvVariables(event *mms.ProductEvent) ([]string, error) {
+	envSet, err := env.Marshal(event)
+	if err != nil {
+		return []string{}, fmt.Errorf("failed to serialie product event to env vars: %s", err)
+	}
+	var envVars []string
+	for name, value := range envSet {
+		envVars = append(envVars, fmt.Sprintf("%s=%s", name, value))
+	}
+	return envVars, nil
 }
