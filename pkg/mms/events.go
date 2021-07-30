@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"os"
 	"os/user"
+	"strings"
 	"time"
 
 	cenats "github.com/cloudevents/sdk-go/protocol/nats/v2"
@@ -34,15 +35,17 @@ import (
 // ProductEvent defines the message to send when a new Product has been completed and persisted.
 // TODO: Find a proper name following our naming conventions: https://github.com/metno/MMS/wiki/Terminology
 type ProductEvent struct {
-	JobName         string
-	Product         string // shortname, i.e., file(object) name without timestamp
-	ProductLocation string // Storage system + protocol + filename or object name
-	ProductionHub   string
-	Counter         int
-	TotalCount      int
-	RefTime         time.Time // Reference time
-	CreatedAt       time.Time // timestamp of the produced file (object)
-	NextEventAt     time.Time // timestamp of the next event
+	JobName string `env:"MMS_PRODUCT_EVENT_JOB_NAME"`
+	// shortname, i.e., file(object) name without timestamp
+	Product string `env:"MMS_PRODUCT_EVENT_PRODUCT,required=true"`
+	// Storage system + protocol + filename or object name
+	ProductLocation string    `env:"MMS_PRODUCT_EVENT_PRODUCT_LOCATION"`
+	ProductionHub   string    `env:"MMS_PRODUCT_EVENT_PRODUCTION_HUB"`
+	Counter         int       `env:"MMS_PRODUCT_EVENT_COUNTER"`
+	TotalCount      int       `env:"MMS_PRODUCT_EVENT_TOTAL_COUNT"`
+	RefTime         time.Time `env:"MMS_PRODUCT_EVENT_REF_TIME"`      // Reference time
+	CreatedAt       time.Time `env:"MMS_PRODUCT_EVENT_CREATED_AT"`    // timestamp of the produced file (object)
+	NextEventAt     time.Time `env:"MMS_PRODUCT_EVENT_NEXT_EVENT_AT"` // timestamp of the next event
 }
 
 type HeartBeatEvent struct {
@@ -239,6 +242,11 @@ func newNATSConsumer(natsURL string) (cloudevents.Client, error) {
 
 func productReceiver(callback ProductEventCallback) func(context.Context, cloudevents.Event) error {
 	return func(ctx context.Context, event cloudevents.Event) error {
+		// Silently ignore non product events.
+		if !strings.HasPrefix(event.Type(), "no.met.mms.product") {
+			return nil
+		}
+
 		mmsEvent := ProductEvent{}
 
 		if err := event.DataAs(&mmsEvent); err != nil {
