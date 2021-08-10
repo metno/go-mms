@@ -23,11 +23,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"time"
 
 	"github.com/metno/go-mms/pkg/mms"
 	"github.com/urfave/cli/v2"
+
+	env "github.com/Netflix/go-env"
 )
 
 func listAllEventsCmd(ctx *cli.Context) error {
@@ -136,6 +139,8 @@ func productReceiver(product string) func(event *mms.ProductEvent) error {
 	}
 }
 
+// createExecutableCallback generate a callback that filter on product and call the command at filepath.
+// The command gets the product-location as first argument and the complete serialized event as the env variable MMS_EVENT.
 func createExecutableCallback(filepath string, args bool, product string) func(event *mms.ProductEvent) error {
 	_, err := exec.LookPath(filepath)
 
@@ -146,6 +151,7 @@ func createExecutableCallback(filepath string, args bool, product string) func(e
 	return func(event *mms.ProductEvent) error {
 		var productLocation string
 
+		// Ignore events not matching product filter, if set.
 		if product != "" && event.Product != product {
 			return nil
 		}
@@ -155,7 +161,14 @@ func createExecutableCallback(filepath string, args bool, product string) func(e
 		} else {
 			productLocation = ""
 		}
+
 		command := exec.Command(filepath, productLocation)
+		command.Env = os.Environ()
+		envVars, err := eventAsEnvVariables(event)
+		if err != nil {
+			return err
+		}
+		command.Env = append(command.Env, envVars...)
 
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
@@ -166,11 +179,23 @@ func createExecutableCallback(filepath string, args bool, product string) func(e
 
 		if err != nil {
 			fmt.Println("Failed", err, stderr.String())
-			return fmt.Errorf("Failed to run executable, %s", err.Error())
+			return fmt.Errorf("failed to run executable, %s", err.Error())
 		}
 
 		fmt.Println(stdout.String())
 		return nil
 	}
+}
 
+// eventAsEnvVariables creates a list of environment variables, one var for each ProductEvent attribute.
+func eventAsEnvVariables(event *mms.ProductEvent) ([]string, error) {
+	envSet, err := env.Marshal(event)
+	if err != nil {
+		return []string{}, fmt.Errorf("failed to serialie product event to env vars: %s", err)
+	}
+	var envVars []string
+	for name, value := range envSet {
+		envVars = append(envVars, fmt.Sprintf("%s=%s", name, value))
+	}
+	return envVars, nil
 }
