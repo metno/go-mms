@@ -189,7 +189,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 	err = json.Unmarshal(payLoad, &pEvent)
 	if err != nil {
 		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusBadRequest)
-		log.Printf("Bad Request: %v", err)
+		log.Printf("Failed to unmarshall request body: %v", err)
 		return
 	}
 
@@ -203,7 +203,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 	err = mms.MakeProductEvent(service.NatsURL, &pEvent)
 	if err != nil {
 		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusBadRequest)
-		log.Printf("Bad Request: %v", err)
+		log.Printf("Failed to create ProductEvent: %v", err)
 		return
 	}
 
