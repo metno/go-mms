@@ -30,8 +30,8 @@ type HealthzStatus int
 
 const (
 	HealthzStatusHealthy   HealthzStatus = 0
-	HealthzStatusUnhealthy               = 1
-	HealthzStatusCritical                = 2
+	HealthzStatusUnhealthy HealthzStatus = 1
+	HealthzStatusCritical  HealthzStatus = 2
 )
 
 type healthzJSONLD struct {

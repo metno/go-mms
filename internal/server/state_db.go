@@ -42,6 +42,9 @@ func AddNewApiKey(db *sql.DB, apiKey string, keyMsg string) error {
 	// Insert it into the database. Duplicate entries will be rejected.
 	insertSQL := `INSERT INTO api_keys (apiKey, createdDate, createMsg) VALUES (?, ?, ?)`
 	statement, err := db.Prepare(insertSQL)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %s", err)
+	}
 	_, err = statement.Exec(apiKey, time.Now().Format(time.RFC3339), keyMsg)
 	if err != nil {
 		return fmt.Errorf("failed to add api key to db: %s", err)
@@ -60,6 +63,9 @@ func RemoveApiKey(db *sql.DB, apiKey string) (bool, error) {
 	// Delete the key from the database
 	deleteSQL := `DELETE FROM api_keys WHERE apiKey = ?`
 	statement, err := db.Prepare(deleteSQL)
+	if err != nil {
+		return false, fmt.Errorf("failed to prepare statement: %s", err)
+	}
 	result, err := statement.Exec(apiKey)
 	if err != nil {
 		return false, fmt.Errorf("failed to remove api key from db: %s", err)
@@ -78,6 +84,9 @@ func ValidateApiKey(db *sql.DB, apiKey string) (bool, error) {
 
 	checkSQL := `UPDATE api_keys SET lastUsed = ? WHERE apiKey = ?`
 	statement, err := db.Prepare(checkSQL)
+	if err != nil {
+		return false, fmt.Errorf("failed to prepare statement: %s", err)
+	}
 	result, err := statement.Exec(time.Now().Format(time.RFC3339), apiKey)
 	if err != nil {
 		return false, fmt.Errorf("failed to update api key record in db: %s", err)

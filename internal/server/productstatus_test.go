@@ -9,7 +9,7 @@ import (
 
 func TestPushEvent(t *testing.T) {
 	metrics := NewServiceMetrics(MetricsOpts{})
-	ps := NewProductstatus(metrics)
+	ps := NewProductstatus(metrics, 60)
 
 	var productEventList [3]mms.ProductEvent
 

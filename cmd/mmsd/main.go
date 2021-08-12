@@ -78,6 +78,11 @@ func main() {
 			Value: 8080,
 		}),
 		altsrc.NewIntFlag(&cli.IntFlag{
+			Name:  "product-drop-timeout",
+			Usage: "Specify how many seconds to wait before a product not seen by the system is dropped from the overview. Default is 604800 (7d)",
+			Value: 604800,
+		}),
+		altsrc.NewIntFlag(&cli.IntFlag{
 			Name:  "nats-port",
 			Usage: "Specify the port number for the NATS listening port.",
 			Value: 4222,
@@ -166,7 +171,7 @@ func main() {
 			}
 
 			templates := server.CreateTemplates()
-			webService := server.NewService(templates, eventsDB, stateDB, natsURL)
+			webService := server.NewService(templates, eventsDB, stateDB, natsURL, ctx.Int("product-drop-timeout"))
 
 			log.Println("Populating productstatus from the local events database ...")
 			events, err := webService.GetAllEvents(context.Background())
@@ -191,7 +196,7 @@ func main() {
 		Commands: []*cli.Command{
 			{
 				Name:  "keys",
-				Usage: fmt.Sprintf("Manage API keys."),
+				Usage: "Manage API keys.",
 				Flags: []cli.Flag{
 					altsrc.NewBoolFlag(&cli.BoolFlag{
 						Name:    "gen",
@@ -354,6 +359,8 @@ func startEventLoop(webService *server.Service) {
 				if err := webService.DeleteOldEvents(time.Now().AddDate(0, 0, -3)); err != nil {
 					log.Printf("failed to delete old events from events db: %s", err)
 				}
+
+				webService.Productstatus.PurgeOldProducts(604800)
 			}
 		}
 	}()

@@ -36,7 +36,7 @@ import (
 func listAllEventsCmd(ctx *cli.Context) error {
 	events := []*mms.ProductEvent{}
 	if ctx.String("production-hub") == "" {
-		return fmt.Errorf("No production-hub specified")
+		return fmt.Errorf("no production-hub specified")
 	}
 	url := ctx.String("production-hub") + "/api/v1/events"
 	newEvents, err := mms.ListProductEvents(url)
@@ -92,13 +92,19 @@ func postEventCmd(ctx *cli.Context) error {
 		NextEventAt:     time.Now().Add(time.Second * time.Duration(ctx.Int("event-interval"))),
 	}
 	if ctx.String("production-hub") == "" {
-		return fmt.Errorf("No production-hub specified")
+		return fmt.Errorf("no production-hub specified")
 	}
 	url := ctx.String("production-hub") + "/api/v1/events"
 	// Create a json-payload from productEvent
 	jsonStr, err := json.Marshal(&productEvent)
+	if err != nil {
+		log.Printf("failed to marshal productEvent, %s", err)
+	}
 	// Create a http-request to post the payload
 	httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	if err != nil {
+		log.Printf("failed to create POST request: %s", err)
+	}
 	httpReq.Header.Set("Api-Key", ctx.String("api-key"))
 	httpReq.Header.Set("Content-Type", "application/json")
 	// Create a http connection to the api.

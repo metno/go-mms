@@ -56,7 +56,7 @@ type HTTPServerError struct {
 }
 
 // NewService creates a service struct, containing all that is needed for a mmsd server to run.
-func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB, natsURL string) *Service {
+func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB, natsURL string, productDropTimeout int) *Service {
 	m := NewServiceMetrics(MetricsOpts{})
 
 	service := Service{
@@ -67,7 +67,7 @@ func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB,
 		Router:        mux.NewRouter(),
 		NatsURL:       natsURL,
 		Metrics:       m,
-		Productstatus: NewProductstatus(m),
+		Productstatus: NewProductstatus(m, productDropTimeout),
 	}
 	service.setRoutes()
 
@@ -143,7 +143,7 @@ func (service *Service) docsHandler(httpRespW http.ResponseWriter, httpReq *http
 	page, exists := params["page"]
 
 	var err error
-	if exists != true {
+	if !exists {
 		err = service.htmlTemplates.ExecuteTemplate(httpRespW, "index", service.about)
 	} else {
 		err = service.htmlTemplates.ExecuteTemplate(httpRespW, page, service.about)
@@ -175,7 +175,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 	validKey, err := ValidateApiKey(service.stateDB, apiKey)
 	if !validKey {
 		http.Error(httpRespW, "Unauthorized API key submitted", http.StatusUnauthorized)
-		log.Print("Unauthorized: API key not accepted")
+		log.Printf("Unauthorized: API key not accepted %s", err)
 		return
 	}
 

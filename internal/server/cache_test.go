@@ -26,8 +26,6 @@ import (
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 )
 
-const productionHubName = "default"
-
 func TestGetAllEvents(t *testing.T) {
 	service, mock, err := NewMockService()
 	if err != nil {
@@ -75,7 +73,7 @@ func NewMockService() (*Service, sqlmock.Sqlmock, error) {
 	}
 
 	templates := CreateTemplates()
-	webService := NewService(templates, eventsDB, nil, "")
+	webService := NewService(templates, eventsDB, nil, "", 60)
 
 	return webService, mock, nil
 }

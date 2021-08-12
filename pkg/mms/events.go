@@ -121,7 +121,7 @@ func ListProductEvents(apiURL string) ([]*ProductEvent, error) {
 
 	resp, err := http.Get(apiURL)
 	if err != nil {
-		return nil, fmt.Errorf("Could not get events from local http server:%v", err)
+		return nil, fmt.Errorf("can't get events from %s local http server:%v", apiURL, err)
 	}
 	defer resp.Body.Close()
 

@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -39,7 +40,7 @@ type metrics struct {
 func NewServiceMetrics(opts MetricsOpts) *metrics {
 	registry := prometheus.NewRegistry()
 
-	goCollector := prometheus.NewGoCollector()
+	goCollector := collectors.NewGoCollector()
 
 	counter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
