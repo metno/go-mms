@@ -168,34 +168,34 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 	apiKey := httpReq.Header.Get("Api-Key")
 	if apiKey == "" {
 		http.Error(httpRespW, "API key invalid or missing", http.StatusUnauthorized)
-		log.Print("Unauthorized: API key invalid or missing")
+		log.Print("unauthorized: API key invalid or missing")
 		return
 	}
 
 	validKey, err := ValidateApiKey(service.stateDB, apiKey)
 	if !validKey {
 		http.Error(httpRespW, "Unauthorized API key submitted", http.StatusUnauthorized)
-		log.Print("Unauthorized: API key not accepted")
+		log.Print("unauthorized: API key not accepted")
 		return
 	}
 
 	payLoad, err = ioutil.ReadAll(httpReq.Body)
 	if err != nil {
 		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusInternalServerError)
-		log.Printf("Internal Server Error: %v", err)
+		log.Printf("failed reading request body: %v", err)
 		return
 	}
 
 	err = json.Unmarshal(payLoad, &pEvent)
 	if err != nil {
 		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusBadRequest)
-		log.Printf("Failed to unmarshall request body: %v", err)
+		log.Printf("failed to unmarshal request body: %v", err)
 		return
 	}
 
 	err = saveProductEvent(service.eventsDB, &pEvent)
 	if err != nil {
-		log.Printf("Could not save to database: %v", err)
+		log.Printf("could not save to database: %v", err)
 		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusInternalServerError)
 		return
 	}
@@ -203,7 +203,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 	err = mms.MakeProductEvent(service.NatsURL, &pEvent)
 	if err != nil {
 		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusBadRequest)
-		log.Printf("Failed to create ProductEvent: %v", err)
+		log.Printf("failed to create ProductEvent: %v", err)
 		return
 	}
 
@@ -224,7 +224,7 @@ func okResponse(payload []byte, httpRespW http.ResponseWriter, httpReq *http.Req
 	httpRespW.Header().Set("Content-Type", "application/json")
 	_, err := httpRespW.Write(payload)
 	if err != nil {
-		log.Printf("could send response to req %q: %s", httpReq.URL, err)
+		log.Printf("failed to send response to req %q: %s", httpReq.URL, err)
 	}
 }
 
@@ -235,7 +235,7 @@ func serverErrorResponse(errMsg error, httpRespW http.ResponseWriter, httpReq *h
 
 	payload, err := json.Marshal(errResponse)
 	if err != nil {
-		http.Error(httpRespW, "Failed to serialize data.", http.StatusInternalServerError)
+		http.Error(httpRespW, "failed to serialize data", http.StatusInternalServerError)
 		return
 	}
 	httpRespW.WriteHeader(http.StatusServiceUnavailable)
@@ -243,6 +243,6 @@ func serverErrorResponse(errMsg error, httpRespW http.ResponseWriter, httpReq *h
 	httpRespW.Header().Set("Content-Type", "application/json")
 	_, err = httpRespW.Write(payload)
 	if err != nil {
-		log.Printf("could send response to req %q: %s", httpReq.URL, err)
+		log.Printf("failed to send response to req %q: %s", httpReq.URL, err)
 	}
 }
