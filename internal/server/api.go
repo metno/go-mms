@@ -56,7 +56,7 @@ type HTTPServerError struct {
 }
 
 // NewService creates a service struct, containing all that is needed for a mmsd server to run.
-func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB, natsURL string) *Service {
+func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB, natsURL string, productDropTimeout int) *Service {
 	m := NewServiceMetrics(MetricsOpts{})
 
 	service := Service{
@@ -67,7 +67,7 @@ func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB,
 		Router:        mux.NewRouter(),
 		NatsURL:       natsURL,
 		Metrics:       m,
-		Productstatus: NewProductstatus(m),
+		Productstatus: NewProductstatus(m, productDropTimeout),
 	}
 	service.setRoutes()
 
