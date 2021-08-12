@@ -196,7 +196,7 @@ func main() {
 		Commands: []*cli.Command{
 			{
 				Name:  "keys",
-				Usage: fmt.Sprintf("Manage API keys."),
+				Usage: "Manage API keys.",
 				Flags: []cli.Flag{
 					altsrc.NewBoolFlag(&cli.BoolFlag{
 						Name:    "gen",

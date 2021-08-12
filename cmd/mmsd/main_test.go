@@ -38,10 +38,12 @@ func TestMain(t *testing.T) {
 	os.Args = []string{"./mmsd"}
 
 	go main()
-	select {
-	case <-time.After(3 * time.Second):
+	for {
+		<-time.After(3 * time.Second)
 		// overwrite panics from underlying goroutines being abandonded
+		// TODO: needs better explanation
 		if recover() != nil {
+			t.Log("Something has happened")
 		}
 		t.Log("Did not fail before timeout")
 	}

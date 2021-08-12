@@ -26,8 +26,6 @@ import (
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 )
 
-const productionHubName = "default"
-
 func TestGetAllEvents(t *testing.T) {
 	service, mock, err := NewMockService()
 	if err != nil {
