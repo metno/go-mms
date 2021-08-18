@@ -30,7 +30,7 @@ import (
 	"github.com/metno/go-mms/pkg/mms"
 	"github.com/urfave/cli/v2"
 
-	env "github.com/Netflix/go-env"
+	env "github.com/metno/go-env"
 )
 
 func listAllEventsCmd(ctx *cli.Context) error {
