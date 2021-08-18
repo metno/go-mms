@@ -13,6 +13,9 @@ clean:
 image:
 	docker build -t mmsd .
 
+testdb:
+	cp test/state.db.static test/state.db
+
 test:
 	go test -v ./...
 
@@ -39,7 +42,7 @@ release:
 puml:
 	go-plantuml generate -rd . -o go-mms.puml
 
-integration_test: build_mmsd
+integration_test: build_mmsd testdb
 	./mmsd -w ./test 2>/dev/null & echo "$$!" > ./mmsd.pid
 	go test --tags=integration ./cmd/mms/ || (kill `cat ./mmsd.pid`; unlink ./mmsd.pid; exit 1)
 
