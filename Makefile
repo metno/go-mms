@@ -41,7 +41,7 @@ puml:
 
 integration_test: build_mmsd
 	./mmsd -w ./test 2>/dev/null & echo "$$!" > ./mmsd.pid
-	go test --tags=integration ./cmd/mms/ || (kill `cat ./mmsd.pid`; unlink ./mmsd.pid; exit 1)
+	go test -count=1 --tags=integration ./cmd/mms/ || (kill `cat ./mmsd.pid`; unlink ./mmsd.pid; exit 1)
 
 	@kill `cat ./mmsd.pid`
 	@unlink ./mmsd.pid
