@@ -4,8 +4,9 @@ go 1.15
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/cloudevents/sdk-go/protocol/nats/v2 v2.4.1
-	github.com/cloudevents/sdk-go/v2 v2.4.1
+	github.com/Netflix/go-env v0.0.0-20210215222557-e437a7e7f9fb
+	github.com/cloudevents/sdk-go/protocol/nats/v2 v2.5.0
+	github.com/cloudevents/sdk-go/v2 v2.5.0
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
