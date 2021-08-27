@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/Netflix/go-env v0.0.0-20210215222557-e437a7e7f9fb
 	github.com/cloudevents/sdk-go/protocol/nats/v2 v2.5.0
 	github.com/cloudevents/sdk-go/v2 v2.5.0
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
@@ -13,7 +12,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/metno/go-env v0.0.0-20210818085717-04b5c276f690
-	github.com/nats-io/nats-server/v2 v2.3.4
+	github.com/nats-io/nats-server/v2 v2.4.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/rakyll/statik v0.1.7
 	github.com/urfave/cli/v2 v2.3.0
