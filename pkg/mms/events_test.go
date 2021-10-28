@@ -84,11 +84,11 @@ func TestListProductEvents(t *testing.T) {
 	}
 }
 
-func TestPostProductEvent(t *testing.T) {
+func EmitProductEventMessage(t *testing.T) {
 	eClient := newMockCloudeventsClient()
 
 	event := ProductEvent{ProductionHub: "test-hub", Product: "test"}
-	err := eClient.PostProductEvent(&event)
+	err := eClient.EmitProductEventMessage(&event)
 
 	if err != nil {
 		t.Errorf("Expected no errors; Got this error: %s", err)

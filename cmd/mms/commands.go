@@ -18,11 +18,9 @@ package main
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
 	"time"
@@ -94,32 +92,12 @@ func postEventCmd(ctx *cli.Context) error {
 	if ctx.String("production-hub") == "" {
 		return fmt.Errorf("No production-hub specified")
 	}
-	url := ctx.String("production-hub") + "/api/v1/events"
-	// Create a json-payload from productEvent
-	jsonStr, err := json.Marshal(&productEvent)
-	// Create a http-request to post the payload
-	httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
-	httpReq.Header.Set("Api-Key", ctx.String("api-key"))
-	httpReq.Header.Set("Content-Type", "application/json")
-	// Create a http connection to the api.
-	var tr *http.Transport
-	if ctx.Bool("insecure") {
-		tr = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-	} else {
-		tr = &http.Transport{}
-	}
-	httpClient := &http.Client{Transport: tr}
-	httpResp, err := httpClient.Do(httpReq)
+
+	err = mms.PostProductEvent(ctx.String("production-hub"), ctx.String("api-key"), &productEvent, ctx.Bool("insecure"))
 	if err != nil {
-		log.Fatalf("Failed to create http client: %v", err)
+		return fmt.Errorf("Posting ProductEvent failed: %v", err)
 	}
-	defer httpResp.Body.Close()
-	// If 201 is not returned, panic with http response
-	if httpResp.StatusCode != http.StatusCreated {
-		log.Fatalln(httpResp.Status)
-	}
+
 	return nil
 }
 
