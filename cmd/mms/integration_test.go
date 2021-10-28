@@ -81,13 +81,15 @@ func subscribeWithCommand(t *testing.T) {
 
 	postArgsGood := os.Args[0:1]
 	postArgsGood = append(postArgsGood, "post", "--production-hub", "http://localhost:8080", "--product", "good",
-		"--jobname", "vibrations", "--product-location", "https://best.place.ever", "--api-key", "97fIjjoKsYxFiJd67EpC1VuZuFPTNUqQv9eTuKEyRXQ=")
+		"--jobname", "vibrations", "--product-location", "https://best.place.ever",
+		"--api-key", "97fIjjoKsYxFiJd67EpC1VuZuFPTNUqQv9eTuKEyRXQ=", "--reftime", "2021-08-18T12:00:00Z")
 	output := captureOutput(postArgsGood, run)
 
 	expectedOutputStrings := []string{
 		"product-location=https://best.place.ever",
 		"MMS_PRODUCT_EVENT_PRODUCT=good",
 		"MMS_PRODUCT_EVENT_PRODUCT_LOCATION=https://best.place.ever",
+		"MMS_PRODUCT_EVENT_REF_TIME=2021-08-18T12:00:00Z",
 	}
 
 	for _, expectedOutput := range expectedOutputStrings {
