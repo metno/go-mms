@@ -29,7 +29,7 @@ go_mod:
 	go mod download
 
 edeps:
-	go get github.com/rakyll/statik
+	go install github.com/rakyll/statik
 
 deps:
 	go get -v -t -d ./...
