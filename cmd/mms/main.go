@@ -61,8 +61,9 @@ func run(args []string) error {
 
 	postFlags := []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:  "api-key",
-			Usage: "The authorized API key.",
+			Name:    "api-key",
+			Usage:   "The authorized API key.",
+			EnvVars: []string{"MMS_API_KEY"},
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "production-hub", // HTTP

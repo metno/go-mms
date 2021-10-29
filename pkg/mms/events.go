@@ -17,7 +17,9 @@ limitations under the License.
 package mms
 
 import (
+	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -142,13 +144,55 @@ func MakeProductEvent(natsURL string, pEvent *ProductEvent) error {
 		return fmt.Errorf("failed to create messaging service: %v", err)
 	}
 
-	err = mmsClient.PostProductEvent(pEvent)
+	err = mmsClient.EmitProductEventMessage(pEvent)
 	if err != nil {
 		return fmt.Errorf("failed to post product to messaging service: %v", err)
 	}
 
 	mmsClient.cenatsSender.Close(context.Background())
 
+	return nil
+}
+
+func PostProductEvent(mmsdURL string, apiKey string, pe *ProductEvent, insecure bool) error {
+	var err error
+
+	url := mmsdURL + "/api/v1/events"
+
+	jsonStr, err := json.Marshal(&pe)
+	if err != nil {
+		return fmt.Errorf("failed to marshal ProductEvent: %v", err)
+	}
+
+	httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request: %v", err)
+	}
+
+	httpReq.Header.Set("Api-Key", apiKey)
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	var tr *http.Transport
+	if insecure {
+		tr = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	} else {
+		tr = &http.Transport{}
+	}
+
+	httpClient := &http.Client{Transport: tr}
+	httpResp, err := httpClient.Do(httpReq)
+
+	if err != nil {
+		return fmt.Errorf("failed to create http client: %v", err)
+	}
+
+	defer httpResp.Body.Close()
+
+	if httpResp.StatusCode != http.StatusCreated {
+		return fmt.Errorf("POST to %s failed with status: %s", url, httpResp.Status)
+	}
 	return nil
 }
 
@@ -160,7 +204,7 @@ func MakeHeartBeatEvent(natsURL string, hEvent *HeartBeatEvent) error {
 		return fmt.Errorf("failed to create messaging service: %v", err)
 	}
 
-	err = mmsClient.PostHeartBeat(hEvent)
+	err = mmsClient.EmitHeartBeatMessage(hEvent)
 	if err != nil {
 		return fmt.Errorf("failed to post heartbeat to messaging service: %v", err)
 	}
@@ -170,8 +214,8 @@ func MakeHeartBeatEvent(natsURL string, hEvent *HeartBeatEvent) error {
 	return nil
 }
 
-// PostProductEvent generates an event and sends it to the specified messaging service.
-func (eClient *EventClient) PostProductEvent(pEvent *ProductEvent) error {
+// EmitProductEventMessage generates an event and sends it to the specified messaging service.
+func (eClient *EventClient) EmitProductEventMessage(pEvent *ProductEvent) error {
 	event := cloudevents.NewEvent()
 	event.SetID(uuid.New().String())
 	event.SetType("no.met.mms.product.v1")
@@ -191,8 +235,8 @@ func (eClient *EventClient) PostProductEvent(pEvent *ProductEvent) error {
 	return nil
 }
 
-// PostProductEvent generates an event and sends it to the specified messaging service.
-func (eClient *EventClient) PostHeartBeat(hEvent *HeartBeatEvent) error {
+// EmitHeartBeatMessage generates an event and sends it to the specified messaging service.
+func (eClient *EventClient) EmitHeartBeatMessage(hEvent *HeartBeatEvent) error {
 	event := cloudevents.NewEvent()
 	event.SetID(uuid.New().String())
 	event.SetType("no.met.mms.heartbeat.v1")

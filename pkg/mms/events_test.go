@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/cloudevents/sdk-go/v2/protocol/gochan"
@@ -85,10 +86,33 @@ func TestListProductEvents(t *testing.T) {
 }
 
 func TestPostProductEvent(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusCreated)
+	}))
+
+	productEvent := ProductEvent{
+		JobName:         "test-job",
+		Product:         "test-product",
+		ProductLocation: ".",
+		ProductionHub:   ts.URL,
+		Counter:         1,
+		TotalCount:      1,
+		RefTime:         time.Date(1918, 10, 28, 12, 00, 00, 00, time.UTC),
+		CreatedAt:       time.Now(),
+		NextEventAt:     time.Now().Add(time.Second * time.Duration(3600)),
+	}
+
+	err := PostProductEvent(ts.URL, "no-api-key", &productEvent, false)
+	if err != nil {
+		t.Errorf("Expected no errors; Got %v", err)
+	}
+}
+
+func EmitProductEventMessage(t *testing.T) {
 	eClient := newMockCloudeventsClient()
 
 	event := ProductEvent{ProductionHub: "test-hub", Product: "test"}
-	err := eClient.PostProductEvent(&event)
+	err := eClient.EmitProductEventMessage(&event)
 
 	if err != nil {
 		t.Errorf("Expected no errors; Got this error: %s", err)
