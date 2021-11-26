@@ -12,7 +12,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/mattn/go-sqlite3 v1.14.9
 	github.com/metno/go-env v0.0.0-20210818085717-04b5c276f690
-	github.com/nats-io/nats-server/v2 v2.6.3
+	github.com/nats-io/nats-server/v2 v2.6.5
 	github.com/prometheus/client_golang v1.11.0
 	github.com/rakyll/statik v0.1.7
 	github.com/urfave/cli/v2 v2.3.0
