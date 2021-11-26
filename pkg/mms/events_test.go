@@ -108,6 +108,29 @@ func TestPostProductEvent(t *testing.T) {
 	}
 }
 
+func TestPostProductEventNotSuccessful(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+
+	productEvent := ProductEvent{
+		JobName:         "test-job",
+		Product:         "test-product",
+		ProductLocation: ".",
+		ProductionHub:   ts.URL,
+		Counter:         1,
+		TotalCount:      1,
+		RefTime:         time.Date(1918, 10, 28, 12, 00, 00, 00, time.UTC),
+		CreatedAt:       time.Now(),
+		NextEventAt:     time.Now().Add(time.Second * time.Duration(3600)),
+	}
+
+	err := PostProductEvent(ts.URL, "no-api-key", &productEvent, false)
+	if err == nil {
+		t.Errorf("Expected the function to return an error.")
+	}
+}
+
 func EmitProductEventMessage(t *testing.T) {
 	eClient := newMockCloudeventsClient()
 
