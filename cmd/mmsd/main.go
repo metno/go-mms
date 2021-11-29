@@ -32,6 +32,7 @@ import (
 	"github.com/metno/go-mms/pkg/gencert"
 	"github.com/metno/go-mms/pkg/mms"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sethvargo/go-password/password"
 
 	nats "github.com/nats-io/nats-server/v2/server"
 	"github.com/urfave/cli/v2"
@@ -144,11 +145,47 @@ func main() {
 			natsURL := fmt.Sprintf("nats://%s:%d", ctx.String("hostname"), ctx.Int("nats-port"))
 			apiURL := fmt.Sprintf("%s:%d", ctx.String("hostname"), ctx.Int("api-port"))
 
-			natsServer, err := nats.NewServer(&nats.Options{
+			password, err := password.Generate(64, 10, 10, false, false)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			privateNatsUser := &nats.User{
+				Username: "privateUser",
+				Password: password,
+				Permissions: &nats.Permissions{
+					Publish: &nats.SubjectPermission{
+						Allow: []string{"mms"},
+					},
+					Subscribe: &nats.SubjectPermission{
+						Allow: []string{"mms"},
+					},
+				},
+			}
+
+			publicNatsUser := &nats.User{
+				Username: "publicUser",
+				Permissions: &nats.Permissions{
+					Publish: &nats.SubjectPermission{
+						Deny: []string{"*"},
+					},
+					Subscribe: &nats.SubjectPermission{
+						Allow: []string{"mms"},
+					},
+				},
+			}
+
+			users := []*nats.User{privateNatsUser, publicNatsUser}
+
+			opts := &nats.Options{
 				ServerName: fmt.Sprintf("mmsd-nats-server-%s", productionHubName),
 				Host:       ctx.String("hostname"),
 				Port:       ctx.Int("nats-port"),
-			})
+				Users:      users,
+				NoAuthUser: "publicUser",
+			}
+
+			natsServer, err := nats.NewServer(opts)
 			if err != nil {
 				nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
 			}
@@ -166,7 +203,7 @@ func main() {
 			}
 
 			templates := server.CreateTemplates()
-			webService := server.NewService(templates, eventsDB, stateDB, natsURL)
+			webService := server.NewService(templates, eventsDB, stateDB, natsURL, "privateUser", password)
 
 			log.Println("Populating productstatus from the local events database ...")
 			events, err := webService.GetAllEvents(context.Background())
@@ -180,7 +217,7 @@ func main() {
 			startNATSServer(natsServer, natsURL)
 
 			if heartBeatInterval > 0 {
-				startHeartBeat(heartBeatInterval, natsURL)
+				startHeartBeat(heartBeatInterval, natsURL, password)
 			}
 
 			startEventLoop(webService)
@@ -297,7 +334,7 @@ func startNATSServer(natsServer *nats.Server, natsURL string) {
 	}()
 }
 
-func startHeartBeat(heartBeatInterval int, NatsURL string) {
+func startHeartBeat(heartBeatInterval int, NatsURL string, NatsPassword string) {
 
 	var pEvent mms.HeartBeatEvent
 	log.Printf("Starting heartbeat sender with interval: %d s", heartBeatInterval)
@@ -315,7 +352,7 @@ func startHeartBeat(heartBeatInterval int, NatsURL string) {
 			case <-ticker.C:
 				pEvent.CreatedAt = time.Now()
 				pEvent.NextEventAt = time.Now().Add(interval)
-				if err := mms.MakeHeartBeatEvent(NatsURL, &pEvent); err != nil {
+				if err := mms.MakeHeartBeatEvent(NatsURL, NatsPassword, &pEvent); err != nil {
 					log.Printf("failed to send HeartBeat message: %s", err.Error())
 				}
 			}

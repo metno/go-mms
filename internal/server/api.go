@@ -46,6 +46,8 @@ type Service struct {
 	htmlTemplates *template.Template
 	Router        *mux.Router
 	NatsURL       string
+	NatsUser      string
+	NatsPassword  string
 	Metrics       *metrics
 	Productstatus *Productstatus
 }
@@ -56,7 +58,7 @@ type HTTPServerError struct {
 }
 
 // NewService creates a service struct, containing all that is needed for a mmsd server to run.
-func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB, natsURL string) *Service {
+func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB, natsURL string, natsUser string, natsPassword string) *Service {
 	m := NewServiceMetrics(MetricsOpts{})
 
 	service := Service{
@@ -66,6 +68,8 @@ func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB,
 		htmlTemplates: templates,
 		Router:        mux.NewRouter(),
 		NatsURL:       natsURL,
+		NatsUser:      natsUser,
+		NatsPassword:  natsPassword,
 		Metrics:       m,
 		Productstatus: NewProductstatus(m),
 	}
@@ -200,7 +204,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 		return
 	}
 
-	err = mms.MakeProductEvent(service.NatsURL, &pEvent)
+	err = mms.MakeProductEvent(service.NatsURL, service.NatsPassword, &pEvent)
 	if err != nil {
 		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusBadRequest)
 		log.Printf("failed to create ProductEvent: %v", err)
