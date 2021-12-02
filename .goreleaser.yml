@@ -13,6 +13,8 @@ builds:
       - linux
     goarch:
       - amd64
+    ldflags:
+      - -linkmode external -extldflags "-static"
 
   - main: ./cmd/mms
     id: "mms"
