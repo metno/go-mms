@@ -39,6 +39,12 @@ import (
 	"github.com/urfave/cli/v2/altsrc"
 )
 
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 const productionHubName = "default"
 const confFile = "mmsd_config.yml"
 const dbEventsFile = "events.db"
@@ -203,7 +209,8 @@ func main() {
 			}
 
 			templates := server.CreateTemplates()
-			webService := server.NewService(templates, eventsDB, stateDB, natsURL, "privateUser", password)
+
+			webService := server.NewService(templates, eventsDB, stateDB, natsURL, "privateUser", password, server.Version{Version: version, Commit: commit, Date: date})
 
 			log.Println("Populating productstatus from the local events database ...")
 			events, err := webService.GetAllEvents(context.Background())
@@ -314,6 +321,15 @@ func main() {
 				Usage:   "Generate a private key (key.pem) and a signing request (cert.csr).",
 				Flags:   certFlags,
 				Action:  gencert.GenerateCSR(),
+			},
+			{
+				Name:    "version",
+				Aliases: []string{"v"},
+				Usage:   "Show build information",
+				Action: func(ctx *cli.Context) error {
+					fmt.Printf("Version: %s\nCommit: %s\nBuilt on: %s\n", version, commit, date)
+					return nil
+				},
 			},
 		},
 	}

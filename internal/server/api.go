@@ -38,6 +38,13 @@ import (
 	_ "github.com/metno/go-mms/pkg/statik"
 )
 
+// Version and build information
+type Version struct {
+	Version string
+	Commit  string
+	Date    string
+}
+
 // Service is a struct that wires up all data that is needed for this service to run.
 type Service struct {
 	eventsDB      *sql.DB
@@ -50,6 +57,7 @@ type Service struct {
 	NatsPassword  string
 	Metrics       *metrics
 	Productstatus *Productstatus
+	Version       Version
 }
 
 // HTTPServerError is used when the server fails to return a correct response to the user.
@@ -58,13 +66,13 @@ type HTTPServerError struct {
 }
 
 // NewService creates a service struct, containing all that is needed for a mmsd server to run.
-func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB, natsURL string, natsUser string, natsPassword string) *Service {
+func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB, natsURL string, natsUser string, natsPassword string, version Version) *Service {
 	m := NewServiceMetrics(MetricsOpts{})
 
 	service := Service{
 		eventsDB:      eventsDB,
 		stateDB:       stateDB,
-		about:         aboutMMSd(),
+		about:         aboutMMSd(version),
 		htmlTemplates: templates,
 		Router:        mux.NewRouter(),
 		NatsURL:       natsURL,
@@ -72,6 +80,7 @@ func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB,
 		NatsPassword:  natsPassword,
 		Metrics:       m,
 		Productstatus: NewProductstatus(m),
+		Version:       version,
 	}
 	service.setRoutes()
 
@@ -147,7 +156,7 @@ func (service *Service) docsHandler(httpRespW http.ResponseWriter, httpReq *http
 	page, exists := params["page"]
 
 	var err error
-	if exists != true {
+	if !exists {
 		err = service.htmlTemplates.ExecuteTemplate(httpRespW, "index", service.about)
 	} else {
 		err = service.htmlTemplates.ExecuteTemplate(httpRespW, page, service.about)

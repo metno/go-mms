@@ -1,0 +1,42 @@
+before:
+  hooks:
+    - make edeps
+    - make statik
+    - make deps
+    - make test
+
+builds:
+  - main: ./cmd/mmsd
+    id: "mmsd"
+    binary: mmsd
+    goos:
+      - linux
+    goarch:
+      - amd64
+
+  - main: ./cmd/mms
+    id: "mms"
+    binary: mms
+    goarch:
+      - linux
+    goos:
+      - amd64
+
+archives:
+  - format: binary
+
+checksum:
+  name_template: "checksums.txt"
+
+snapshot:
+  name_template: "{{ .Tag }}-next"
+
+env:
+  - CGO_ENABLED=1
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"

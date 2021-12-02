@@ -31,6 +31,7 @@ type About struct {
 	Responsible    string
 	TermsOfService *url.URL
 	Documentation  *url.URL
+	Version        Version
 }
 
 type WebAPISchemaOrg struct {
@@ -46,13 +47,14 @@ type Provider struct {
 	Name   string `json:"name"`
 }
 
-func aboutMMSd() *About {
+func aboutMMSd(version Version) *About {
 	return &About{
 		Name:           "MMSd REST API",
 		Description:    "Receive, list and publish events coming from a production hub.",
 		Responsible:    "Production hub team",
 		Documentation:  &url.URL{Path: "/"},
 		TermsOfService: &url.URL{Path: "/docs/termsofservice"},
+		Version:        version,
 	}
 }
 
