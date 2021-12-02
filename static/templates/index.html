@@ -14,5 +14,20 @@
 </p>
 <p>Please email helpdesk&#64met.no if you have questions about MMSd, and it will be directed to the appropriate people.
 </p>
+
+<h2>Version</h2>
+<table>
+  <tr>
+    <th>Version</th>
+    <th>Commit</th>
+    <th>Date</th>
+  </tr>
+  <tr>
+    <td>{{ .Version.Version }}</td>
+    <td>{{ .Version.Commit }}</td>
+    <td>{{ .Version.Date }}</td>
+  </tr>
+</table>
+
 {{template "footer"}}
 {{end}}

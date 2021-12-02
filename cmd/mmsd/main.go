@@ -209,7 +209,8 @@ func main() {
 			}
 
 			templates := server.CreateTemplates()
-			webService := server.NewService(templates, eventsDB, stateDB, natsURL, "privateUser", password)
+
+			webService := server.NewService(templates, eventsDB, stateDB, natsURL, "privateUser", password, server.Version{Version: version, Commit: commit, Date: date})
 
 			log.Println("Populating productstatus from the local events database ...")
 			events, err := webService.GetAllEvents(context.Background())
@@ -326,7 +327,7 @@ func main() {
 				Aliases: []string{"v"},
 				Usage:   "Show build information",
 				Action: func(ctx *cli.Context) error {
-					fmt.Printf("Version: %s\nCommit: %s\nBuilt at: %s\n", version, commit, date)
+					fmt.Printf("Version: %s\nCommit: %s\nBuilt on: %s\n", version, commit, date)
 					return nil
 				},
 			},

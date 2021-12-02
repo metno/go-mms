@@ -1,4 +1,3 @@
-VERSION := $(shell cat ./VERSION)
 all: build_mmsd build_mms
 
 build_mmsd: go_mod statik

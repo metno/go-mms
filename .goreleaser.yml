@@ -9,6 +9,8 @@ builds:
   - main: ./cmd/mmsd
     id: "mmsd"
     binary: mmsd
+    goos:
+      - linux
     goarch:
       - amd64
 
@@ -16,6 +18,8 @@ builds:
     id: "mms"
     binary: mms
     goarch:
+      - linux
+    goos:
       - amd64
 
 archives:
@@ -26,6 +30,9 @@ checksum:
 
 snapshot:
   name_template: "{{ .Tag }}-next"
+
+env:
+  - CGO_ENABLED=1
 
 changelog:
   sort: asc
