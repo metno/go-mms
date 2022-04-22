@@ -76,6 +76,11 @@ func run(args []string) error {
 			EnvVars: []string{"MMS_PRODUCT"},
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    "MMD", // xml
+			Usage:   "The MMD file describing the product.",
+			EnvVars: []string{"MMS_MMD"},
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "product-location",
 			Usage:   "Location of the product.",
 			EnvVars: []string{"MMS_PRODUCT_LOCATION"},
