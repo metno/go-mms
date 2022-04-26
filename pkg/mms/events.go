@@ -44,6 +44,7 @@ type ProductEvent struct {
 	// Storage system + protocol + filename or object name
 	ProductLocation string    `env:"MMS_PRODUCT_EVENT_PRODUCT_LOCATION"`
 	ProductionHub   string    `env:"MMS_PRODUCT_EVENT_PRODUCTION_HUB"`
+	MMD             string    `env:"MMS_PRODUCT_EVENT_MMD` // MMDfile for the product
 	Counter         int       `env:"MMS_PRODUCT_EVENT_COUNTER"`
 	TotalCount      int       `env:"MMS_PRODUCT_EVENT_TOTAL_COUNT"`
 	RefTime         time.Time `env:"MMS_PRODUCT_EVENT_REF_TIME"`      // Reference time
