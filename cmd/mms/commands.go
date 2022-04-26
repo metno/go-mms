@@ -23,6 +23,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/metno/go-mms/pkg/mms"
@@ -88,7 +90,9 @@ func postEventCmd(ctx *cli.Context) error {
 		RefTime:         refTime,
 		CreatedAt:       time.Now(),
 		NextEventAt:     time.Now().Add(time.Second * time.Duration(ctx.Int("event-interval"))),
+		MMD:             ctx.String("MMD"),
 	}
+
 	if ctx.String("production-hub") == "" {
 		return fmt.Errorf("No production-hub specified")
 	}
@@ -111,8 +115,9 @@ func productReceiver(product string) func(event *mms.ProductEvent) error {
 		if err != nil {
 			return fmt.Errorf("failed to encode event as json: %s", err)
 		}
-
-		fmt.Println(string(encoded))
+		// Replace html-escaped characters when printing message.
+		str, err := strconv.Unquote(strings.Replace(strconv.Quote(string(encoded)), `\\u`, `\u`, -1))
+		fmt.Println(str)
 		return nil
 	}
 }
