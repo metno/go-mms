@@ -23,6 +23,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3" // Import sqlite3 driver for database/sql library
@@ -76,12 +78,17 @@ func saveProductEvent(db *sql.DB, event *mms.ProductEvent) error {
 		return fmt.Errorf("failed to create json blob for storage: %s", err)
 	}
 
+	str, err := strconv.Unquote(strings.Replace(strconv.Quote(string(payload)), `\\u`, `\u`, -1))
+	if err != nil {
+		return fmt.Errorf("failed to unescape html characters for storage: %s", err)
+	}
+
 	insertEventSQL := `INSERT INTO events(createdAt,event) VALUES (?, ?)`
 	statement, err := db.Prepare(insertEventSQL)
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %s", err)
 	}
-	_, err = statement.Exec(event.CreatedAt.Format(time.RFC3339), payload)
+	_, err = statement.Exec(event.CreatedAt.Format(time.RFC3339), str)
 	if err != nil {
 
 		return fmt.Errorf("failed to store event in db: %s", err)
