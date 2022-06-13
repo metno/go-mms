@@ -54,10 +54,10 @@ github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWR
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
-github.com/cloudevents/sdk-go/protocol/nats/v2 v2.9.0 h1:3d1z9UQer8v2KLxRba3tNd7M5x9Te7g9g9ZLqdzfpVc=
-github.com/cloudevents/sdk-go/protocol/nats/v2 v2.9.0/go.mod h1:QJzS5Pw2lWu22wJfrq43o90Nj7xr9H8JDbd+T3IpwCE=
-github.com/cloudevents/sdk-go/v2 v2.9.0 h1:StQ9q2JuGvclGFoT7kpTdQm+qjW0LQzg51CgUF4ncpY=
-github.com/cloudevents/sdk-go/v2 v2.9.0/go.mod h1:GpCBmUj7DIRiDhVvsK5d6WCbgTWs8DxAWTRtAwQmIXs=
+github.com/cloudevents/sdk-go/protocol/nats/v2 v2.10.1 h1:vhMEC9zc6nIw3HwxaFZF/lT/uTftXx9h++f0KyXJazM=
+github.com/cloudevents/sdk-go/protocol/nats/v2 v2.10.1/go.mod h1:9l2pSSkH9AvMCwK8Rscwqtsni30UIWNj/EmgtmaRMmc=
+github.com/cloudevents/sdk-go/v2 v2.10.1 h1:qNFovJ18fWOd8Q9ydWJPk1oiFudXyv1GxJIP7MwPjuM=
+github.com/cloudevents/sdk-go/v2 v2.10.1/go.mod h1:GpCBmUj7DIRiDhVvsK5d6WCbgTWs8DxAWTRtAwQmIXs=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/cpuguy83/go-md2man/v2 v2.0.1 h1:r/myEWzV9lfsM1tFLgDyu0atFtJ1fXn261LKYj/3DxU=
 github.com/cpuguy83/go-md2man/v2 v2.0.1/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
