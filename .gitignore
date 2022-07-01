@@ -26,4 +26,9 @@ mms_authorized_keys
 *.csr
 *.pem
 
+# Nats creds
+*.creds
+*.nk
+*.jwt
+
 dist/
