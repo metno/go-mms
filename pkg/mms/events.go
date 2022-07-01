@@ -82,13 +82,12 @@ func MakeHubIdentifier() (string, error) {
 	} else {
 		userName = "unkown"
 	}
-
 	return fmt.Sprintf("%s@%s", userName, hostName), nil
 }
 
 // NewNatsConsumerClient creates a cloudevent client for consuming MMS events from NATS.
-func NewNatsConsumerClient(natsURL string) (*EventClient, error) {
-	eClient, err := newNATSConsumer(natsURL)
+func NewNatsConsumerClient(natsURL string, natsCredentials nats.Option) (*EventClient, error) {
+	eClient, err := newNATSConsumer(natsURL, natsCredentials)
 	if err != nil {
 		return nil, fmt.Errorf("failed to subscribe to events: %v", err)
 	}
@@ -99,8 +98,8 @@ func NewNatsConsumerClient(natsURL string) (*EventClient, error) {
 }
 
 // NewNatsSenderClient creates a cloudevent client for sending MMS events to NATS.
-func NewNatsSenderClient(natsURL string, natsPassword string) (*EventClient, error) {
-	eClient, pEvent, err := newNATSSender(natsURL, natsPassword)
+func NewNatsSenderClient(natsURL string, natsCredentials nats.Option) (*EventClient, error) {
+	eClient, pEvent, err := newNATSSender(natsURL, natsCredentials)
 	if err != nil {
 		return nil, fmt.Errorf("failed to subscribe to events: %v", err)
 	}
@@ -139,9 +138,9 @@ func ListProductEvents(apiURL string) ([]*ProductEvent, error) {
 }
 
 // MakeProductEvent prepares and sends the product event
-func MakeProductEvent(natsURL string, natsPassword string, pEvent *ProductEvent) error {
+func MakeProductEvent(natsURL string, natsCredentials nats.Option, pEvent *ProductEvent) error {
 
-	mmsClient, err := NewNatsSenderClient(natsURL, natsPassword)
+	mmsClient, err := NewNatsSenderClient(natsURL, natsCredentials)
 	if err != nil {
 		return fmt.Errorf("failed to create messaging service: %v", err)
 	}
@@ -199,9 +198,9 @@ func PostProductEvent(mmsdURL string, apiKey string, pe *ProductEvent, insecure 
 }
 
 // MakeProductEvent prepares and sends the product event
-func MakeHeartBeatEvent(natsURL string, natsPassword string, hEvent *HeartBeatEvent) error {
+func MakeHeartBeatEvent(natsURL string, natsCredentials nats.Option, hEvent *HeartBeatEvent) error {
 
-	mmsClient, err := NewNatsSenderClient(natsURL, natsPassword)
+	mmsClient, err := NewNatsSenderClient(natsURL, natsCredentials)
 	if err != nil {
 		return fmt.Errorf("failed to create messaging service: %v", err)
 	}
@@ -259,8 +258,8 @@ func (eClient *EventClient) EmitHeartBeatMessage(hEvent *HeartBeatEvent) error {
 	return nil
 }
 
-func newNATSSender(natsURL string, natsPassword string) (cloudevents.Client, cenats.Sender, error) {
-	pEvent, err := cenats.NewSender(natsURL, "mms", cenats.NatsOptions(nats.UserInfo("privateUser", natsPassword)))
+func newNATSSender(natsURL string, natsCredentials nats.Option) (cloudevents.Client, cenats.Sender, error) {
+	pEvent, err := cenats.NewSender(natsURL, "mms", cenats.NatsOptions(natsCredentials))
 	if err != nil {
 		return nil, cenats.Sender{}, fmt.Errorf("failed to create nats protocol: %v", err)
 	}
@@ -273,8 +272,8 @@ func newNATSSender(natsURL string, natsPassword string) (cloudevents.Client, cen
 	return eClient, *pEvent, nil
 }
 
-func newNATSConsumer(natsURL string) (cloudevents.Client, error) {
-	pEvent, err := cenats.NewConsumer(natsURL, "mms", cenats.NatsOptions())
+func newNATSConsumer(natsURL string, natsCredentials nats.Option) (cloudevents.Client, error) {
+	pEvent, err := cenats.NewConsumer(natsURL, "mms", cenats.NatsOptions(natsCredentials))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create nats protocol, %v", err)
 	}
