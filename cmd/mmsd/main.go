@@ -35,6 +35,8 @@ import (
 	"github.com/sethvargo/go-password/password"
 
 	nats "github.com/nats-io/nats-server/v2/server"
+	natscli "github.com/nats-io/nats.go"
+
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 )
@@ -88,6 +90,26 @@ func main() {
 			Name:  "nats-port",
 			Usage: "Specify the port number for the NATS listening port.",
 			Value: 4222,
+		}),
+		altsrc.NewBoolFlag(&cli.BoolFlag{
+			Name:  "nats-local",
+			Usage: "Specify wether this MMSD instance will spawn own NATS-server (True) or connect to an existing NATS stream",
+			Value: true,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "nats-url",
+			Usage: "Specify which nats-url daemon should post incoming messages",
+			Value: "",
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "nats-user",
+			Usage: "Username to use to post to external NATS",
+			Value: "",
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "nats-password",
+			Usage: "Password to use to post to external NATS",
+			Value: "",
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "certificate",
@@ -148,53 +170,72 @@ func main() {
 		},
 		Flags: cmdFlags,
 		Action: func(ctx *cli.Context) error {
-			natsURL := fmt.Sprintf("nats://%s:%d", ctx.String("hostname"), ctx.Int("nats-port"))
+			var natsURL string
+			var natsUser string
+			var natsPassword string
+			var natsCredentials natscli.Option
+
+			if ctx.Bool("nats-local") == true {
+				natsURL = fmt.Sprintf("nats://%s:%d", ctx.String("hostname"), ctx.Int("nats-port"))
+				natsUser = "privateUser"
+				// Create a password to use internally if NATS is local for privateUser
+				natsPassword, err = password.Generate(64, 10, 10, false, false)
+				if err != nil {
+					log.Fatal(err)
+				}
+				privateNatsUser := &nats.User{
+					Username: natsUser,
+					Password: natsPassword,
+					Permissions: &nats.Permissions{
+						Publish: &nats.SubjectPermission{
+							Allow: []string{"mms"},
+						},
+						Subscribe: &nats.SubjectPermission{
+							Allow: []string{"mms"},
+						},
+					},
+				}
+
+				publicNatsUser := &nats.User{
+					Username: "publicUser",
+					Permissions: &nats.Permissions{
+						Publish: &nats.SubjectPermission{
+							Deny: []string{"*"},
+						},
+						Subscribe: &nats.SubjectPermission{
+							Allow: []string{"mms"},
+						},
+					},
+				}
+
+				users := []*nats.User{privateNatsUser, publicNatsUser}
+
+				opts := &nats.Options{
+					ServerName: fmt.Sprintf("mmsd-nats-server-%s", productionHubName),
+					Host:       ctx.String("hostname"),
+					Port:       ctx.Int("nats-port"),
+					Users:      users,
+					NoAuthUser: "publicUser",
+				}
+
+				natsServer, err := nats.NewServer(opts)
+				if err != nil {
+					nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
+				}
+
+				startNATSServer(natsServer, natsURL)
+				natsCredentials = natscli.UserInfo("privateUser", natsPassword)
+			} else {
+				natsURL = ctx.String("nats-url")
+				if natsURL == "" {
+					return fmt.Errorf("Need to provide nats-url if nats-local is false")
+				}
+				natsUser = ctx.String("nats-user")
+				natsPassword = ctx.String("nats-password")
+				natsCredentials = natscli.UserCredentials(natsUser, natsPassword)
+			}
+
 			apiURL := fmt.Sprintf("%s:%d", ctx.String("hostname"), ctx.Int("api-port"))
-
-			password, err := password.Generate(64, 10, 10, false, false)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			privateNatsUser := &nats.User{
-				Username: "privateUser",
-				Password: password,
-				Permissions: &nats.Permissions{
-					Publish: &nats.SubjectPermission{
-						Allow: []string{"mms"},
-					},
-					Subscribe: &nats.SubjectPermission{
-						Allow: []string{"mms"},
-					},
-				},
-			}
-
-			publicNatsUser := &nats.User{
-				Username: "publicUser",
-				Permissions: &nats.Permissions{
-					Publish: &nats.SubjectPermission{
-						Deny: []string{"*"},
-					},
-					Subscribe: &nats.SubjectPermission{
-						Allow: []string{"mms"},
-					},
-				},
-			}
-
-			users := []*nats.User{privateNatsUser, publicNatsUser}
-
-			opts := &nats.Options{
-				ServerName: fmt.Sprintf("mmsd-nats-server-%s", productionHubName),
-				Host:       ctx.String("hostname"),
-				Port:       ctx.Int("nats-port"),
-				Users:      users,
-				NoAuthUser: "publicUser",
-			}
-
-			natsServer, err := nats.NewServer(opts)
-			if err != nil {
-				nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
-			}
 
 			eventsPath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbEventsFile))
 			eventsDB, err := server.NewEventsDB(eventsPath)
@@ -210,7 +251,7 @@ func main() {
 
 			templates := server.CreateTemplates()
 
-			webService := server.NewService(templates, eventsDB, stateDB, natsURL, "privateUser", password, server.Version{Version: version, Commit: commit, Date: date})
+			webService := server.NewService(templates, eventsDB, stateDB, natsURL, natsCredentials, server.Version{Version: version, Commit: commit, Date: date})
 
 			log.Println("Populating productstatus from the local events database ...")
 			events, err := webService.GetAllEvents(context.Background())
@@ -221,10 +262,8 @@ func main() {
 
 			heartBeatInterval := ctx.Int("heartbeat-interval")
 
-			startNATSServer(natsServer, natsURL)
-
 			if heartBeatInterval > 0 {
-				startHeartBeat(heartBeatInterval, natsURL, password)
+				startHeartBeat(heartBeatInterval, natsURL, natsCredentials)
 			}
 
 			startEventLoop(webService)
@@ -350,7 +389,7 @@ func startNATSServer(natsServer *nats.Server, natsURL string) {
 	}()
 }
 
-func startHeartBeat(heartBeatInterval int, NatsURL string, NatsPassword string) {
+func startHeartBeat(heartBeatInterval int, natsURL string, natsCredentials natscli.Option) {
 
 	var pEvent mms.HeartBeatEvent
 	log.Printf("Starting heartbeat sender with interval: %d s", heartBeatInterval)
@@ -368,7 +407,7 @@ func startHeartBeat(heartBeatInterval int, NatsURL string, NatsPassword string) 
 			case <-ticker.C:
 				pEvent.CreatedAt = time.Now()
 				pEvent.NextEventAt = time.Now().Add(interval)
-				if err := mms.MakeHeartBeatEvent(NatsURL, NatsPassword, &pEvent); err != nil {
+				if err := mms.MakeHeartBeatEvent(natsURL, natsCredentials, &pEvent); err != nil {
 					log.Printf("failed to send HeartBeat message: %s", err.Error())
 				}
 			}
