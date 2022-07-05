@@ -1,4 +1,0 @@
-production-hub: http://localhost:8080
-product: "test"
-jobname: "test-job"
-event-interval: 3600

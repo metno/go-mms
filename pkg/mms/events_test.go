@@ -97,9 +97,9 @@ func TestPostProductEvent(t *testing.T) {
 		ProductionHub:   ts.URL,
 		Counter:         1,
 		TotalCount:      1,
-		RefTime:         time.Date(1918, 10, 28, 12, 00, 00, 00, time.UTC),
-		CreatedAt:       time.Now(),
-		NextEventAt:     time.Now().Add(time.Second * time.Duration(3600)),
+		RefTime:         PEventTime(time.Date(1918, 10, 28, 12, 00, 00, 00, time.UTC)),
+		CreatedAt:       PEventTime(time.Now()),
+		NextEventAt:     PEventTime(time.Now().Add(time.Second * time.Duration(3600))),
 	}
 
 	err := PostProductEvent(ts.URL, "no-api-key", &productEvent, false)
@@ -120,9 +120,9 @@ func TestPostProductEventNotSuccessful(t *testing.T) {
 		ProductionHub:   ts.URL,
 		Counter:         1,
 		TotalCount:      1,
-		RefTime:         time.Date(1918, 10, 28, 12, 00, 00, 00, time.UTC),
-		CreatedAt:       time.Now(),
-		NextEventAt:     time.Now().Add(time.Second * time.Duration(3600)),
+		RefTime:         PEventTime(time.Date(1918, 10, 28, 12, 00, 00, 00, time.UTC)),
+		CreatedAt:       PEventTime(time.Now()),
+		NextEventAt:     PEventTime(time.Now().Add(time.Second * time.Duration(3600))),
 	}
 
 	err := PostProductEvent(ts.URL, "no-api-key", &productEvent, false)
