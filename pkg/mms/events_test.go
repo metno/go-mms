@@ -51,7 +51,7 @@ var correctEventData = `
 	"Product": "Arome Arctic",
 	"ProductionHub": "ecflow.modellprod",
 	"Product": "arome_arctic_sfx_2_5km",
-	"CreatedAt": "2020-08-26T12:18:48.281847242+02:00",
+	"CreatedAt": "2022-07-05T08:51:19Z",
 	"ProductLocation": ""
 }]`
 
