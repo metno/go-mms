@@ -64,14 +64,14 @@ type ProductEvent struct {
 	// shortname, i.e., file(object) name without timestamp
 	Product string `env:"MMS_PRODUCT_EVENT_PRODUCT,required=true"`
 	// Storage system + protocol + filename or object name
-	ProductLocation string    `env:"MMS_PRODUCT_EVENT_PRODUCT_LOCATION"`
-	ProductionHub   string    `env:"MMS_PRODUCT_EVENT_PRODUCTION_HUB"`
-	MMD             string    `env:"MMS_PRODUCT_EVENT_MMD"` // MMDfile for the product
-	Counter         int       `env:"MMS_PRODUCT_EVENT_COUNTER"`
-	TotalCount      int       `env:"MMS_PRODUCT_EVENT_TOTAL_COUNT"`
-	RefTime         time.Time `env:"MMS_PRODUCT_EVENT_REF_TIME"`      // Reference time
-	CreatedAt       time.Time `env:"MMS_PRODUCT_EVENT_CREATED_AT"`    // timestamp of the produced file (object)
-	NextEventAt     time.Time `env:"MMS_PRODUCT_EVENT_NEXT_EVENT_AT"` // timestamp of the next event
+	ProductLocation string     `env:"MMS_PRODUCT_EVENT_PRODUCT_LOCATION"`
+	ProductionHub   string     `env:"MMS_PRODUCT_EVENT_PRODUCTION_HUB"`
+	MMD             string     `env:"MMS_PRODUCT_EVENT_MMD"` // MMDfile for the product
+	Counter         int        `env:"MMS_PRODUCT_EVENT_COUNTER"`
+	TotalCount      int        `env:"MMS_PRODUCT_EVENT_TOTAL_COUNT"`
+	RefTime         PEventTime `env:"MMS_PRODUCT_EVENT_REF_TIME"`      // Reference time
+	CreatedAt       PEventTime `env:"MMS_PRODUCT_EVENT_CREATED_AT"`    // timestamp of the produced file (object)
+	NextEventAt     PEventTime `env:"MMS_PRODUCT_EVENT_NEXT_EVENT_AT"` // timestamp of the next event
 
 }
 
