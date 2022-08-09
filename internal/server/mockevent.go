@@ -36,7 +36,7 @@ func MockProductEvent(httpRespW http.ResponseWriter, httpReq *http.Request) {
 
 	event.SetData(cloudevents.ApplicationJSON, &mms.ProductEvent{
 		Product:   "arome_arctic_sfx_2_5km",
-		CreatedAt: time.Now(),
+		CreatedAt: mms.PEventTime(time.Now()),
 	})
 
 	payload, err := json.Marshal(event)
