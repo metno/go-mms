@@ -71,7 +71,7 @@ func postEventCmd(ctx *cli.Context) error {
 	var err error
 	refTime := time.Now()
 	if ctx.String("reftime") != "now" {
-		refTime, err = time.Parse(time.RFC3339, ctx.String("reftime"))
+		refTime, err = time.Parse(mms.DefaultTimeFormat, ctx.String("reftime"))
 		if err != nil {
 			log.Println("Could not parse reftime")
 			log.Println("Please use RFC 3339 format:")
@@ -87,9 +87,9 @@ func postEventCmd(ctx *cli.Context) error {
 		ProductionHub:   ctx.String("production-hub"),
 		Counter:         ctx.Int("counter"),
 		TotalCount:      ctx.Int("ntotal"),
-		RefTime:         refTime,
-		CreatedAt:       time.Now(),
-		NextEventAt:     time.Now().Add(time.Second * time.Duration(ctx.Int("event-interval"))),
+		RefTime:         mms.PEventTime(refTime),
+		CreatedAt:       mms.PEventTime(time.Now()),
+		NextEventAt:     mms.PEventTime(time.Now().Add(time.Second * time.Duration(ctx.Int("event-interval")))),
 		MMD:             ctx.String("MMD"),
 	}
 
