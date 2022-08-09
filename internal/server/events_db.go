@@ -88,7 +88,7 @@ func saveProductEvent(db *sql.DB, event *mms.ProductEvent) error {
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %s", err)
 	}
-	_, err = statement.Exec(event.CreatedAt.Format(time.RFC3339), str)
+	_, err = statement.Exec(time.Time(event.CreatedAt).Format(time.RFC3339), str)
 	if err != nil {
 
 		return fmt.Errorf("failed to store event in db: %s", err)

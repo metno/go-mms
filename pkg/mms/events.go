@@ -35,8 +35,30 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
-// ProductEvent defines the message to send when a new Product has been completed and persisted.
+// convert the time to UTC and Format to a default time format
+
+type PEventTime time.Time
+
+const DefaultTimeFormat = "2006-01-02T15:04:05Z"
+
+func (pt PEventTime) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("\"%s\"", time.Time(pt).UTC().Format(DefaultTimeFormat))), nil
+}
+
+func (pt *PEventTime) UnmarshalJSON(b []byte) error {
+	timeString := strings.Trim(string(b), `"`)
+	t, err := time.Parse(DefaultTimeFormat, timeString)
+
+	if err != nil {
+		return fmt.Errorf("invalid date format: %s", timeString)
+	}
+	*pt = PEventTime(t)
+	return nil
+}
+
+// ProductEvent defines the message to send whPEventTimeen a new Product has been completed and persisted.
 // TODO: Find a proper name following our naming conventions: https://github.com/metno/MMS/wiki/Terminology
+
 type ProductEvent struct {
 	JobName string `env:"MMS_PRODUCT_EVENT_JOB_NAME"`
 	// shortname, i.e., file(object) name without timestamp
@@ -50,6 +72,7 @@ type ProductEvent struct {
 	RefTime         time.Time `env:"MMS_PRODUCT_EVENT_REF_TIME"`      // Reference time
 	CreatedAt       time.Time `env:"MMS_PRODUCT_EVENT_CREATED_AT"`    // timestamp of the produced file (object)
 	NextEventAt     time.Time `env:"MMS_PRODUCT_EVENT_NEXT_EVENT_AT"` // timestamp of the next event
+
 }
 
 type HeartBeatEvent struct {

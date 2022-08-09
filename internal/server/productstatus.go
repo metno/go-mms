@@ -40,13 +40,13 @@ func NewProductstatus(m *metrics) *Productstatus {
 }
 
 func (p *Productstatus) PushEvent(pe mms.ProductEvent) error {
-	if pe.NextEventAt.Equal(pe.CreatedAt) {
+	if time.Time(pe.NextEventAt).Equal(time.Time(pe.CreatedAt)) {
 		return nil
 	}
 
 	p.Products[pe.Product] = Product{
 		Name:                 pe.Product,
-		NextInstanceExpected: pe.NextEventAt,
+		NextInstanceExpected: time.Time(pe.NextEventAt),
 	}
 	return nil
 }
