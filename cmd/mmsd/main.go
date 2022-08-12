@@ -331,6 +331,25 @@ func main() {
 					return nil
 				},
 			},
+
+			{
+				Name:    "delete-old-events",
+				Aliases: []string{"del"},
+				Usage:   "Delete old events ",
+				Action: func(ctx *cli.Context) error {
+
+					eventsPath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbEventsFile))
+					eventsDB, err := server.NewEventsDB(eventsPath)
+					if err != nil {
+						log.Fatalf("could not open events db: %s", err)
+					}
+
+					if err := server.DeleteOldEventsCmd(eventsDB, time.Now().AddDate(0, 0, -3)); err != nil {
+						log.Printf("failed to delete old events from events db: %s", err)
+					}
+					return nil
+				},
+			},
 		},
 	}
 
