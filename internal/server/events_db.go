@@ -71,32 +71,6 @@ func (service *Service) DeleteOldEvents(maxAge time.Time) error {
 	return err
 }
 
-//DeleteOldEventsCmd removes events older than a specified datetime as a command line option.
-func DeleteOldEventsCmd(db *sql.DB, maxAge time.Time) error {
-
-	deleteOldEvents := `DELETE FROM events WHERE createdAt < "` + maxAge.Format(time.RFC3339) + `";`
-	statement, err := db.Prepare(deleteOldEvents)
-	if err != nil {
-		return fmt.Errorf("failed to prepare statement: %s", err)
-	}
-
-	result, err := statement.Exec()
-	if err != nil {
-		return fmt.Errorf("failed to delete event in db: %s", err)
-	}
-
-	rows, _ := result.RowsAffected()
-	_ = statement.Close()
-	if rows == 0 {
-		log.Println("No events older than 3 days")
-		return nil
-	}
-
-	log.Printf("%v rows of events deleted", rows)
-	return nil
-
-}
-
 func saveProductEvent(db *sql.DB, event *mms.ProductEvent) error {
 
 	payload, err := json.Marshal(event)

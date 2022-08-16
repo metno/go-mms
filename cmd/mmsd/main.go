@@ -110,6 +110,11 @@ func main() {
 			Usage: "Specify the interval for sending heartbeats. Turn off with 0 or negative value",
 			Value: 10,
 		}),
+		altsrc.NewUintFlag(&cli.UintFlag{
+			Name:  "del-events-interval",
+			Usage: "Specify the interval(days) for deleting events. Default is 3 days (deletes 3 days old events)",
+			Value: 3,
+		}),
 	}
 
 	certFlags := []cli.Flag{
@@ -227,7 +232,7 @@ func main() {
 				startHeartBeat(heartBeatInterval, natsURL, password)
 			}
 
-			startEventLoop(webService)
+			startEventLoop(webService, ctx.Int(("del-events-interval")))
 			startWebServer(webService, apiURL, ctx.Bool("tls"), ctx.String("certificate"), ctx.String("key"))
 
 			return nil
@@ -331,25 +336,6 @@ func main() {
 					return nil
 				},
 			},
-
-			{
-				Name:    "delete-old-events",
-				Aliases: []string{"del"},
-				Usage:   "Delete old events ",
-				Action: func(ctx *cli.Context) error {
-
-					eventsPath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbEventsFile))
-					eventsDB, err := server.NewEventsDB(eventsPath)
-					if err != nil {
-						log.Fatalf("could not open events db: %s", err)
-					}
-
-					if err := server.DeleteOldEventsCmd(eventsDB, time.Now().AddDate(0, 0, -3)); err != nil {
-						log.Printf("failed to delete old events from events db: %s", err)
-					}
-					return nil
-				},
-			},
 		},
 	}
 
@@ -395,8 +381,8 @@ func startHeartBeat(heartBeatInterval int, NatsURL string, NatsPassword string) 
 	}()
 }
 
-func startEventLoop(webService *server.Service) {
-	log.Printf("Starting event loop ...")
+func startEventLoop(webService *server.Service, eventDeletionInterval int) {
+	log.Printf("Starting event loop with %v days of event deletion Interval ...", eventDeletionInterval)
 	// Start a separate go routine serving as an event loop for maintenance tasks.
 
 	uptimeCounter := prometheus.NewCounter(prometheus.CounterOpts{
@@ -423,7 +409,7 @@ func startEventLoop(webService *server.Service) {
 		for {
 			select {
 			case <-hourTicker.C:
-				if err := webService.DeleteOldEvents(time.Now().AddDate(0, 0, -3)); err != nil {
+				if err := webService.DeleteOldEvents(time.Now().AddDate(0, 0, -eventDeletionInterval)); err != nil {
 					log.Printf("failed to delete old events from events db: %s", err)
 				}
 			}
