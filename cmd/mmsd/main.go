@@ -102,9 +102,10 @@ func main() {
 			Value: "",
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:  "nats-user",
-			Usage: "Username to use to post to external NATS",
-			Value: "",
+			Name:    "nats-user",
+			Aliases: []string{"cred-file"},
+			Usage:   "Username to use to post to external NATS",
+			Value:   "",
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:  "nats-password",
@@ -171,7 +172,9 @@ func main() {
 		Flags: cmdFlags,
 		Action: func(ctx *cli.Context) error {
 			var natsURL string
+			// natsUser is either filepath for JWT or cred file, or privateUser for local nats
 			var natsUser string
+			// if natsUser is JWT, natsPassword is nkeySeed filepath, if local nats, it local pass
 			var natsPassword string
 			var natsCredentials natscli.Option
 
@@ -231,8 +234,15 @@ func main() {
 					return fmt.Errorf("Need to provide nats-url if nats-local is false")
 				}
 				natsUser = ctx.String("nats-user")
+				if natsUser == "" {
+					return fmt.Errorf("Need to provide either JWT and NkeySeed or cred files as nats-user")
+				}
 				natsPassword = ctx.String("nats-password")
-				natsCredentials = natscli.UserCredentials(natsUser, natsPassword)
+				if natsPassword == "" {
+					natsCredentials = natscli.UserCredentials(natsUser)
+				} else {
+					natsCredentials = natscli.UserCredentials(natsUser, natsPassword)
+				}
 			}
 
 			apiURL := fmt.Sprintf("%s:%d", ctx.String("hostname"), ctx.Int("api-port"))
