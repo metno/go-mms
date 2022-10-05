@@ -7,12 +7,21 @@ Go client for MET Messaging system (MMS)
 # How to use
 ## Building
 
-For being able to use `statik` binary, you need to have go's bin directory in the path, most probably `~/go/bin` or `~/.local/go/bin`.
+To be able to use the `statik` binary, you need to have go's bin directory in the path, most probably `~/go/bin` or `~/.local/go/bin`. 
+We found this to be solved by using these paths:
+
+```bash
+export GOPATH=$HOME/go
+export PATH=$GOPATH/bin:$PATH
+export PATH=$PATH:/usr/local/go/bin
+```
 
 - `cd go-mms`
+- `make edeps`
+- `make statik`
 - `make deps`
 - `make`
-- `./mmsd`
+
 
 ## Use
 See [mms](docs/tldr/mms.md) and [mmsd](docs/tldr/mmsd.md)

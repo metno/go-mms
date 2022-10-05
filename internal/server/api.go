@@ -31,6 +31,7 @@ import (
 
 	gorilla "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/nats-io/nats.go"
 
 	"github.com/rakyll/statik/fs"
 
@@ -47,14 +48,15 @@ type Version struct {
 
 // Service is a struct that wires up all data that is needed for this service to run.
 type Service struct {
-	eventsDB      *sql.DB
-	stateDB       *sql.DB
-	about         *About
-	htmlTemplates *template.Template
-	Router        *mux.Router
-	NatsURL       string
-	NatsUser      string
-	NatsPassword  string
+	eventsDB        *sql.DB
+	stateDB         *sql.DB
+	about           *About
+	htmlTemplates   *template.Template
+	Router          *mux.Router
+	NatsURL         string
+	NatsCredentials nats.Option
+	// NatsUser      string
+	// NatsPassword  string
 	Metrics       *metrics
 	Productstatus *Productstatus
 	Version       Version
@@ -66,18 +68,19 @@ type HTTPServerError struct {
 }
 
 // NewService creates a service struct, containing all that is needed for a mmsd server to run.
-func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB, natsURL string, natsUser string, natsPassword string, version Version) *Service {
+func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB, natsURL string, natsCredentials nats.Option, version Version) *Service {
 	m := NewServiceMetrics(MetricsOpts{})
 
 	service := Service{
-		eventsDB:      eventsDB,
-		stateDB:       stateDB,
-		about:         aboutMMSd(version),
-		htmlTemplates: templates,
-		Router:        mux.NewRouter(),
-		NatsURL:       natsURL,
-		NatsUser:      natsUser,
-		NatsPassword:  natsPassword,
+		eventsDB:        eventsDB,
+		stateDB:         stateDB,
+		about:           aboutMMSd(version),
+		htmlTemplates:   templates,
+		Router:          mux.NewRouter(),
+		NatsURL:         natsURL,
+		NatsCredentials: natsCredentials,
+		// NatsUser:      natsUser,
+		// NatsPassword:  natsPassword,
 		Metrics:       m,
 		Productstatus: NewProductstatus(m),
 		Version:       version,
@@ -213,7 +216,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 		return
 	}
 
-	err = mms.MakeProductEvent(service.NatsURL, service.NatsPassword, &pEvent)
+	err = mms.MakeProductEvent(service.NatsURL, service.NatsCredentials, &pEvent)
 	if err != nil {
 		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusBadRequest)
 		log.Printf("failed to create ProductEvent: %v", err)
