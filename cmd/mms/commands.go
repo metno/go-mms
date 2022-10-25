@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/metno/go-mms/pkg/mms"
+	"github.com/nats-io/nats.go"
 	"github.com/urfave/cli/v2"
 
 	env "github.com/metno/go-env"
@@ -51,7 +52,14 @@ func listAllEventsCmd(ctx *cli.Context) error {
 }
 
 func subscribeEventsCmd(ctx *cli.Context) error {
-	mmsClient, err := mms.NewNatsConsumerClient(ctx.String("production-hub"))
+	var natsCreds nats.Option
+
+	if ctx.String("cred-file") == "" {
+		natsCreds = nil
+	} else {
+		natsCreds = nats.UserCredentials(ctx.String("cred-file"))
+	}
+	mmsClient, err := mms.NewNatsConsumerClient(ctx.String("production-hub"), natsCreds)
 	if err != nil {
 		return fmt.Errorf("one hub event subscription failed, ending: %v", err)
 	}

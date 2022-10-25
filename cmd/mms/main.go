@@ -48,6 +48,10 @@ func run(args []string) error {
 			Aliases: []string{"cmd"},
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "cred-file",
+			Usage: "File-path to credfile for subscribing",
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "product",
 			Usage:   "Name of the product.",
 			EnvVars: []string{"MMS_PRODUCT"},
