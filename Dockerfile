@@ -25,6 +25,5 @@ FROM debian:buster-slim
 COPY --from=build-app /build/app/mmsd /app/
 
 WORKDIR /app
-USER nobody:nogroup
 
 ENTRYPOINT ["/app/mmsd"]
