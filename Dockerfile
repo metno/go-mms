@@ -21,10 +21,10 @@ RUN make test
 
 # SECOND STAGE: create the app runtime image.
 FROM debian:buster-slim
-
 COPY --from=build-app /build/app/mmsd /app/
-
 WORKDIR /app
+
+RUN chown nobody.nogroup /app
 USER nobody:nogroup
 
 ENTRYPOINT ["/app/mmsd"]
