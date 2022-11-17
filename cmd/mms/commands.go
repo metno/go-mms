@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -161,19 +160,14 @@ func createExecutableCallback(filepath string, args bool, product string) func(e
 		}
 		command.Env = append(command.Env, envVars...)
 
-		var stdout bytes.Buffer
-		var stderr bytes.Buffer
-		command.Stdout = &stdout
-		command.Stderr = &stderr
-
-		err = command.Run()
+		out, err := command.CombinedOutput()
 
 		if err != nil {
-			fmt.Println("Failed", err, stderr.String())
+			fmt.Println("Failed", err)
 			return fmt.Errorf("failed to run executable, %s", err.Error())
 		}
 
-		fmt.Println(stdout.String())
+		fmt.Println(string(out))
 		return nil
 	}
 }
