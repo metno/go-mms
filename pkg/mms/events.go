@@ -109,8 +109,8 @@ func MakeHubIdentifier() (string, error) {
 }
 
 // NewNatsConsumerClient creates a cloudevent client for consuming MMS events from NATS.
-func NewNatsConsumerClient(natsURL string, natsCredentials nats.Option) (*EventClient, error) {
-	eClient, err := newNATSConsumer(natsURL, natsCredentials)
+func NewNatsConsumerClient(natsURL string, natsCredentials nats.Option, queueName string) (*EventClient, error) {
+	eClient, err := newNATSConsumer(natsURL, natsCredentials, queueName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to subscribe to events: %v", err)
 	}
@@ -121,8 +121,8 @@ func NewNatsConsumerClient(natsURL string, natsCredentials nats.Option) (*EventC
 }
 
 // NewNatsSenderClient creates a cloudevent client for sending MMS events to NATS.
-func NewNatsSenderClient(natsURL string, natsCredentials nats.Option) (*EventClient, error) {
-	eClient, pEvent, err := newNATSSender(natsURL, natsCredentials)
+func NewNatsSenderClient(natsURL string, natsCredentials nats.Option, queueName string) (*EventClient, error) {
+	eClient, pEvent, err := newNATSSender(natsURL, natsCredentials, queueName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to subscribe to events: %v", err)
 	}
@@ -161,9 +161,9 @@ func ListProductEvents(apiURL string) ([]*ProductEvent, error) {
 }
 
 // MakeProductEvent prepares and sends the product event
-func MakeProductEvent(natsURL string, natsCredentials nats.Option, pEvent *ProductEvent) error {
+func MakeProductEvent(natsURL string, natsCredentials nats.Option, pEvent *ProductEvent, queueName string) error {
 
-	mmsClient, err := NewNatsSenderClient(natsURL, natsCredentials)
+	mmsClient, err := NewNatsSenderClient(natsURL, natsCredentials, queueName)
 	if err != nil {
 		return fmt.Errorf("failed to create messaging service: %v", err)
 	}
@@ -178,7 +178,7 @@ func MakeProductEvent(natsURL string, natsCredentials nats.Option, pEvent *Produ
 	return nil
 }
 
-func PostProductEvent(mmsdURL string, apiKey string, pe *ProductEvent, insecure bool) error {
+func PostProductEvent(mmsdURL string, apiKey string, queueName string, pe *ProductEvent, insecure bool) error {
 	var err error
 
 	url := mmsdURL + "/api/v1/events"
@@ -194,6 +194,7 @@ func PostProductEvent(mmsdURL string, apiKey string, pe *ProductEvent, insecure 
 	}
 
 	httpReq.Header.Set("Api-Key", apiKey)
+	httpReq.Header.Set("Queue-Name", queueName)
 	httpReq.Header.Set("Content-Type", "application/json")
 
 	var tr *http.Transport
@@ -222,8 +223,8 @@ func PostProductEvent(mmsdURL string, apiKey string, pe *ProductEvent, insecure 
 
 // MakeProductEvent prepares and sends the product event
 func MakeHeartBeatEvent(natsURL string, natsCredentials nats.Option, hEvent *HeartBeatEvent) error {
-
-	mmsClient, err := NewNatsSenderClient(natsURL, natsCredentials)
+	// Maybe queueName for HeartBeatEvent should be heartbeat? Hardcoded to mms for now
+	mmsClient, err := NewNatsSenderClient(natsURL, natsCredentials, "mms")
 	if err != nil {
 		return fmt.Errorf("failed to create messaging service: %v", err)
 	}
@@ -281,7 +282,7 @@ func (eClient *EventClient) EmitHeartBeatMessage(hEvent *HeartBeatEvent) error {
 	return nil
 }
 
-func newNATSSender(natsURL string, natsCredentials nats.Option) (cloudevents.Client, cenats.Sender, error) {
+func newNATSSender(natsURL string, natsCredentials nats.Option, queueName string) (cloudevents.Client, cenats.Sender, error) {
 	pEvent, err := cenats.NewSender(natsURL, "mms", cenats.NatsOptions(natsCredentials))
 	if err != nil {
 		return nil, cenats.Sender{}, fmt.Errorf("failed to create nats protocol: %v", err)
@@ -295,8 +296,8 @@ func newNATSSender(natsURL string, natsCredentials nats.Option) (cloudevents.Cli
 	return eClient, *pEvent, nil
 }
 
-func newNATSConsumer(natsURL string, natsCredentials nats.Option) (cloudevents.Client, error) {
-	pEvent, err := cenats.NewConsumer(natsURL, "mms", cenats.NatsOptions(natsCredentials))
+func newNATSConsumer(natsURL string, natsCredentials nats.Option, queueName string) (cloudevents.Client, error) {
+	pEvent, err := cenats.NewConsumer(natsURL, queueName, cenats.NatsOptions(natsCredentials))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create nats protocol, %v", err)
 	}
