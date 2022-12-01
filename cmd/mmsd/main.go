@@ -51,6 +51,7 @@ const productionHubName = "default"
 const confFile = "mmsd_config.yml"
 const dbEventsFile = "events.db"
 const dbStateFile = "state.db"
+const dbJWTFile = "jwt.db"
 
 func main() {
 
@@ -102,14 +103,14 @@ func main() {
 			Value: "",
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:    "nats-user",
+			Name:    "hearbeat-user",
 			Aliases: []string{"cred-file"},
-			Usage:   "Username to use to post to external NATS",
+			Usage:   "Username to use to post heartbeat to external NATS",
 			Value:   "",
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:  "nats-password",
-			Usage: "Password to use to post to external NATS",
+			Name:  "hearbeat-password",
+			Usage: "Password to use to post heartbeat to external NATS",
 			Value: "",
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
@@ -183,7 +184,12 @@ func main() {
 			var natsPassword string
 			var natsCredentials natscli.Option
 
-			if ctx.Bool("nats-local") == true {
+			var eventsDB *sql.DB
+			var stateDB *sql.DB
+
+			natsLocal := ctx.Bool("nats-local")
+
+			if natsLocal == true {
 				natsURL = fmt.Sprintf("nats://%s:%d", ctx.String("hostname"), ctx.Int("nats-port"))
 				natsUser = "privateUser"
 				// Create a password to use internally if NATS is local for privateUser
@@ -238,11 +244,11 @@ func main() {
 				if natsURL == "" {
 					return fmt.Errorf("Need to provide nats-url if nats-local is false")
 				}
-				natsUser = ctx.String("nats-user")
+				natsUser = ctx.String("hearbeat-user")
 				if natsUser == "" {
-					return fmt.Errorf("Need to provide either JWT and NkeySeed or cred files as nats-user")
+					return fmt.Errorf("Need to provide either JWT and NkeySeed or cred files as hearbeat-user")
 				}
-				natsPassword = ctx.String("nats-password")
+				natsPassword = ctx.String("hearbeat-password")
 				if natsPassword == "" {
 					natsCredentials = natscli.UserCredentials(natsUser)
 				} else {
@@ -253,20 +259,28 @@ func main() {
 			apiURL := fmt.Sprintf("%s:%d", ctx.String("hostname"), ctx.Int("api-port"))
 
 			eventsPath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbEventsFile))
-			eventsDB, err := server.NewEventsDB(eventsPath)
+			eventsDB, err = server.NewEventsDB(eventsPath)
 			if err != nil {
 				log.Fatalf("could not open events db: %s", err)
 			}
-
-			statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbStateFile))
-			stateDB, err := server.NewStateDB(statePath)
-			if err != nil {
-				log.Fatalf("could not open state db: %s", err)
+			if natsLocal == true {
+				statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbStateFile))
+				stateDB, err = server.NewStateDB(statePath)
+				if err != nil {
+					log.Fatalf("could not open state db for local NATS authentication: %s", err)
+				}
+			} else {
+				statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbJWTFile))
+				NSC_creds_location := "/tmp/nkeys/creds/met-operator/met-account/"
+				stateDB, err = server.NewJWTDB(statePath, NSC_creds_location)
+				if err != nil {
+					log.Fatalf("could not open state db for non-local NATS authentication: %s", err)
+				}
 			}
 
 			templates := server.CreateTemplates()
 
-			webService := server.NewService(templates, eventsDB, stateDB, natsURL, natsCredentials, server.Version{Version: version, Commit: commit, Date: date})
+			webService := server.NewService(templates, eventsDB, stateDB, natsURL, natsCredentials, server.Version{Version: version, Commit: commit, Date: date}, natsLocal)
 
 			log.Println("Populating productstatus from the local events database ...")
 			events, err := webService.GetAllEvents(context.Background())
