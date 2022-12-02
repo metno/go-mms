@@ -194,6 +194,9 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 		validKey, natsUser, err = ValidateJWTKey(service.stateDB, apiKey)
 		postCredentials = nats.UserCredentials(natsUser)
 	}
+	if err != nil {
+		log.Printf("Failed to validate key: %s", err)
+	}
 	queueName := httpReq.Header.Get("Queue-Name")
 	if queueName == "" {
 		queueName = "mms"
