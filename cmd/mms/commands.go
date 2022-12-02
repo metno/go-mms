@@ -58,7 +58,8 @@ func subscribeEventsCmd(ctx *cli.Context) error {
 	} else {
 		natsCreds = nats.UserCredentials(ctx.String("cred-file"))
 	}
-	mmsClient, err := mms.NewNatsConsumerClient(ctx.String("production-hub"), natsCreds)
+	queueName := ctx.String("queue-name")
+	mmsClient, err := mms.NewNatsConsumerClient(ctx.String("production-hub"), natsCreds, queueName)
 	if err != nil {
 		return fmt.Errorf("one hub event subscription failed, ending: %v", err)
 	}
@@ -103,8 +104,13 @@ func postEventCmd(ctx *cli.Context) error {
 	if ctx.String("production-hub") == "" {
 		return fmt.Errorf("No production-hub specified")
 	}
+	queueName := ctx.String("queue-name")
+	if queueName == "" {
+		fmt.Println("queue-name was not given, trying with mms")
+		queueName = "mms"
+	}
 
-	err = mms.PostProductEvent(ctx.String("production-hub"), ctx.String("api-key"), &productEvent, ctx.Bool("insecure"))
+	err = mms.PostProductEvent(ctx.String("production-hub"), ctx.String("api-key"), queueName, &productEvent, ctx.Bool("insecure"))
 	if err != nil {
 		return fmt.Errorf("Posting ProductEvent failed: %v", err)
 	}

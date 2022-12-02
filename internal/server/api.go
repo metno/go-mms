@@ -55,11 +55,10 @@ type Service struct {
 	Router          *mux.Router
 	NatsURL         string
 	NatsCredentials nats.Option
-	// NatsUser      string
-	// NatsPassword  string
-	Metrics       *metrics
-	Productstatus *Productstatus
-	Version       Version
+	NatsLocal       bool
+	Metrics         *metrics
+	Productstatus   *Productstatus
+	Version         Version
 }
 
 // HTTPServerError is used when the server fails to return a correct response to the user.
@@ -68,7 +67,7 @@ type HTTPServerError struct {
 }
 
 // NewService creates a service struct, containing all that is needed for a mmsd server to run.
-func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB, natsURL string, natsCredentials nats.Option, version Version) *Service {
+func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB, natsURL string, natsCredentials nats.Option, version Version, natsLocal bool) *Service {
 	m := NewServiceMetrics(MetricsOpts{})
 
 	service := Service{
@@ -79,11 +78,10 @@ func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB,
 		Router:          mux.NewRouter(),
 		NatsURL:         natsURL,
 		NatsCredentials: natsCredentials,
-		// NatsUser:      natsUser,
-		// NatsPassword:  natsPassword,
-		Metrics:       m,
-		Productstatus: NewProductstatus(m),
-		Version:       version,
+		NatsLocal:       natsLocal,
+		Metrics:         m,
+		Productstatus:   NewProductstatus(m),
+		Version:         version,
 	}
 	service.setRoutes()
 
@@ -178,17 +176,32 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 	}
 
 	var err error
+	var validKey bool
+	var natsUser string
 	var pEvent mms.ProductEvent
 	var payLoad []byte
-
+	var postCredentials nats.Option
 	apiKey := httpReq.Header.Get("Api-Key")
 	if apiKey == "" {
 		http.Error(httpRespW, "API key invalid or missing", http.StatusUnauthorized)
 		log.Print("unauthorized: API key invalid or missing")
 		return
 	}
+	if service.NatsLocal == true {
+		validKey, err = ValidateApiKey(service.stateDB, apiKey)
+		postCredentials = service.NatsCredentials
+	} else {
+		validKey, natsUser, err = ValidateJWTKey(service.stateDB, apiKey)
+		postCredentials = nats.UserCredentials(natsUser)
+	}
+	if err != nil {
+		log.Printf("Failed to validate key: %s", err)
+	}
+	queueName := httpReq.Header.Get("Queue-Name")
+	if queueName == "" {
+		queueName = "mms"
+	}
 
-	validKey, err := ValidateApiKey(service.stateDB, apiKey)
 	if !validKey {
 		http.Error(httpRespW, "Unauthorized API key submitted", http.StatusUnauthorized)
 		log.Print("unauthorized: API key not accepted")
@@ -216,7 +229,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 		return
 	}
 
-	err = mms.MakeProductEvent(service.NatsURL, service.NatsCredentials, &pEvent)
+	err = mms.MakeProductEvent(service.NatsURL, postCredentials, &pEvent, queueName)
 	if err != nil {
 		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusBadRequest)
 		log.Printf("failed to create ProductEvent: %v", err)

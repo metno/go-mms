@@ -102,7 +102,7 @@ func TestPostProductEvent(t *testing.T) {
 		NextEventAt:     PEventTime(time.Now().Add(time.Second * time.Duration(3600))),
 	}
 
-	err := PostProductEvent(ts.URL, "no-api-key", &productEvent, false)
+	err := PostProductEvent(ts.URL, "no-api-key", "mms", &productEvent, false)
 	if err != nil {
 		t.Errorf("Expected no errors; Got %v", err)
 	}
@@ -125,7 +125,7 @@ func TestPostProductEventNotSuccessful(t *testing.T) {
 		NextEventAt:     PEventTime(time.Now().Add(time.Second * time.Duration(3600))),
 	}
 
-	err := PostProductEvent(ts.URL, "no-api-key", &productEvent, false)
+	err := PostProductEvent(ts.URL, "no-api-key", "mms", &productEvent, false)
 	if err == nil {
 		t.Errorf("Expected the function to return an error.")
 	}
