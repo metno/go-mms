@@ -98,6 +98,11 @@ func main() {
 			Value: true,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:  "nats-cred-path",
+			Usage: "Path where creds are stored in for mmsd-sidecar",
+			Value: "/nsc/nkeys/creds/met-operator/met-account/",
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:  "nats-url",
 			Usage: "Specify which nats-url daemon should post incoming messages",
 			Value: "",
@@ -271,7 +276,7 @@ func main() {
 				}
 			} else {
 				statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbJWTFile))
-				NSC_creds_location := "/tmp/nkeys/creds/met-operator/met-account/"
+				NSC_creds_location := ctx.String("nats-cred-path")
 				stateDB, err = server.NewJWTDB(statePath, NSC_creds_location)
 				if err != nil {
 					log.Fatalf("could not open state db for non-local NATS authentication: %s", err)
