@@ -11,11 +11,12 @@
 
 # Test coverage artifacts
 coverage.*
-state.db
 
 # Runtime
 *.sqlite
 events.db
+state.db
+jwt.db
 mms_authorized_keys
 
 # Config

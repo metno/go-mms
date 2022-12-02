@@ -75,6 +75,11 @@ func run(args []string) error {
 			EnvVars: []string{"MMS_PRODUCTION_HUB"},
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    "queue-name",
+			Usage:   "Nats queue (Subject) to post to.",
+			EnvVars: []string{"MMS_QUEUE"},
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "product",
 			Usage:   "Name of the product.",
 			EnvVars: []string{"MMS_PRODUCT"},
