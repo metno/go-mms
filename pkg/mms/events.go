@@ -283,7 +283,7 @@ func (eClient *EventClient) EmitHeartBeatMessage(hEvent *HeartBeatEvent) error {
 }
 
 func newNATSSender(natsURL string, natsCredentials nats.Option, queueName string) (cloudevents.Client, cenats.Sender, error) {
-	pEvent, err := cenats.NewSender(natsURL, "mms", cenats.NatsOptions(natsCredentials))
+	pEvent, err := cenats.NewSender(natsURL, queueName, cenats.NatsOptions(natsCredentials))
 	if err != nil {
 		return nil, cenats.Sender{}, fmt.Errorf("failed to create nats protocol: %v", err)
 	}
