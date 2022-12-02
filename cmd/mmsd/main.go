@@ -108,13 +108,13 @@ func main() {
 			Value: "",
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:    "hearbeat-user",
+			Name:    "heartbeat-user",
 			Aliases: []string{"cred-file"},
 			Usage:   "Username to use to post heartbeat to external NATS",
 			Value:   "",
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:  "hearbeat-password",
+			Name:  "heartbeat-password",
 			Usage: "Password to use to post heartbeat to external NATS",
 			Value: "",
 		}),
@@ -249,11 +249,11 @@ func main() {
 				if natsURL == "" {
 					return fmt.Errorf("Need to provide nats-url if nats-local is false")
 				}
-				natsUser = ctx.String("hearbeat-user")
+				natsUser = ctx.String("heartbeat-user")
 				if natsUser == "" {
-					return fmt.Errorf("Need to provide either JWT and NkeySeed or cred files as hearbeat-user")
+					return fmt.Errorf("Need to provide either JWT and NkeySeed or cred files as heartbeat-user")
 				}
-				natsPassword = ctx.String("hearbeat-password")
+				natsPassword = ctx.String("heartbeat-password")
 				if natsPassword == "" {
 					natsCredentials = natscli.UserCredentials(natsUser)
 				} else {
