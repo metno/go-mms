@@ -21,6 +21,10 @@ RUN make test
 
 # SECOND STAGE: create the app runtime image.
 FROM debian:buster-slim
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates
+RUN update-ca-certificates
+
 COPY --from=build-app /build/app/mmsd /app/
 WORKDIR /app
 
