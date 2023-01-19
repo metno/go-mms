@@ -12,7 +12,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.9
 	github.com/metno/go-env v0.0.0-20210818085717-04b5c276f690
 	github.com/nats-io/nats-server/v2 v2.8.1
-	github.com/nats-io/nats.go v1.14.0
+	github.com/nats-io/nats.go v1.23.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/rakyll/statik v0.1.7
 	github.com/sethvargo/go-password v0.2.0
@@ -42,8 +42,8 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0 // indirect
-	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd // indirect
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/crypto v0.5.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
