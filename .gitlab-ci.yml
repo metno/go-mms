@@ -1,0 +1,41 @@
+stages:
+  - build
+  - release
+
+build container:
+  stage: build
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - |
+      # Build if not yet present in registry
+      if ! docker pull "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" > /dev/null 2>&1; then
+        docker build --pull -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" .
+        docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+      fi
+    - |
+      # Default branch updates latest container image
+      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
+        docker tag "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" "$CI_REGISTRY_IMAGE:latest"
+        docker push "$CI_REGISTRY_IMAGE:latest"
+      fi
+    - |
+      # Tags also creates container image tags as references to the same build
+      if [[ "$CI_COMMIT_TAG" != "" ]]; then
+        docker tag "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
+        docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
+      fi
+  tags:
+    - k8s-root
+
+tjenester/s-enda:
+  stage: release
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - when: never
+  variables:
+    UPSTREAM_CI_COMMIT_SHA: "${CI_COMMIT_SHA}"
+    UPSTREAM_CI_PROJECT_PATH: "${CI_PROJECT_PATH}"
+    UPSTREAM_CI_PROJECT_URL: "${CI_PROJECT_URL}"
+    UPSTREAM_IMAGES: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
+  trigger: tjenester/s-enda
