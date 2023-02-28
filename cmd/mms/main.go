@@ -61,6 +61,11 @@ func run(args []string) error {
 			Usage: "Toggles sending of productLocation as arg[1] in executable",
 			Value: true,
 		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    "queue-name",
+			Usage:   "Name of NATS subject (queue) to subscribe to",
+			EnvVars: []string{"MMS_QUEUE"},
+		}),
 	}
 
 	postFlags := []cli.Flag{
