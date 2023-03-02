@@ -28,7 +28,7 @@ import (
 	"os/user"
 	"strings"
 	"time"
-
+	"io/ioutil"
 	cenats "github.com/cloudevents/sdk-go/protocol/nats/v2"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/google/uuid"
@@ -215,8 +215,10 @@ func PostProductEvent(mmsdURL string, apiKey string, queueName string, pe *Produ
 
 	defer httpResp.Body.Close()
 
-	if httpResp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("POST to %s failed with status: %s", url, httpResp.Status)
+	statusOK := httpResp.StatusCode >= 200 && httpResp.StatusCode < 300
+	if !statusOK {
+		b, _ := ioutil.ReadAll(httpResp.Body)
+		return fmt.Errorf("POST to %s failed with status: %s . Response body: %s", url, httpResp.Status, string(b))
 	}
 	return nil
 }
