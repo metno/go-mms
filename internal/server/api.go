@@ -98,7 +98,7 @@ func (service *Service) setRoutes() {
 	// Events
 	service.Router.HandleFunc("/api/v1/events", service.Metrics.Endpoint("/v1/events", service.eventsHandler)).Methods("GET")
 	service.Router.Handle("/api/v1/events", proxyHeaders(service.postEventHandler)).Methods("POST")
-
+	
 	// Health of the service
 	service.Router.HandleFunc("/api/v1/healthz", HealthzHandler(service.checkHealthz))
 
