@@ -174,7 +174,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 		httpRespW.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-
+	log.Print("Post started")
 	var err error
 	var validKey bool
 	var natsUser string
@@ -222,6 +222,12 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 		return
 	}
 
+	if pEvent.ProductionHub == "" {
+		http.Error(httpRespW, "ProductionHub must be given", http.StatusBadRequest)
+		log.Print("ProductionHub must be given")
+		return
+	}
+
 	err = saveProductEvent(service.eventsDB, &pEvent)
 	if err != nil {
 		log.Printf("could not save to database: %v", err)
@@ -238,6 +244,8 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 
 	httpRespW.WriteHeader(http.StatusCreated)
 	service.Productstatus.PushEvent(pEvent)
+	log.Print("Post ended")
+
 }
 
 // checkHealthz is supplied to HealthzHandler as a callback function.
