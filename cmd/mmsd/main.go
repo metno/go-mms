@@ -194,7 +194,7 @@ func main() {
 
 			natsLocal := ctx.Bool("nats-local")
 
-			if natsLocal == true {
+			if natsLocal {
 				natsURL = fmt.Sprintf("nats://%s:%d", ctx.String("hostname"), ctx.Int("nats-port"))
 				natsUser = "privateUser"
 				// Create a password to use internally if NATS is local for privateUser
@@ -268,7 +268,7 @@ func main() {
 			if err != nil {
 				log.Fatalf("could not open events db: %s", err)
 			}
-			if natsLocal == true {
+			if natsLocal {
 				statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbStateFile))
 				stateDB, err = server.NewStateDB(statePath)
 				if err != nil {

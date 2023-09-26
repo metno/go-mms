@@ -22,14 +22,15 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/user"
 	"strings"
 	"time"
-	"io/ioutil"
-	cenats "github.com/cloudevents/sdk-go/protocol/nats/v2"
+
+	cenats "github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
@@ -285,7 +286,7 @@ func (eClient *EventClient) EmitHeartBeatMessage(hEvent *HeartBeatEvent) error {
 }
 
 func newNATSSender(natsURL string, natsCredentials nats.Option, queueName string) (cloudevents.Client, cenats.Sender, error) {
-	pEvent, err := cenats.NewSender(natsURL, queueName, cenats.NatsOptions(natsCredentials))
+	pEvent, err := cenats.NewSender(natsURL, "PRODUCTDATA", queueName, cenats.NatsOptions(natsCredentials), nil, nil)
 	if err != nil {
 		return nil, cenats.Sender{}, fmt.Errorf("failed to create nats protocol: %v", err)
 	}
@@ -299,7 +300,8 @@ func newNATSSender(natsURL string, natsCredentials nats.Option, queueName string
 }
 
 func newNATSConsumer(natsURL string, natsCredentials nats.Option, queueName string) (cloudevents.Client, error) {
-	pEvent, err := cenats.NewConsumer(natsURL, queueName, cenats.NatsOptions(natsCredentials))
+	pEvent, err := cenats.NewConsumer(natsURL, "PRODUCTDATA", queueName, cenats.NatsOptions(natsCredentials), nil, nil)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to create nats protocol, %v", err)
 	}
