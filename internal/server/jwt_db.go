@@ -55,7 +55,10 @@ func createJWTDB(dbFilePath string, NSC_creds_location string) (*sql.DB, error) 
 	);`
 
 	_, err = db.Exec(createTable)
-	InitializeJWTDB(db, NSC_creds_location)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create table: %s", err)
+	}
+	err = InitializeJWTDB(db, NSC_creds_location)
 	return db, err
 }
 
@@ -106,10 +109,15 @@ func InitializeJWTDB(db *sql.DB, NSC_creds_location string) error {
 			// Insert it into the database. Duplicate entries will be rejected.
 			insertSQL := `INSERT INTO jwt_keys (JWTKey, NSC_cred_path) VALUES (?, ?)`
 			statement, err := db.Prepare(insertSQL)
-			_, err = statement.Exec(JWTKey, NSC_cred_path)
 			if err != nil {
-				error_string += fmt.Sprintf("failed to add JWT key to db: %s", err)
+				error_string += fmt.Sprintf("failed to prepare insert: %s", err)
+			} else {
+				_, err = statement.Exec(JWTKey, NSC_cred_path)
+				if err != nil {
+					error_string += fmt.Sprintf("failed to add JWT key to db: %s", err)
+				}
 			}
+
 		}
 	}
 	if error_string != "" {
