@@ -293,13 +293,14 @@ func main() {
 				log.Fatalf("could not read all events %s", err)
 			}
 			webService.Productstatus.Populate(events)
+			if natsLocal {
 
-			heartBeatInterval := ctx.Int("heartbeat-interval")
+				heartBeatInterval := ctx.Int("heartbeat-interval")
 
-			if heartBeatInterval > 0 {
-				startHeartBeat(heartBeatInterval, natsURL, natsCredentials)
+				if heartBeatInterval > 0 {
+					startHeartBeat(heartBeatInterval, natsURL, natsCredentials, natsLocal)
+				}
 			}
-
 			startEventLoop(webService, ctx.Int(("del-events-interval")))
 			startWebServer(webService, apiURL, ctx.Bool("tls"), ctx.String("certificate"), ctx.String("key"))
 
@@ -423,7 +424,7 @@ func startNATSServer(natsServer *nats.Server, natsURL string) {
 	}()
 }
 
-func startHeartBeat(heartBeatInterval int, natsURL string, natsCredentials natscli.Option) {
+func startHeartBeat(heartBeatInterval int, natsURL string, natsCredentials natscli.Option, natsLocal bool) {
 
 	var pEvent mms.HeartBeatEvent
 	log.Printf("Starting heartbeat sender with interval: %d s", heartBeatInterval)
@@ -441,7 +442,7 @@ func startHeartBeat(heartBeatInterval int, natsURL string, natsCredentials natsc
 			case <-ticker.C:
 				pEvent.CreatedAt = time.Now()
 				pEvent.NextEventAt = time.Now().Add(interval)
-				if err := mms.MakeHeartBeatEvent(natsURL, natsCredentials, &pEvent); err != nil {
+				if err := mms.MakeHeartBeatEvent(natsURL, natsCredentials, &pEvent, natsLocal); err != nil {
 					log.Printf("failed to send HeartBeat message: %s", err.Error())
 				}
 			}

@@ -61,6 +61,11 @@ func run(args []string) error {
 			Usage: "Toggles sending of productLocation as arg[1] in executable",
 			Value: true,
 		}),
+		altsrc.NewBoolFlag(&cli.BoolFlag{
+			Name:  "nats-local",
+			Usage: "Specify wether this MMSD instance will spawn own NATS-server (True) or connect to an existing NATS stream",
+			Value: true,
+		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "queue-name",
 			Usage:   "Name of NATS subject (queue) to subscribe to",

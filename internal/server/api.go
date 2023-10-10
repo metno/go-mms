@@ -98,7 +98,7 @@ func (service *Service) setRoutes() {
 	// Events
 	service.Router.HandleFunc("/api/v1/events", service.Metrics.Endpoint("/v1/events", service.eventsHandler)).Methods("GET")
 	service.Router.Handle("/api/v1/events", proxyHeaders(service.postEventHandler)).Methods("POST")
-	
+
 	// Health of the service
 	service.Router.HandleFunc("/api/v1/healthz", HealthzHandler(service.checkHealthz))
 
@@ -187,7 +187,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 		log.Print("unauthorized: API key invalid or missing")
 		return
 	}
-	if service.NatsLocal == true {
+	if service.NatsLocal {
 		validKey, err = ValidateApiKey(service.stateDB, apiKey)
 		postCredentials = service.NatsCredentials
 	} else {
@@ -235,7 +235,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 		return
 	}
 
-	err = mms.MakeProductEvent(service.NatsURL, postCredentials, &pEvent, queueName)
+	err = mms.MakeProductEvent(service.NatsURL, postCredentials, &pEvent, queueName, service.NatsLocal)
 	if err != nil {
 		http.Error(httpRespW, fmt.Sprintf("%v", err), http.StatusBadRequest)
 		log.Printf("failed to create ProductEvent: %v", err)

@@ -59,7 +59,7 @@ func subscribeEventsCmd(ctx *cli.Context) error {
 		natsCreds = nats.UserCredentials(ctx.String("cred-file"))
 	}
 	queueName := ctx.String("queue-name")
-	mmsClient, err := mms.NewNatsConsumerClient(ctx.String("production-hub"), natsCreds, queueName)
+	mmsClient, err := mms.NewNatsConsumerClient(ctx.String("production-hub"), natsCreds, queueName, ctx.Bool("nats-local"))
 	if err != nil {
 		return fmt.Errorf("one hub event subscription failed, ending: %v", err)
 	}

@@ -30,7 +30,8 @@ import (
 	"strings"
 	"time"
 
-	cenats "github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2"
+	cenats "github.com/cloudevents/sdk-go/protocol/nats/v2"
+	jsnats "github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
@@ -89,6 +90,7 @@ type ProductEventCallback func(e *ProductEvent) error
 type EventClient struct {
 	ceClient     cloudevents.Client
 	cenatsSender cenats.Sender
+	jsnatsSender jsnats.Sender
 }
 
 // Generate a hub indetifier
@@ -97,41 +99,65 @@ func MakeHubIdentifier() (string, error) {
 
 	hostName, err := os.Hostname()
 	if err != nil {
-		hostName = "unkown"
+		hostName = "unknown"
 	}
 
 	user, err := user.Current()
 	if err == nil {
 		userName = user.Username
 	} else {
-		userName = "unkown"
+		userName = "unknown"
 	}
 	return fmt.Sprintf("%s@%s", userName, hostName), nil
 }
 
 // NewNatsConsumerClient creates a cloudevent client for consuming MMS events from NATS.
-func NewNatsConsumerClient(natsURL string, natsCredentials nats.Option, queueName string) (*EventClient, error) {
-	eClient, err := newNATSConsumer(natsURL, natsCredentials, queueName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to subscribe to events: %v", err)
-	}
+func NewNatsConsumerClient(natsURL string, natsCredentials nats.Option, queueName string, natsLocal bool) (*EventClient, error) {
+	if natsLocal {
+		eClient, err := newNATSConsumer(natsURL, natsCredentials, queueName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to subscribe to events: %v", err)
+		}
 
-	return &EventClient{
-		ceClient: eClient,
-	}, nil
+		return &EventClient{
+			ceClient: eClient,
+		}, nil
+	} else {
+		eClient, err := newNATSJsConsumer(natsURL, natsCredentials, queueName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to subscribe to events: %v", err)
+		}
+
+		return &EventClient{
+			ceClient: eClient,
+		}, nil
+
+	}
 }
 
 // NewNatsSenderClient creates a cloudevent client for sending MMS events to NATS.
-func NewNatsSenderClient(natsURL string, natsCredentials nats.Option, queueName string) (*EventClient, error) {
-	eClient, pEvent, err := newNATSSender(natsURL, natsCredentials, queueName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to subscribe to events: %v", err)
-	}
+func NewNatsSenderClient(natsURL string, natsCredentials nats.Option, queueName string, natsLocal bool) (*EventClient, error) {
+	if natsLocal {
+		eClient, pEvent, err := newNATSSender(natsURL, natsCredentials, queueName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to subscribe to events: %v", err)
+		}
 
-	return &EventClient{
-		ceClient:     eClient,
-		cenatsSender: pEvent,
-	}, nil
+		return &EventClient{
+			ceClient:     eClient,
+			cenatsSender: pEvent,
+		}, nil
+	} else {
+		eClient, pEvent, err := newNATSJsSender(natsURL, natsCredentials, queueName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to subscribe to events: %v", err)
+		}
+
+		return &EventClient{
+			ceClient:     eClient,
+			jsnatsSender: pEvent,
+		}, nil
+	}
 }
 
 // WatchProductEvents will call your callback function on each incoming event from the MMS Nats server.
@@ -162,9 +188,9 @@ func ListProductEvents(apiURL string) ([]*ProductEvent, error) {
 }
 
 // MakeProductEvent prepares and sends the product event
-func MakeProductEvent(natsURL string, natsCredentials nats.Option, pEvent *ProductEvent, queueName string) error {
+func MakeProductEvent(natsURL string, natsCredentials nats.Option, pEvent *ProductEvent, queueName string, natsLocal bool) error {
 
-	mmsClient, err := NewNatsSenderClient(natsURL, natsCredentials, queueName)
+	mmsClient, err := NewNatsSenderClient(natsURL, natsCredentials, queueName, natsLocal)
 	if err != nil {
 		return fmt.Errorf("failed to create messaging service: %v", err)
 	}
@@ -225,9 +251,9 @@ func PostProductEvent(mmsdURL string, apiKey string, queueName string, pe *Produ
 }
 
 // MakeProductEvent prepares and sends the product event
-func MakeHeartBeatEvent(natsURL string, natsCredentials nats.Option, hEvent *HeartBeatEvent) error {
+func MakeHeartBeatEvent(natsURL string, natsCredentials nats.Option, hEvent *HeartBeatEvent, natsLocal bool) error {
 	// Maybe queueName for HeartBeatEvent should be heartbeat? Hardcoded to mms for now
-	mmsClient, err := NewNatsSenderClient(natsURL, natsCredentials, "mms")
+	mmsClient, err := NewNatsSenderClient(natsURL, natsCredentials, "mms", natsLocal)
 	if err != nil {
 		return fmt.Errorf("failed to create messaging service: %v", err)
 	}
@@ -286,7 +312,7 @@ func (eClient *EventClient) EmitHeartBeatMessage(hEvent *HeartBeatEvent) error {
 }
 
 func newNATSSender(natsURL string, natsCredentials nats.Option, queueName string) (cloudevents.Client, cenats.Sender, error) {
-	pEvent, err := cenats.NewSender(natsURL, "PRODUCTDATA", queueName, cenats.NatsOptions(natsCredentials), nil, nil)
+	pEvent, err := cenats.NewSender(natsURL, queueName, cenats.NatsOptions(natsCredentials))
 	if err != nil {
 		return nil, cenats.Sender{}, fmt.Errorf("failed to create nats protocol: %v", err)
 	}
@@ -299,8 +325,44 @@ func newNATSSender(natsURL string, natsCredentials nats.Option, queueName string
 	return eClient, *pEvent, nil
 }
 
+func newNATSJsSender(natsURL string, natsCredentials nats.Option, queueName string) (cloudevents.Client, jsnats.Sender, error) {
+	pEvent, err := jsnats.NewSender(natsURL, "PRODUCTDATA", queueName, cenats.NatsOptions(natsCredentials), nil)
+	if err != nil {
+		return nil, jsnats.Sender{}, fmt.Errorf("failed to create nats protocol: %v", err)
+	}
+
+	eClient, err := cloudevents.NewClient(pEvent)
+	if err != nil {
+		return nil, jsnats.Sender{}, fmt.Errorf("failed to create client, %v", err)
+	}
+
+	return eClient, *pEvent, nil
+}
+
 func newNATSConsumer(natsURL string, natsCredentials nats.Option, queueName string) (cloudevents.Client, error) {
-	pEvent, err := cenats.NewConsumer(natsURL, "PRODUCTDATA", queueName, cenats.NatsOptions(natsCredentials), nil, nil)
+
+	pEvent, err := cenats.NewConsumer(natsURL, queueName, cenats.NatsOptions(natsCredentials))
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create nats protocol, %v", err)
+	}
+
+	eClient, err := cloudevents.NewClient(pEvent)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client, %v", err)
+	}
+
+	return eClient, nil
+}
+
+func newNATSJsConsumer(natsURL string, natsCredentials nats.Option, queueName string) (cloudevents.Client, error) {
+	since := time.Now().UTC().Add(time.Hour * time.Duration(-12))
+
+	subscribeOptions := []nats.SubOpt{
+		nats.DeliverAll(),
+		nats.StartTime(since),
+	}
+	pEvent, err := jsnats.NewConsumer(natsURL, "PRODUCTDATA", queueName, cenats.NatsOptions(natsCredentials), nil, subscribeOptions)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create nats protocol, %v", err)
