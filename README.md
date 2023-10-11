@@ -1,5 +1,5 @@
 # go-mms
-![Go](https://github.com/metno/go-mms/workflows/Go/badge.svg?branch=master) 
+![Go](https://github.com/metno/go-mms/workflows/Go/badge.svg?branch=main) 
 [![codecov](https://codecov.io/gh/metno/go-mms/branch/master/graph/badge.svg)](https://codecov.io/gh/metno/go-mms)
 
 Go client for MET Messaging system (MMS)
