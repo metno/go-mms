@@ -20,7 +20,7 @@ RUN make
 RUN make test
 
 # SECOND STAGE: create the app runtime image.
-FROM debian:buster-slim
+FROM docker.io/ubuntu:22.04
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates
 RUN update-ca-certificates
