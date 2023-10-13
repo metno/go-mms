@@ -33,7 +33,7 @@ func NewJWTDB(filePath string, NSC_creds_location string) (*sql.DB, error) {
 
 func createJWTDB(dbFilePath string, NSC_creds_location string) (*sql.DB, error) {
 	// Create database file if it does not exist.
-	file, err := os.OpenFile(dbFilePath, os.O_CREATE, 0660)
+	file, err := os.OpenFile(dbFilePath, os.O_TRUNC, 0660)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create db file: %s", err)
 	}
@@ -114,7 +114,8 @@ func InitializeJWTDB(db *sql.DB, NSC_creds_location string) error {
 			} else {
 				_, err = statement.Exec(JWTKey, NSC_cred_path)
 				if err != nil {
-					error_string += fmt.Sprintf("failed to add JWT key to db: %s", err)
+					error_string += fmt.Sprintf("failed to add JWT key to db: %s ", err)
+					error_string += fmt.Sprintf("key: %s, path: %s.", JWTKey, NSC_cred_path)
 				}
 			}
 
