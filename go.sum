@@ -9,6 +9,8 @@ github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj
 github.com/cespare/xxhash/v2 v2.2.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/cloudevents/sdk-go/protocol/nats/v2 v2.14.0 h1:cPOXwhwRb+RtHrPSs6Qmobgt4q/0e4wNBdfUjOeV9Qw=
 github.com/cloudevents/sdk-go/protocol/nats/v2 v2.14.0/go.mod h1:BQefJHVdyw9MqEG5EdualOQ/JgYMViAEzkSbAp6qCKA=
+github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2 v2.14.0 h1:Iq1ivWHGtkg10E38bxQj0pbLe9C6AWhX49i+QVxUilw=
+github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2 v2.14.0/go.mod h1:Kly/VEwcO3vyOY5Rd17sTALl1rtzGyPncfTHHSvA2gY=
 github.com/cloudevents/sdk-go/v2 v2.14.0 h1:Nrob4FwVgi5L4tV9lhjzZcjYqFVyJzsA56CwPaPfv6s=
 github.com/cloudevents/sdk-go/v2 v2.14.0/go.mod h1:xDmKfzNjM8gBvjaF8ijFjM1VYOVUEeUfapHMUX1T5To=
 github.com/cpuguy83/go-md2man/v2 v2.0.2 h1:p1EgwI/C7NhT0JmVkwCD2ZBK8j4aeHQX2pMHHBfMQ6w=
