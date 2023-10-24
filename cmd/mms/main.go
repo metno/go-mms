@@ -66,6 +66,11 @@ func run(args []string) error {
 			Usage:   "Name of NATS subject (queue) to subscribe to",
 			EnvVars: []string{"MMS_QUEUE"},
 		}),
+		altsrc.NewBoolFlag(&cli.BoolFlag{
+			Name:  "nats-local",
+			Usage: "Specify wether this MMS instance will connect to NATS-server (True) or connect to an existing NATS stream",
+			Value: true,
+		}),
 	}
 
 	postFlags := []cli.Flag{

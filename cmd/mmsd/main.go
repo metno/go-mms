@@ -194,7 +194,7 @@ func main() {
 
 			natsLocal := ctx.Bool("nats-local")
 
-			if natsLocal == true {
+			if natsLocal {
 				natsURL = fmt.Sprintf("nats://%s:%d", ctx.String("hostname"), ctx.Int("nats-port"))
 				natsUser = "privateUser"
 				// Create a password to use internally if NATS is local for privateUser
@@ -268,7 +268,7 @@ func main() {
 			if err != nil {
 				log.Fatalf("could not open events db: %s", err)
 			}
-			if natsLocal == true {
+			if natsLocal {
 				statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbStateFile))
 				stateDB, err = server.NewStateDB(statePath)
 				if err != nil {
@@ -294,12 +294,14 @@ func main() {
 			}
 			webService.Productstatus.Populate(events)
 
-			heartBeatInterval := ctx.Int("heartbeat-interval")
+			if natsLocal {
 
-			if heartBeatInterval > 0 {
-				startHeartBeat(heartBeatInterval, natsURL, natsCredentials)
+				heartBeatInterval := ctx.Int("heartbeat-interval")
+
+				if heartBeatInterval > 0 {
+					startHeartBeat(heartBeatInterval, natsURL, natsCredentials, natsLocal)
+				}
 			}
-
 			startEventLoop(webService, ctx.Int(("del-events-interval")))
 			startWebServer(webService, apiURL, ctx.Bool("tls"), ctx.String("certificate"), ctx.String("key"))
 
@@ -423,7 +425,7 @@ func startNATSServer(natsServer *nats.Server, natsURL string) {
 	}()
 }
 
-func startHeartBeat(heartBeatInterval int, natsURL string, natsCredentials natscli.Option) {
+func startHeartBeat(heartBeatInterval int, natsURL string, natsCredentials natscli.Option, natsLocal bool) {
 
 	var pEvent mms.HeartBeatEvent
 	log.Printf("Starting heartbeat sender with interval: %d s", heartBeatInterval)
@@ -441,7 +443,7 @@ func startHeartBeat(heartBeatInterval int, natsURL string, natsCredentials natsc
 			case <-ticker.C:
 				pEvent.CreatedAt = time.Now()
 				pEvent.NextEventAt = time.Now().Add(interval)
-				if err := mms.MakeHeartBeatEvent(natsURL, natsCredentials, &pEvent); err != nil {
+				if err := mms.MakeHeartBeatEvent(natsURL, natsCredentials, &pEvent, natsLocal); err != nil {
 					log.Printf("failed to send HeartBeat message: %s", err.Error())
 				}
 			}

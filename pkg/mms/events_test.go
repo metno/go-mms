@@ -131,7 +131,7 @@ func TestPostProductEventNotSuccessful(t *testing.T) {
 	}
 }
 
-func EmitProductEventMessage(t *testing.T) {
+func TestEmitProductEventMessage(t *testing.T) {
 	eClient := newMockCloudeventsClient()
 
 	event := ProductEvent{ProductionHub: "test-hub", Product: "test"}
