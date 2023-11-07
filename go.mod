@@ -13,7 +13,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/metno/go-env v0.0.0-20210818085717-04b5c276f690
 	github.com/nats-io/nats-server/v2 v2.9.15
-	github.com/nats-io/nats.go v1.30.2
+	github.com/nats-io/nats.go v1.31.0
 	github.com/prometheus/client_golang v1.17.0
 	github.com/rakyll/statik v0.1.7
 	github.com/sethvargo/go-password v0.2.0
