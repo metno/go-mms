@@ -3,7 +3,7 @@ module github.com/metno/go-mms
 go 1.19
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/DATA-DOG/go-sqlmock v1.5.1
 	github.com/cloudevents/sdk-go/protocol/nats/v2 v2.14.0
 	github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2 v2.14.0
 	github.com/cloudevents/sdk-go/v2 v2.14.0
