@@ -283,7 +283,6 @@ func (eClient *EventClient) EmitProductEventMessage(pEvent *ProductEvent) error 
 	}
 
 	if result := eClient.ceClient.Send(context.Background(), event); cloudevents.IsUndelivered(result) {
-		log.Fatalf(result.Error())
 		return fmt.Errorf("failed to send: %v", result.Error())
 	}
 
