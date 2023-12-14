@@ -196,11 +196,14 @@ func MakeProductEvent(natsURL string, natsCredentials nats.Option, pEvent *Produ
 	}
 
 	err = mmsClient.EmitProductEventMessage(pEvent)
+	if natsLocal {
+		mmsClient.cenatsSender.Close(context.Background())
+	} else {
+		mmsClient.jsnatsSender.Close(context.Background())
+	}
 	if err != nil {
 		return fmt.Errorf("failed to post product to messaging service: %v", err)
 	}
-
-	mmsClient.cenatsSender.Close(context.Background())
 
 	return nil
 }
@@ -283,7 +286,6 @@ func (eClient *EventClient) EmitProductEventMessage(pEvent *ProductEvent) error 
 	}
 
 	if result := eClient.ceClient.Send(context.Background(), event); cloudevents.IsUndelivered(result) {
-		log.Fatalf(result.Error())
 		return fmt.Errorf("failed to send: %v", result.Error())
 	}
 
