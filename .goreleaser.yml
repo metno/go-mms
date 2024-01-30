@@ -23,6 +23,7 @@ builds:
       - linux
     goarch:
       - amd64
+    go_version: 1.20
 
 archives:
   - format: binary
