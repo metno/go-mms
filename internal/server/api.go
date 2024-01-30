@@ -133,8 +133,10 @@ func proxyHeaders(next func(httpRespW http.ResponseWriter, httpReq *http.Request
 	return gorilla.ProxyHeaders(http.HandlerFunc(setSchemeIfEmpty))
 }
 
+const eventsApiResponseTimeoutSecs = 15
+
 func (service *Service) eventsHandler(httpRespW http.ResponseWriter, httpReq *http.Request) {
-	dbCtx, cancel := context.WithTimeout(httpReq.Context(), 5*time.Second)
+	dbCtx, cancel := context.WithTimeout(httpReq.Context(), time.Duration(eventsApiResponseTimeoutSecs)*time.Second)
 	defer cancel()
 
 	events, err := service.GetAllEvents(dbCtx)
