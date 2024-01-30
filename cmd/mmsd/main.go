@@ -142,7 +142,7 @@ func main() {
 		altsrc.NewUintFlag(&cli.UintFlag{
 			Name:  "del-events-interval",
 			Usage: "Specify the interval(days) for deleting events. Default is 3 days (deletes 3 days old events)",
-			Value: 3,
+			Value: 1,
 		}),
 	}
 
