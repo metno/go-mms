@@ -141,8 +141,8 @@ func main() {
 		}),
 		altsrc.NewUintFlag(&cli.UintFlag{
 			Name:  "del-events-interval",
-			Usage: "Specify the interval(days) for deleting events. Default is 3 days (deletes 3 days old events)",
-			Value: 1,
+			Usage: "Specify the interval(hours) for deleting events. Default is 12 hours (deletes 12 hours old events)",
+			Value: 12,
 		}),
 	}
 
@@ -479,7 +479,7 @@ func startEventLoop(webService *server.Service, eventDeletionInterval int) {
 		for {
 			select {
 			case <-hourTicker.C:
-				if err := webService.DeleteOldEvents(time.Now().AddDate(0, 0, -eventDeletionInterval)); err != nil {
+				if err := webService.DeleteOldEvents(time.Now().Add(-time.Hour * time.Duration(eventDeletionInterval))); err != nil {
 					log.Printf("failed to delete old events from events db: %s", err)
 				}
 			}
