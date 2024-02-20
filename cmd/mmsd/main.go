@@ -452,7 +452,7 @@ func startHeartBeat(heartBeatInterval int, natsURL string, natsCredentials natsc
 }
 
 func startEventLoop(webService *server.Service, eventDeletionInterval int) {
-	log.Printf("Starting event loop with %v days of event deletion Interval ...", eventDeletionInterval)
+	log.Printf("Starting event loop with %v hours of event deletion Interval ...", eventDeletionInterval)
 	// Start a separate go routine serving as an event loop for maintenance tasks.
 
 	uptimeCounter := prometheus.NewCounter(prometheus.CounterOpts{
