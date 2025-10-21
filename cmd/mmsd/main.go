@@ -461,7 +461,7 @@ func startEventLoop(webService *server.Service, eventDeletionInterval int) {
 	webService.Metrics.MustRegister(uptimeCounter)
 
 	secondTicker := time.NewTicker(1 * time.Second)
-	//go func() { // Does not seem necessary
+	//go func() { // Does not seem necessary // Causing threading error: concurrent map iteration and map write
 	for range secondTicker.C {
 		uptimeCounter.Inc()
 		webService.Productstatus.UpdateMetrics()
