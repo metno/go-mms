@@ -438,14 +438,11 @@ func startHeartBeat(heartBeatInterval int, natsURL string, natsCredentials natsc
 	}
 
 	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				pEvent.CreatedAt = time.Now()
-				pEvent.NextEventAt = time.Now().Add(interval)
-				if err := mms.MakeHeartBeatEvent(natsURL, natsCredentials, &pEvent, natsLocal); err != nil {
-					log.Printf("failed to send HeartBeat message: %s", err.Error())
-				}
+		for range ticker.C {
+			pEvent.CreatedAt = time.Now()
+			pEvent.NextEventAt = time.Now().Add(interval)
+			if err := mms.MakeHeartBeatEvent(natsURL, natsCredentials, &pEvent, natsLocal); err != nil {
+				log.Printf("failed to send HeartBeat message: %s", err.Error())
 			}
 		}
 	}()
@@ -464,27 +461,21 @@ func startEventLoop(webService *server.Service, eventDeletionInterval int) {
 	webService.Metrics.MustRegister(uptimeCounter)
 
 	secondTicker := time.NewTicker(1 * time.Second)
-	go func() {
-		for {
-			select {
-			case <-secondTicker.C:
-				uptimeCounter.Inc()
-				webService.Productstatus.UpdateMetrics()
-			}
-		}
-	}()
+	//go func() {
+	for range secondTicker.C {
+		uptimeCounter.Inc()
+		webService.Productstatus.UpdateMetrics()
+	}
+	//}()
 
 	hourTicker := time.NewTicker(1 * time.Hour)
-	go func() {
-		for {
-			select {
-			case <-hourTicker.C:
-				if err := webService.DeleteOldEvents(time.Now().Add(-time.Hour * time.Duration(eventDeletionInterval))); err != nil {
-					log.Printf("failed to delete old events from events db: %s", err)
-				}
-			}
+	//go func() {
+	for range hourTicker.C {
+		if err := webService.DeleteOldEvents(time.Now().Add(-time.Hour * time.Duration(eventDeletionInterval))); err != nil {
+			log.Printf("failed to delete old events from events db: %s", err)
 		}
-	}()
+	}
+	//}()
 }
 
 func startWebServer(webService *server.Service, apiURL string, tlsEnabled bool, certificatePath string, keyPath string) {
