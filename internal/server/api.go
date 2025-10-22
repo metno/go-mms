@@ -32,7 +32,6 @@ import (
 	gorilla "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/nats-io/nats.go"
-
 	"github.com/rakyll/statik/fs"
 
 	"github.com/metno/go-mms/pkg/mms"
@@ -94,7 +93,6 @@ func (service *Service) setRoutes() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	// Events
 	service.Router.HandleFunc("/api/v1/events", service.Metrics.Endpoint("/v1/events", service.eventsHandler)).Methods("GET")
 	service.Router.Handle("/api/v1/events", proxyHeaders(service.postEventHandler)).Methods("POST")
@@ -189,7 +187,7 @@ func (service *Service) postEventHandler(httpRespW http.ResponseWriter, httpReq 
 		log.Print("unauthorized: API key invalid or missing")
 		return
 	}
-	if service.NatsLocal == true {
+	if service.NatsLocal {
 		validKey, err = ValidateApiKey(service.stateDB, apiKey)
 		postCredentials = service.NatsCredentials
 	} else {
