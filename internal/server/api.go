@@ -93,7 +93,6 @@ func (service *Service) setRoutes() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//var statikFS embed.FS
 	// Events
 	service.Router.HandleFunc("/api/v1/events", service.Metrics.Endpoint("/v1/events", service.eventsHandler)).Methods("GET")
 	service.Router.Handle("/api/v1/events", proxyHeaders(service.postEventHandler)).Methods("POST")
