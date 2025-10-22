@@ -46,6 +46,9 @@ func (p *Productstatus) PushEvent(pe mms.ProductEvent) error {
 		return nil
 	}
 
+	p.mu.Lock() // Used Lock() (not RLock()) because we're writing to the map
+	defer p.mu.Unlock()
+
 	p.Products[pe.Product] = Product{
 		Name:                 pe.Product,
 		NextInstanceExpected: time.Time(pe.NextEventAt),
@@ -54,6 +57,8 @@ func (p *Productstatus) PushEvent(pe mms.ProductEvent) error {
 }
 
 func (p *Productstatus) GetProductDelays(t time.Time) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	for k, v := range p.Products {
 		diff := t.Sub(v.NextInstanceExpected)
 		fmt.Printf("%s: %v\n", k, diff.Seconds())
