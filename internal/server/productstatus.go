@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/metno/go-mms/pkg/mms"
@@ -16,6 +17,7 @@ type Product struct {
 type Productstatus struct {
 	Products map[string]Product
 	GaugeVec *prometheus.GaugeVec
+	mu       sync.RWMutex
 }
 
 func NewProductstatus(m *metrics) *Productstatus {
@@ -59,6 +61,8 @@ func (p *Productstatus) GetProductDelays(t time.Time) {
 }
 
 func (p *Productstatus) UpdateMetrics() {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	for k, v := range p.Products {
 		diff := time.Now().Sub(v.NextInstanceExpected)
 		p.GaugeVec.WithLabelValues(k).Set(diff.Seconds())

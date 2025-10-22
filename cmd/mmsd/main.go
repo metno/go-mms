@@ -461,24 +461,24 @@ func startEventLoop(webService *server.Service, eventDeletionInterval int) {
 	webService.Metrics.MustRegister(uptimeCounter)
 
 	secondTicker := time.NewTicker(1 * time.Second)
-	//go func() { // Does not seem necessary // Causing threading error: concurrent map iteration and map write
-	for range secondTicker.C {
-		uptimeCounter.Inc()
-		webService.Productstatus.UpdateMetrics()
-		//log.Printf("webService.Productstatus.UpdateMetrics()")
-	}
-	//}()
+	go func() {
+		for range secondTicker.C {
+			uptimeCounter.Inc()
+			webService.Productstatus.UpdateMetrics()
+			//log.Printf("webService.Productstatus.UpdateMetrics()")
+		}
+	}()
 
 	hourTicker := time.NewTicker(1 * time.Hour)
-	//go func() { // Does not seem necessary
-	for range hourTicker.C {
-		if err := webService.DeleteOldEvents(time.Now().Add(-time.Hour * time.Duration(eventDeletionInterval))); err != nil {
-			log.Printf("failed to delete old events from events db: %s", err)
-		} else {
-			log.Printf("Deleted old events")
+	go func() {
+		for range hourTicker.C {
+			if err := webService.DeleteOldEvents(time.Now().Add(-time.Hour * time.Duration(eventDeletionInterval))); err != nil {
+				log.Printf("failed to delete old events from events db: %s", err)
+			} else {
+				log.Printf("Deleted old events")
+			}
 		}
-	}
-	//}()
+	}()
 }
 
 func startWebServer(webService *server.Service, apiURL string, tlsEnabled bool, certificatePath string, keyPath string) {
