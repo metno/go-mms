@@ -122,7 +122,7 @@ func InitializeJWTDB(db *sql.DB, NSC_creds_location string) error {
 		}
 	}
 	if error_string != "" {
-		return fmt.Errorf(error_string)
+		return fmt.Errorf("Failed to initialize JWT DB: %s", error_string)
 	}
 	return nil
 }

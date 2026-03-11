@@ -31,7 +31,7 @@ edeps:
 	go install github.com/rakyll/statik
 
 deps:
-	go get -v -t -d ./...
+	go get -v -t ./...
 
 release:
 	git tag -a $(VERSION) -m "Release" || true

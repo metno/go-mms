@@ -1,6 +1,8 @@
 # FIRST STAGE:  build the app.
-FROM golang:1.20 AS build-app
+FROM docker.io/library/golang:1.25 AS build-app
 WORKDIR /build/app
+
+RUN go telemetry off
 
 # We want to populate the module cache based on the go.{mod,sum} files.
 COPY go.mod .
@@ -17,6 +19,10 @@ RUN make statik
 RUN make deps
 
 RUN make
+
+# Security scan
+RUN go install golang.org/x/vuln/cmd/govulncheck@latest && govulncheck ./...
+
 RUN make test
 
 # SECOND STAGE: create the app runtime image.
