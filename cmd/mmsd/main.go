@@ -54,15 +54,22 @@ const dbStateFile = "state.db"
 const dbJWTFile = "jwt.db"
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
 
 	var err error
 	var hubID string
-
+	var cmdNotFoundErr error
 	// Create an identifier
 	hubID, err = mms.MakeHubIdentifier()
 	if err != nil {
 		log.Printf("Failed to create identifier, %s", err.Error())
 		hubID = "error"
+		err = nil
 	}
 
 	cmdFlags := []cli.Flag{
@@ -181,13 +188,13 @@ func main() {
 			return altsrc.ApplyInputSourceValues(ctx, inputSource, cmdFlags)
 		},
 		CommandNotFound: func(ctx *cli.Context, command string) {
-		log.Fatalf("unknown command: %q", command)
+			cmdNotFoundErr = fmt.Errorf("Unknown command: %q", command)
 		},
 		DefaultCommand: "start",
-		Flags: cmdFlags,
+		Flags:          cmdFlags,
 		Commands: []*cli.Command{
 			{
-				Name: "start",
+				Name:  "start",
 				Usage: "Start the MMS server. (Default)",
 				Action: func(ctx *cli.Context) error {
 					var natsURL string
@@ -208,7 +215,7 @@ func main() {
 						// Create a password to use internally if NATS is local for privateUser
 						natsPassword, err = password.Generate(64, 10, 10, false, false)
 						if err != nil {
-							log.Fatal(err)
+							return err
 						}
 						privateNatsUser := &nats.User{
 							Username: natsUser,
@@ -274,20 +281,20 @@ func main() {
 					eventsPath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbEventsFile))
 					eventsDB, err = server.NewEventsDB(eventsPath)
 					if err != nil {
-						log.Fatalf("could not open events db: %s", err)
+						return fmt.Errorf("could not open events db: %s", err)
 					}
 					if natsLocal {
 						statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbStateFile))
 						stateDB, err = server.NewStateDB(statePath)
 						if err != nil {
-							log.Fatalf("could not open state db for local NATS authentication: %s", err)
+							return fmt.Errorf("could not open state db for local NATS authentication: %s", err)
 						}
 					} else {
 						statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbJWTFile))
 						NSC_creds_location := ctx.String("nats-cred-path")
 						stateDB, err = server.NewJWTDB(statePath, NSC_creds_location)
 						if err != nil {
-							log.Fatalf("could not open state db for non-local NATS authentication: %s", err)
+							return fmt.Errorf("could not open state db for non-local NATS authentication: %s", err)
 						}
 					}
 
@@ -298,7 +305,7 @@ func main() {
 					log.Println("Populating productstatus from the local events database ...")
 					events, err := webService.GetAllEvents(context.Background())
 					if err != nil {
-						log.Fatalf("could not read all events %s", err)
+						return fmt.Errorf("could not read all events %s", err)
 					}
 					webService.Productstatus.Populate(events)
 
@@ -354,30 +361,30 @@ func main() {
 					statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbStateFile))
 					stateDB, err := server.NewStateDB(statePath)
 					if err != nil {
-						log.Fatalf("could not open state db: %s", err)
+						return fmt.Errorf("could not open state db: %s", err)
 					}
 
 					if ctx.Bool("gen") {
 						err := generateAPIKey(stateDB, ctx.String("message"))
 						if err != nil {
-							log.Fatalf("failed to generate key: %s", err)
+							return fmt.Errorf("failed to generate key: %s", err)
 						}
 					} else if ctx.Bool("list") {
 						err := server.ListApiKeys(stateDB)
 						if err != nil {
-							log.Fatalf("failed to list keys: %s", err)
+							return fmt.Errorf("failed to list keys: %s", err)
 						}
 					} else if ctx.String("add") != "None" {
 						err := server.AddNewApiKey(stateDB, ctx.String("add"), ctx.String("message"))
 						if err != nil {
-							log.Fatalf("failed to add key: %s", err)
+							return fmt.Errorf("failed to add key: %s", err)
 						}
 						fmt.Printf("Added Key:   %s\n", ctx.String("add"))
 						fmt.Printf("Key Message: %s\n", ctx.String("message"))
 					} else if ctx.String("remove") != "None" {
 						isOk, err := server.RemoveApiKey(stateDB, ctx.String("remove"))
 						if err != nil {
-							log.Fatalf("failed to remove key: %s", err)
+							return fmt.Errorf("failed to remove key: %s", err)
 						}
 						if isOk {
 							fmt.Printf("Removed Key: %s\n", ctx.String("remove"))
@@ -419,8 +426,12 @@ func main() {
 
 	err = app.Run(os.Args)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+	if cmdNotFoundErr != nil {
+		return cmdNotFoundErr
+	}
+	return nil
 }
 
 func startNATSServer(natsServer *nats.Server, natsURL string) {
