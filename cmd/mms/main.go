@@ -65,7 +65,6 @@ func run(args []string) error {
 			Name:    "queue-name",
 			Usage:   "Name of NATS subject (queue) to subscribe to",
 			EnvVars: []string{"MMS_QUEUE"},
-			Value: "mms",
 		}),
 		altsrc.NewBoolFlag(&cli.BoolFlag{
 			Name:  "nats-local",
