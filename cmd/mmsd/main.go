@@ -180,6 +180,10 @@ func main() {
 
 			return altsrc.ApplyInputSourceValues(ctx, inputSource, cmdFlags)
 		},
+		CommandNotFound: func(ctx *cli.Context, command string) {
+		log.Fatalf("unknown command: %q", command)
+		},
+		DefaultCommand: "start",
 		Flags: cmdFlags,
 		Action: func(ctx *cli.Context) error {
 			var natsURL string
