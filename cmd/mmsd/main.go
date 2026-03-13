@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	cryptorand "crypto/rand"
 	"database/sql"
 	"encoding/base64"
 	"fmt"
@@ -505,17 +506,17 @@ func startWebServer(webService *server.Service, apiURL string, tlsEnabled bool, 
 }
 
 func generateAPIKey(stateDB *sql.DB, keyMsg string) error {
-	// Generate the key
+	// Generate the key using crypto/rand for secure randomness
 	byteKey := make([]byte, 32)
-	for i := range byteKey {
-		byteKey[i] = byte(rand.Intn(255))
+	if _, err := cryptorand.Read(byteKey); err != nil {
+		return fmt.Errorf("failed to generate random key: %w", err)
 	}
-	apiKey := base64.StdEncoding.EncodeToString([]byte(byteKey))
+	apiKey := base64.StdEncoding.EncodeToString(byteKey)
 
 	// Save the new key entry
 	err := server.AddNewApiKey(stateDB, apiKey, keyMsg)
 	if err != nil {
-		log.Fatalf("error in state db: %s", err)
+		return fmt.Errorf("error in state db: %w", err)
 	}
 
 	fmt.Printf("Generated Key: %s\n", apiKey)
