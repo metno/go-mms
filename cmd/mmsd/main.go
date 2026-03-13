@@ -185,133 +185,137 @@ func main() {
 		},
 		DefaultCommand: "start",
 		Flags: cmdFlags,
-		Action: func(ctx *cli.Context) error {
-			var natsURL string
-			// natsUser is either filepath for JWT or cred file, or privateUser for local nats
-			var natsUser string
-			// if natsUser is JWT, natsPassword is nkeySeed filepath, if local nats, it local pass
-			var natsPassword string
-			var natsCredentials natscli.Option
-
-			var eventsDB *sql.DB
-			var stateDB *sql.DB
-
-			natsLocal := ctx.Bool("nats-local")
-
-			if natsLocal {
-				natsURL = fmt.Sprintf("nats://%s:%d", ctx.String("hostname"), ctx.Int("nats-port"))
-				natsUser = "privateUser"
-				// Create a password to use internally if NATS is local for privateUser
-				natsPassword, err = password.Generate(64, 10, 10, false, false)
-				if err != nil {
-					log.Fatal(err)
-				}
-				privateNatsUser := &nats.User{
-					Username: natsUser,
-					Password: natsPassword,
-					Permissions: &nats.Permissions{
-						Publish: &nats.SubjectPermission{
-							Allow: []string{"mms"},
-						},
-						Subscribe: &nats.SubjectPermission{
-							Allow: []string{"mms"},
-						},
-					},
-				}
-
-				publicNatsUser := &nats.User{
-					Username: "publicUser",
-					Permissions: &nats.Permissions{
-						Publish: &nats.SubjectPermission{
-							Deny: []string{"*"},
-						},
-						Subscribe: &nats.SubjectPermission{
-							Allow: []string{"mms"},
-						},
-					},
-				}
-
-				users := []*nats.User{privateNatsUser, publicNatsUser}
-
-				opts := &nats.Options{
-					ServerName: fmt.Sprintf("mmsd-nats-server-%s", productionHubName),
-					Host:       ctx.String("hostname"),
-					Port:       ctx.Int("nats-port"),
-					Users:      users,
-					NoAuthUser: "publicUser",
-				}
-
-				natsServer, err := nats.NewServer(opts)
-				if err != nil {
-					nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
-				}
-
-				startNATSServer(natsServer, natsURL)
-				natsCredentials = natscli.UserInfo("privateUser", natsPassword)
-			} else {
-				natsURL = ctx.String("nats-url")
-				if natsURL == "" {
-					return fmt.Errorf("Need to provide nats-url if nats-local is false")
-				}
-				natsUser = ctx.String("heartbeat-user")
-				if natsUser == "" {
-					return fmt.Errorf("Need to provide either JWT and NkeySeed or cred files as heartbeat-user")
-				}
-				natsPassword = ctx.String("heartbeat-password")
-				if natsPassword == "" {
-					natsCredentials = natscli.UserCredentials(natsUser)
-				} else {
-					natsCredentials = natscli.UserCredentials(natsUser, natsPassword)
-				}
-			}
-
-			apiURL := fmt.Sprintf("%s:%d", ctx.String("hostname"), ctx.Int("api-port"))
-
-			eventsPath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbEventsFile))
-			eventsDB, err = server.NewEventsDB(eventsPath)
-			if err != nil {
-				log.Fatalf("could not open events db: %s", err)
-			}
-			if natsLocal {
-				statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbStateFile))
-				stateDB, err = server.NewStateDB(statePath)
-				if err != nil {
-					log.Fatalf("could not open state db for local NATS authentication: %s", err)
-				}
-			} else {
-				statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbJWTFile))
-				NSC_creds_location := ctx.String("nats-cred-path")
-				stateDB, err = server.NewJWTDB(statePath, NSC_creds_location)
-				if err != nil {
-					log.Fatalf("could not open state db for non-local NATS authentication: %s", err)
-				}
-			}
-
-			templates := server.CreateTemplates()
-
-			webService := server.NewService(templates, eventsDB, stateDB, natsURL, natsCredentials, server.Version{Version: version, Commit: commit, Date: date}, natsLocal)
-
-			log.Println("Populating productstatus from the local events database ...")
-			events, err := webService.GetAllEvents(context.Background())
-			if err != nil {
-				log.Fatalf("could not read all events %s", err)
-			}
-			webService.Productstatus.Populate(events)
-
-			if natsLocal {
-
-				heartBeatInterval := ctx.Int("heartbeat-interval")
-
-				if heartBeatInterval > 0 {
-					startHeartBeat(heartBeatInterval, natsURL, natsCredentials, natsLocal)
-				}
-			}
-			startEventLoop(webService, ctx.Int(("del-events-interval")))
-			startWebServer(webService, apiURL, ctx.Bool("tls"), ctx.String("certificate"), ctx.String("key"))
-
-			return nil
-		},
 		Commands: []*cli.Command{
+			{
+				Name: "start",
+				Usage: "Start the MMS server. (Default)",
+				Action: func(ctx *cli.Context) error {
+					var natsURL string
+					// natsUser is either filepath for JWT or cred file, or privateUser for local nats
+					var natsUser string
+					// if natsUser is JWT, natsPassword is nkeySeed filepath, if local nats, it local pass
+					var natsPassword string
+					var natsCredentials natscli.Option
+
+					var eventsDB *sql.DB
+					var stateDB *sql.DB
+
+					natsLocal := ctx.Bool("nats-local")
+
+					if natsLocal {
+						natsURL = fmt.Sprintf("nats://%s:%d", ctx.String("hostname"), ctx.Int("nats-port"))
+						natsUser = "privateUser"
+						// Create a password to use internally if NATS is local for privateUser
+						natsPassword, err = password.Generate(64, 10, 10, false, false)
+						if err != nil {
+							log.Fatal(err)
+						}
+						privateNatsUser := &nats.User{
+							Username: natsUser,
+							Password: natsPassword,
+							Permissions: &nats.Permissions{
+								Publish: &nats.SubjectPermission{
+									Allow: []string{"mms"},
+								},
+								Subscribe: &nats.SubjectPermission{
+									Allow: []string{"mms"},
+								},
+							},
+						}
+
+						publicNatsUser := &nats.User{
+							Username: "publicUser",
+							Permissions: &nats.Permissions{
+								Publish: &nats.SubjectPermission{
+									Deny: []string{"*"},
+								},
+								Subscribe: &nats.SubjectPermission{
+									Allow: []string{"mms"},
+								},
+							},
+						}
+
+						users := []*nats.User{privateNatsUser, publicNatsUser}
+
+						opts := &nats.Options{
+							ServerName: fmt.Sprintf("mmsd-nats-server-%s", productionHubName),
+							Host:       ctx.String("hostname"),
+							Port:       ctx.Int("nats-port"),
+							Users:      users,
+							NoAuthUser: "publicUser",
+						}
+
+						natsServer, err := nats.NewServer(opts)
+						if err != nil {
+							nats.PrintAndDie(fmt.Sprintf("nats server failed: %s for server: mmsd-nats-server-%s", err, productionHubName))
+						}
+
+						startNATSServer(natsServer, natsURL)
+						natsCredentials = natscli.UserInfo("privateUser", natsPassword)
+					} else {
+						natsURL = ctx.String("nats-url")
+						if natsURL == "" {
+							return fmt.Errorf("Need to provide nats-url if nats-local is false")
+						}
+						natsUser = ctx.String("heartbeat-user")
+						if natsUser == "" {
+							return fmt.Errorf("Need to provide either JWT and NkeySeed or cred files as heartbeat-user")
+						}
+						natsPassword = ctx.String("heartbeat-password")
+						if natsPassword == "" {
+							natsCredentials = natscli.UserCredentials(natsUser)
+						} else {
+							natsCredentials = natscli.UserCredentials(natsUser, natsPassword)
+						}
+					}
+
+					apiURL := fmt.Sprintf("%s:%d", ctx.String("hostname"), ctx.Int("api-port"))
+
+					eventsPath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbEventsFile))
+					eventsDB, err = server.NewEventsDB(eventsPath)
+					if err != nil {
+						log.Fatalf("could not open events db: %s", err)
+					}
+					if natsLocal {
+						statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbStateFile))
+						stateDB, err = server.NewStateDB(statePath)
+						if err != nil {
+							log.Fatalf("could not open state db for local NATS authentication: %s", err)
+						}
+					} else {
+						statePath := fmt.Sprint(filepath.Join(ctx.String("work-dir"), dbJWTFile))
+						NSC_creds_location := ctx.String("nats-cred-path")
+						stateDB, err = server.NewJWTDB(statePath, NSC_creds_location)
+						if err != nil {
+							log.Fatalf("could not open state db for non-local NATS authentication: %s", err)
+						}
+					}
+
+					templates := server.CreateTemplates()
+
+					webService := server.NewService(templates, eventsDB, stateDB, natsURL, natsCredentials, server.Version{Version: version, Commit: commit, Date: date}, natsLocal)
+
+					log.Println("Populating productstatus from the local events database ...")
+					events, err := webService.GetAllEvents(context.Background())
+					if err != nil {
+						log.Fatalf("could not read all events %s", err)
+					}
+					webService.Productstatus.Populate(events)
+
+					if natsLocal {
+
+						heartBeatInterval := ctx.Int("heartbeat-interval")
+
+						if heartBeatInterval > 0 {
+							startHeartBeat(heartBeatInterval, natsURL, natsCredentials, natsLocal)
+						}
+					}
+					startEventLoop(webService, ctx.Int(("del-events-interval")))
+					startWebServer(webService, apiURL, ctx.Bool("tls"), ctx.String("certificate"), ctx.String("key"))
+
+					return nil
+				},
+			},
 			{
 				Name:  "keys",
 				Usage: "Manage API keys.",
