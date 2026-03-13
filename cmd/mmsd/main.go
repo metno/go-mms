@@ -23,7 +23,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
