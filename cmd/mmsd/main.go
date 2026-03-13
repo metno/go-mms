@@ -497,12 +497,6 @@ func startWebServer(webService *server.Service, apiURL string, tlsEnabled bool, 
 }
 
 func generateAPIKey(stateDB *sql.DB, keyMsg string) error {
-	// Seeding the random generator for each call may be risky since it may produce the same
-	// seed twice if the time resolution is low and the function is called often. However, the
-	// function is only called once in a single instance of mmsd, and the database should error
-	// on a duplicate key entry.
-	rand.Seed(time.Now().UnixNano())
-
 	// Generate the key
 	byteKey := make([]byte, 32)
 	for i := range byteKey {
