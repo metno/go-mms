@@ -83,6 +83,13 @@ trivy_docker:
     reports:
       junit: $CI_JOB_NAME.xml
 
+build_container_scanning:
+  extends: .container_scanning
+  variables:
+    RELEASE_IMAGE_NAME: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+  rules:
+   - if: $CI_COMMIT_TAG
+
 tjenester/s-enda:
   stage: release
   rules:
