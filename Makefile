@@ -1,6 +1,6 @@
 all: build_mmsd build_mms
 
-build_mmsd: go_mod statik
+build_mmsd: go_mod
 	go build ./cmd/mmsd
 
 build_mms: go_mod
@@ -21,14 +21,8 @@ test:
 testcov:
 	go test -coverprofile=coverage.txt -covermode=atomic -v ./...
 
-statik:
-	statik -f -src=static -dest=pkg
-
 go_mod:
 	go mod download
-
-edeps:
-	go install github.com/rakyll/statik
 
 deps:
 	go get -v -t ./...
@@ -48,4 +42,4 @@ integration_test: build_mmsd testdb
 	@kill `cat ./mmsd.pid`
 	@unlink ./mmsd.pid
 
-.PHONY: deps go_mod build_mmsd build_mms test image release puml static
+.PHONY: deps go_mod build_mmsd build_mms test image release puml

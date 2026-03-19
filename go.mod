@@ -15,7 +15,6 @@ require (
 	github.com/nats-io/nats-server/v2 v2.12.5
 	github.com/nats-io/nats.go v1.49.0
 	github.com/prometheus/client_golang v1.23.2
-	github.com/rakyll/statik v0.1.8
 	github.com/sethvargo/go-password v0.3.1
 	github.com/urfave/cli/v2 v2.27.7
 )

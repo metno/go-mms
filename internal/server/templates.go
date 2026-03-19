@@ -18,40 +18,29 @@ package server
 
 import (
 	"html/template"
-	"io/ioutil"
+	"io/fs"
 	"log"
-	"os"
 	"path/filepath"
 
-	// When this is not a blank import, then VSCode removes it when saving the file
-	_ "github.com/metno/go-mms/pkg/statik"
-	"github.com/rakyll/statik/fs"
+	"github.com/metno/go-mms/pkg/assets"
 )
 
-// CreateTemplates creates templates from the template files statically built into the binary
+// CreateTemplates creates templates from the template files embedded into the binary.
 func CreateTemplates() *template.Template {
-	staticFS, err := fs.New()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	templates := template.New("")
 
-	fs.Walk(staticFS, "/templates", func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			templateFile, err := staticFS.Open(path)
+	fs.WalkDir(assets.Static, "static/templates", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			log.Fatal(err)
+		}
+		if !d.IsDir() {
+			templateData, err := assets.Static.ReadFile(path)
 			if err != nil {
 				log.Fatal(err)
 			}
-
-			templateData, err := ioutil.ReadAll(templateFile)
-			if err != nil {
-				log.Fatal(err)
-			}
-			// Multiple calls to Parse are appending templates
+			// Multiple calls to Parse append templates; {{define}} blocks inside each file name the template.
 			templates.New(filepath.Base(path)).Parse(string(templateData))
 		}
-
 		return nil
 	})
 

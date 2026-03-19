@@ -1,7 +1,5 @@
 before:
   hooks:
-    - make edeps
-    - make statik
     - make deps
     - make test
 

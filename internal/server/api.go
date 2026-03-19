@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -32,10 +33,9 @@ import (
 	gorilla "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/nats-io/nats.go"
-	"github.com/rakyll/statik/fs"
 
+	"github.com/metno/go-mms/pkg/assets"
 	"github.com/metno/go-mms/pkg/mms"
-	_ "github.com/metno/go-mms/pkg/statik"
 )
 
 // Version and build information
@@ -89,7 +89,7 @@ func NewService(templates *template.Template, eventsDB *sql.DB, stateDB *sql.DB,
 
 func (service *Service) setRoutes() {
 
-	statikFS, err := fs.New()
+	staticFS, err := fs.Sub(assets.Static, "static")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -113,7 +113,7 @@ func (service *Service) setRoutes() {
 	service.Router.HandleFunc("/mockevent", MockProductEvent)
 
 	// Static assets.
-	service.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(statikFS)))
+	service.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
 
 	// Send root path of the http service to the docs index page.
 	service.Router.HandleFunc("/", service.docsHandler)
