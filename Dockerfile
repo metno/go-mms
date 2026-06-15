@@ -5,7 +5,7 @@ ARG go_version=1.25
 FROM docker.io/library/golang:${go_version}-alpine${alpine_version} AS build-app
 WORKDIR /build/app
 
-RUN --mount=type=cache,target=/var/cache/apk apk add build-base ca-certificates git
+RUN --mount=type=cache,target=/var/cache/apk apk add build-base ca-certificates git coreutils
 
 RUN go telemetry off
 
