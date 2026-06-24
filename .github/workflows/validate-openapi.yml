@@ -1,0 +1,55 @@
+name: OpenAPI Schema Validation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  schemathesis:
+    name: Schemathesis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ^1.25
+
+      - name: Get external dependencies
+        run: make edeps
+
+      - name: Generate static files package
+        run: make statik
+
+      - name: Get other dependencies
+        run: make deps
+
+      - name: Build mmsd
+        run: make build_mmsd
+
+      - name: Prepare test state db
+        run: make testdb
+
+      - name: Start mmsd
+        run: ./mmsd --hostname 0.0.0.0 --api-port 8080 --work-dir ./test &
+
+      - name: Wait for mmsd to be ready
+        run: |
+          for i in $(seq 1 15); do
+            curl --silent --fail http://localhost:8080/api/v1/healthz && echo "Server is up!" && exit 0
+            echo "Waiting for server... attempt $i"
+            sleep 2
+          done
+          echo "Server did not start in time"
+          exit 1
+
+      - name: Run Schemathesis
+        uses: schemathesis/action@v3
+        with:
+          schema: openapi3.yaml
+          base-url: http://localhost:8080
+          args: '--report-junit-path=/tmp/junit.xml'
